@@ -5,23 +5,39 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Million Dollar Wall</title>
+
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   font-family: Arial, sans-serif;
   background: #f4f6fa;
   color: #202a38;
 }
+
 header {
   background: white;
   padding: 20px;
   text-align: center;
   border-bottom: 1px solid #ddd;
 }
-h1 { margin: 0; font-size: 32px; }
-h1 span { color: #159c64; }
-header p { color: #666; }
+
+h1 {
+  margin: 0;
+  font-size: 32px;
+}
+
+h1 span {
+  color: #159c64;
+}
+
+header p {
+  color: #666;
+}
+
 .container {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 300px;
@@ -30,31 +46,39 @@ header p { color: #666; }
   margin: auto;
   padding: 20px;
 }
+
 .panel {
   background: white;
   padding: 20px;
   border-radius: 14px;
   border: 1px solid #e1e5eb;
+  min-width: 0;
 }
+
 .stage {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  justify-content: flex-start;
+  align-items: flex-start;
   overflow: auto;
   background: #edf1f7;
   padding: 12px;
   border-radius: 10px;
+  max-height: 80vh;
 }
+
 #wall {
   position: relative;
-  width: min(100%, 75vh);
+  width: 100%;
+  max-width: 700px;
   aspect-ratio: 1;
-  background: white;
+  background-color: white;
   border: 3px solid #d94b4b;
   flex-shrink: 0;
   cursor: crosshair;
   touch-action: none;
+  overflow: hidden;
 }
+
 canvas {
   position: absolute;
   inset: 0;
@@ -62,6 +86,7 @@ canvas {
   height: 100%;
   image-rendering: pixelated;
 }
+
 button {
   padding: 11px 14px;
   border: 0;
@@ -71,37 +96,44 @@ button {
   cursor: pointer;
   font-weight: bold;
 }
+
 button:disabled {
   opacity: .45;
   cursor: not-allowed;
 }
+
 .controls {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   margin: 15px 0;
 }
+
 label {
   display: block;
   margin-top: 18px;
   margin-bottom: 7px;
   font-weight: bold;
 }
+
 input[type="file"],
 input[type="url"] {
   width: 100%;
 }
+
 input[type="url"] {
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 8px;
 }
+
 .price {
   font-size: 32px;
   font-weight: bold;
   color: #159c64;
   margin: 12px 0;
 }
+
 .note {
   margin-top: 20px;
   background: #fff3d6;
@@ -109,96 +141,127 @@ input[type="url"] {
   border-radius: 8px;
   font-size: 13px;
 }
-small { color: #666; }
+
+small {
+  color: #666;
+}
+
 @media (max-width: 800px) {
-  .container { grid-template-columns: 1fr; }
-  h1 { font-size: 25px; }
+  .container {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    font-size: 25px;
+  }
 }
 </style>
 </head>
+
 <body>
 
 <header>
   <h1>The <span>Million Dollar</span> Wall</h1>
-  <p>1.000.000 di pixel disponibili · 1 pixel = 1 €</p>
+  <p>1.000.000 di pixel · 1 pixel = 1 €</p>
   <small>VERSIONE DEMO — PAGAMENTI DISATTIVATI</small>
 </header>
 
 <div class="container">
 
-  <section class="panel">
-    <h2>Il muro da un milione di pixel</h2>
-    <p>
-      Seleziona liberamente uno spazio.
-      Puoi acquistare anche un solo pixel.
-    </p>
+<section class="panel">
+  <h2>Il muro da un milione di pixel</h2>
 
-    <div class="controls">
-      <button onclick="changeZoom(1.5)">+ Zoom</button>
-      <button onclick="changeZoom(1/1.5)">- Zoom</button>
-      <button onclick="resetZoom()">Ripristina</button>
-      <span id="zoomText">100%</span>
+  <p>
+    Seleziona liberamente uno spazio.
+    Puoi acquistare anche un solo pixel.
+  </p>
+
+  <div class="controls">
+    <button onclick="changeZoom(1.5)">+ Zoom</button>
+    <button onclick="changeZoom(1/1.5)">- Zoom</button>
+    <button onclick="resetZoom()">Ripristina</button>
+    <span id="zoomText">100%</span>
+  </div>
+
+  <div class="stage" id="stage">
+    <div id="wall">
+      <canvas id="base" width="1000" height="1000"></canvas>
+      <canvas id="grid" width="1000" height="1000"></canvas>
+      <canvas id="overlay" width="1000" height="1000"></canvas>
     </div>
+  </div>
 
-    <div class="stage">
-      <div id="wall">
-        <canvas id="base" width="1000" height="1000"></canvas>
-        <canvas id="overlay" width="1000" height="1000"></canvas>
-      </div>
-    </div>
+  <p>
+    <small>
+      La griglia è visibile fin da subito.
+      Ogni quadratino grande rappresenta 10 × 10 pixel.
+      Puoi comunque selezionare anche un singolo pixel.
+    </small>
+  </p>
+</section>
 
-    <p><small>
-      Trascina sul muro per scegliere un rettangolo.
-      Usa lo zoom per selezionare con precisione.
-    </small></p>
-  </section>
+<aside class="panel">
+  <h2>Il tuo spazio</h2>
 
-  <aside class="panel">
-    <h2>Il tuo spazio</h2>
+  <p id="selectionInfo">Nessuna selezione</p>
 
-    <p id="selectionInfo">Nessuna selezione</p>
+  <div class="price" id="price">0 €</div>
+  <small id="pixelCount">0 pixel × 1 €</small>
 
-    <div class="price" id="price">0 €</div>
-    <small id="pixelCount">0 pixel × 1 €</small>
+  <label for="color">Colore</label>
+  <input type="color" id="color" value="#16a36a">
 
-    <label for="color">Colore</label>
-    <input type="color" id="color" value="#16a36a">
+  <label for="image">Carica immagine o logo</label>
+  <input
+    type="file"
+    id="image"
+    accept="image/png,image/jpeg,image/webp"
+  >
 
-    <label for="image">Carica immagine o logo</label>
-    <input type="file" id="image"
-      accept="image/png,image/jpeg,image/webp,image/gif">
-    <p><small>Dimensione massima: 5 MB</small></p>
+  <p><small>Dimensione massima: 5 MB</small></p>
 
-    <label for="link">Link pubblicitario</label>
-    <input type="url" id="link"
-      placeholder="https://tuosito.it">
+  <label for="link">Link pubblicitario</label>
+  <input
+    type="url"
+    id="link"
+    placeholder="https://tuosito.it"
+  >
 
-    <div class="controls">
-      <button id="previewBtn" onclick="preview()" disabled>
-        Mostra anteprima
-      </button>
-      <button onclick="clearSelection()">
-        Cancella selezione
-      </button>
-    </div>
+  <div class="controls">
+    <button
+      id="previewBtn"
+      onclick="preview()"
+      disabled
+    >
+      Mostra anteprima
+    </button>
 
-    <div class="note">
-      Questa è una demo grafica.
-      Non vengono effettuati pagamenti.
-      Le immagini non vengono salvate online.
-      Il database e Stripe saranno collegati
-      prima del lancio ufficiale.
-    </div>
-  </aside>
+    <button onclick="clearSelection()">
+      Cancella selezione
+    </button>
+  </div>
+
+  <div class="note">
+    Questa è una demo grafica.
+    Non vengono effettuati pagamenti.
+    Le immagini non vengono salvate online.
+    Stripe e Supabase saranno collegati
+    prima del lancio ufficiale.
+  </div>
+</aside>
 
 </div>
 
 <script>
 const wall = document.getElementById("wall");
+const stage = document.getElementById("stage");
+
 const base = document.getElementById("base");
+const grid = document.getElementById("grid");
 const overlay = document.getElementById("overlay");
 
 const ctx = base.getContext("2d");
+const gridCtx = grid.getContext("2d");
 const selectionCtx = overlay.getContext("2d");
 
 let zoom = 1;
@@ -207,18 +270,39 @@ let start = null;
 let dragging = false;
 let uploadedImage = null;
 
+// Disegna la griglia permanente.
+// 100 righe e 100 colonne.
+// Ogni quadrato contiene 100 pixel reali.
+
+function drawGrid() {
+  gridCtx.clearRect(0, 0, 1000, 1000);
+
+  gridCtx.beginPath();
+  gridCtx.strokeStyle = "#c1cad7";
+  gridCtx.lineWidth = 1;
+
+  for (let i = 0; i <= 1000; i += 10) {
+    const p = Math.min(i + 0.5, 999.5);
+
+    gridCtx.moveTo(p, 0);
+    gridCtx.lineTo(p, 1000);
+
+    gridCtx.moveTo(0, p);
+    gridCtx.lineTo(1000, p);
+  }
+
+  gridCtx.stroke();
+}
+
 function getPosition(event) {
-  const rect = wall.getBoundingClientRect();
-  const border = 3;
+  const rect = overlay.getBoundingClientRect();
 
   const x = Math.floor(
-    ((event.clientX - rect.left - border) /
-    (rect.width - border * 2)) * 1000
+    ((event.clientX - rect.left) / rect.width) * 1000
   );
 
   const y = Math.floor(
-    ((event.clientY - rect.top - border) /
-    (rect.height - border * 2)) * 1000
+    ((event.clientY - rect.top) / rect.height) * 1000
   );
 
   return {
@@ -311,7 +395,7 @@ wall.addEventListener("pointercancel", () => {
 });
 
 function changeZoom(factor) {
-  zoom = Math.max(1, Math.min(4, zoom * factor));
+  zoom = Math.max(1, Math.min(8, zoom * factor));
   applyZoom();
 }
 
@@ -321,8 +405,15 @@ function resetZoom() {
 }
 
 function applyZoom() {
-  const size = Math.min(window.innerHeight * .75, 850);
-  wall.style.width = Math.round(size * zoom) + "px";
+  const available = Math.max(
+    200,
+    stage.clientWidth - 24
+  );
+
+  const size = Math.min(available, 700);
+
+  wall.style.width =
+    Math.round(size * zoom) + "px";
 
   document.getElementById("zoomText").textContent =
     Math.round(zoom * 100) + "%";
@@ -340,10 +431,23 @@ document.getElementById("image").addEventListener(
     uploadedImage = null;
 
     const file = event.target.files[0];
+
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
       alert("Il file deve essere inferiore a 5 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    const allowed = [
+      "image/png",
+      "image/jpeg",
+      "image/webp"
+    ];
+
+    if (!allowed.includes(file.type)) {
+      alert("Formato immagine non supportato.");
       event.target.value = "";
       return;
     }
@@ -370,7 +474,9 @@ function preview() {
 
   const { x, y, w, h } = selection;
 
-  ctx.fillStyle = document.getElementById("color").value;
+  ctx.fillStyle =
+    document.getElementById("color").value;
+
   ctx.fillRect(x, y, w, h);
 
   if (uploadedImage) {
@@ -385,10 +491,9 @@ function preview() {
   );
 }
 
-window.addEventListener("resize", () => {
-  if (zoom === 1) applyZoom();
-});
+window.addEventListener("resize", applyZoom);
 
+drawGrid();
 applyZoom();
 updateInfo();
 </script>
