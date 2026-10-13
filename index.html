@@ -1,0 +1,397 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Million Dollar Wall</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f6fa;
+  color: #202a38;
+}
+header {
+  background: white;
+  padding: 20px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+h1 { margin: 0; font-size: 32px; }
+h1 span { color: #159c64; }
+header p { color: #666; }
+.container {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 20px;
+  max-width: 1450px;
+  margin: auto;
+  padding: 20px;
+}
+.panel {
+  background: white;
+  padding: 20px;
+  border-radius: 14px;
+  border: 1px solid #e1e5eb;
+}
+.stage {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: auto;
+  background: #edf1f7;
+  padding: 12px;
+  border-radius: 10px;
+}
+#wall {
+  position: relative;
+  width: min(100%, 75vh);
+  aspect-ratio: 1;
+  background: white;
+  border: 3px solid #d94b4b;
+  flex-shrink: 0;
+  cursor: crosshair;
+  touch-action: none;
+}
+canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+button {
+  padding: 11px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: #202f46;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+.controls {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 15px 0;
+}
+label {
+  display: block;
+  margin-top: 18px;
+  margin-bottom: 7px;
+  font-weight: bold;
+}
+input[type="file"],
+input[type="url"] {
+  width: 100%;
+}
+input[type="url"] {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+.price {
+  font-size: 32px;
+  font-weight: bold;
+  color: #159c64;
+  margin: 12px 0;
+}
+.note {
+  margin-top: 20px;
+  background: #fff3d6;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+small { color: #666; }
+@media (max-width: 800px) {
+  .container { grid-template-columns: 1fr; }
+  h1 { font-size: 25px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>The <span>Million Dollar</span> Wall</h1>
+  <p>1.000.000 di pixel disponibili · 1 pixel = 1 €</p>
+  <small>VERSIONE DEMO — PAGAMENTI DISATTIVATI</small>
+</header>
+
+<div class="container">
+
+  <section class="panel">
+    <h2>Il muro da un milione di pixel</h2>
+    <p>
+      Seleziona liberamente uno spazio.
+      Puoi acquistare anche un solo pixel.
+    </p>
+
+    <div class="controls">
+      <button onclick="changeZoom(1.5)">+ Zoom</button>
+      <button onclick="changeZoom(1/1.5)">- Zoom</button>
+      <button onclick="resetZoom()">Ripristina</button>
+      <span id="zoomText">100%</span>
+    </div>
+
+    <div class="stage">
+      <div id="wall">
+        <canvas id="base" width="1000" height="1000"></canvas>
+        <canvas id="overlay" width="1000" height="1000"></canvas>
+      </div>
+    </div>
+
+    <p><small>
+      Trascina sul muro per scegliere un rettangolo.
+      Usa lo zoom per selezionare con precisione.
+    </small></p>
+  </section>
+
+  <aside class="panel">
+    <h2>Il tuo spazio</h2>
+
+    <p id="selectionInfo">Nessuna selezione</p>
+
+    <div class="price" id="price">0 €</div>
+    <small id="pixelCount">0 pixel × 1 €</small>
+
+    <label for="color">Colore</label>
+    <input type="color" id="color" value="#16a36a">
+
+    <label for="image">Carica immagine o logo</label>
+    <input type="file" id="image"
+      accept="image/png,image/jpeg,image/webp,image/gif">
+    <p><small>Dimensione massima: 5 MB</small></p>
+
+    <label for="link">Link pubblicitario</label>
+    <input type="url" id="link"
+      placeholder="https://tuosito.it">
+
+    <div class="controls">
+      <button id="previewBtn" onclick="preview()" disabled>
+        Mostra anteprima
+      </button>
+      <button onclick="clearSelection()">
+        Cancella selezione
+      </button>
+    </div>
+
+    <div class="note">
+      Questa è una demo grafica.
+      Non vengono effettuati pagamenti.
+      Le immagini non vengono salvate online.
+      Il database e Stripe saranno collegati
+      prima del lancio ufficiale.
+    </div>
+  </aside>
+
+</div>
+
+<script>
+const wall = document.getElementById("wall");
+const base = document.getElementById("base");
+const overlay = document.getElementById("overlay");
+
+const ctx = base.getContext("2d");
+const selectionCtx = overlay.getContext("2d");
+
+let zoom = 1;
+let selection = null;
+let start = null;
+let dragging = false;
+let uploadedImage = null;
+
+function getPosition(event) {
+  const rect = wall.getBoundingClientRect();
+  const border = 3;
+
+  const x = Math.floor(
+    ((event.clientX - rect.left - border) /
+    (rect.width - border * 2)) * 1000
+  );
+
+  const y = Math.floor(
+    ((event.clientY - rect.top - border) /
+    (rect.height - border * 2)) * 1000
+  );
+
+  return {
+    x: Math.max(0, Math.min(999, x)),
+    y: Math.max(0, Math.min(999, y))
+  };
+}
+
+function makeRectangle(a, b) {
+  return {
+    x: Math.min(a.x, b.x),
+    y: Math.min(a.y, b.y),
+    w: Math.abs(a.x - b.x) + 1,
+    h: Math.abs(a.y - b.y) + 1
+  };
+}
+
+function drawSelection() {
+  selectionCtx.clearRect(0, 0, 1000, 1000);
+
+  if (!selection) return;
+
+  const { x, y, w, h } = selection;
+
+  selectionCtx.fillStyle = "rgba(20,100,230,0.25)";
+  selectionCtx.fillRect(x, y, w, h);
+
+  selectionCtx.strokeStyle = "#1558d6";
+  selectionCtx.lineWidth = 2;
+  selectionCtx.strokeRect(x, y, w, h);
+}
+
+function updateInfo() {
+  const info = document.getElementById("selectionInfo");
+  const price = document.getElementById("price");
+  const count = document.getElementById("pixelCount");
+  const btn = document.getElementById("previewBtn");
+
+  if (!selection) {
+    info.textContent = "Nessuna selezione";
+    price.textContent = "0 €";
+    count.textContent = "0 pixel × 1 €";
+    btn.disabled = true;
+    return;
+  }
+
+  const { x, y, w, h } = selection;
+  const pixels = w * h;
+
+  info.textContent =
+    `Posizione X ${x + 1}, Y ${y + 1} — ${w} × ${h}`;
+
+  price.textContent =
+    pixels.toLocaleString("it-IT") + " €";
+
+  count.textContent =
+    pixels.toLocaleString("it-IT") + " pixel × 1 €";
+
+  btn.disabled = false;
+}
+
+wall.addEventListener("pointerdown", event => {
+  event.preventDefault();
+
+  start = getPosition(event);
+  selection = makeRectangle(start, start);
+  dragging = true;
+
+  wall.setPointerCapture(event.pointerId);
+
+  drawSelection();
+  updateInfo();
+});
+
+wall.addEventListener("pointermove", event => {
+  if (!dragging) return;
+
+  selection = makeRectangle(start, getPosition(event));
+
+  drawSelection();
+  updateInfo();
+});
+
+wall.addEventListener("pointerup", () => {
+  dragging = false;
+});
+
+wall.addEventListener("pointercancel", () => {
+  dragging = false;
+});
+
+function changeZoom(factor) {
+  zoom = Math.max(1, Math.min(4, zoom * factor));
+  applyZoom();
+}
+
+function resetZoom() {
+  zoom = 1;
+  applyZoom();
+}
+
+function applyZoom() {
+  const size = Math.min(window.innerHeight * .75, 850);
+  wall.style.width = Math.round(size * zoom) + "px";
+
+  document.getElementById("zoomText").textContent =
+    Math.round(zoom * 100) + "%";
+}
+
+function clearSelection() {
+  selection = null;
+  drawSelection();
+  updateInfo();
+}
+
+document.getElementById("image").addEventListener(
+  "change",
+  event => {
+    uploadedImage = null;
+
+    const file = event.target.files[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Il file deve essere inferiore a 5 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      uploadedImage = image;
+      URL.revokeObjectURL(url);
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      alert("Immagine non valida.");
+    };
+
+    image.src = url;
+  }
+);
+
+function preview() {
+  if (!selection) return;
+
+  const { x, y, w, h } = selection;
+
+  ctx.fillStyle = document.getElementById("color").value;
+  ctx.fillRect(x, y, w, h);
+
+  if (uploadedImage) {
+    ctx.drawImage(uploadedImage, x, y, w, h);
+  }
+
+  drawSelection();
+
+  alert(
+    "Anteprima applicata! " +
+    "Non è un acquisto e non viene salvata online."
+  );
+}
+
+window.addEventListener("resize", () => {
+  if (zoom === 1) applyZoom();
+});
+
+applyZoom();
+updateInfo();
+</script>
+
+</body>
+</html>
