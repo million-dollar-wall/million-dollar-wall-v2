@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -14,15 +15,15 @@
 body {
   margin: 0;
   font-family: Arial, sans-serif;
-  background: #f4f6fa;
   color: #202a38;
+  background: #f4f6fa;
 }
 
 header {
-  background: white;
-  padding: 20px;
   text-align: center;
-  border-bottom: 1px solid #ddd;
+  background: white;
+  padding: 18px;
+  border-bottom: 1px solid #e1e5eb;
 }
 
 h1 {
@@ -35,66 +36,48 @@ h1 span {
 }
 
 header p {
+  margin: 8px 0;
   color: #666;
 }
 
 .container {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
-  gap: 20px;
-  max-width: 1450px;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 18px;
+  max-width: 1500px;
   margin: auto;
-  padding: 20px;
+  padding: 18px;
+  align-items: start;
 }
 
 .panel {
-  background: white;
-  padding: 20px;
-  border-radius: 14px;
-  border: 1px solid #e1e5eb;
   min-width: 0;
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid #e1e5eb;
+  background: white;
 }
 
-.stage {
+.panel h2 {
+  margin-top: 0;
+}
+
+.controls {
   display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
-  overflow: auto;
-  background: #edf1f7;
-  padding: 12px;
-  border-radius: 10px;
-  max-height: 80vh;
-}
-
-#wall {
-  position: relative;
-  width: 100%;
-  max-width: 700px;
-  aspect-ratio: 1;
-  background-color: white;
-  border: 3px solid #d94b4b;
-  flex-shrink: 0;
-  cursor: crosshair;
-  touch-action: none;
-  overflow: hidden;
-}
-
-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  image-rendering: pixelated;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 14px 0;
 }
 
 button {
-  padding: 11px 14px;
-  border: 0;
+  border: none;
   border-radius: 8px;
+  padding: 11px 14px;
   background: #202f46;
   color: white;
-  cursor: pointer;
   font-weight: bold;
+  cursor: pointer;
 }
 
 button:disabled {
@@ -102,51 +85,92 @@ button:disabled {
   cursor: not-allowed;
 }
 
-.controls {
+/* Area del muro: centrata e senza fascia laterale */
+
+.stage {
+  width: 100%;
   display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 15px 0;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: auto;
+  background: #f1f4f8;
+  padding: 12px;
+  border-radius: 10px;
+  max-height: 78vh;
+}
+
+/* Il muro mantiene sempre proporzioni quadrate */
+
+#wall {
+  position: relative;
+  width: 600px;
+  height: 600px;
+  flex: 0 0 auto;
+  background: #ffffff;
+  border: 3px solid #d94b4b;
+  cursor: crosshair;
+  touch-action: none;
+  overflow: hidden;
+}
+
+#wall canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  image-rendering: pixelated;
+}
+
+/* La griglia è sopra il muro ma sotto la selezione */
+
+#grid {
+  pointer-events: none;
+}
+
+#overlay {
+  pointer-events: auto;
 }
 
 label {
   display: block;
-  margin-top: 18px;
-  margin-bottom: 7px;
   font-weight: bold;
+  margin-top: 18px;
+  margin-bottom: 8px;
 }
 
-input[type="file"],
-input[type="url"] {
+input[type="url"],
+input[type="file"] {
   width: 100%;
 }
 
 input[type="url"] {
-  padding: 10px;
-  border: 1px solid #ccc;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
+  padding: 10px;
 }
 
 .price {
   font-size: 32px;
-  font-weight: bold;
   color: #159c64;
+  font-weight: bold;
   margin: 12px 0;
-}
-
-.note {
-  margin-top: 20px;
-  background: #fff3d6;
-  padding: 12px;
-  border-radius: 8px;
-  font-size: 13px;
 }
 
 small {
   color: #666;
 }
 
-@media (max-width: 800px) {
+.note {
+  margin-top: 20px;
+  padding: 12px;
+  background: #fff3d6;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+@media (max-width: 850px) {
   .container {
     grid-template-columns: 1fr;
   }
@@ -166,19 +190,19 @@ small {
   <small>VERSIONE DEMO — PAGAMENTI DISATTIVATI</small>
 </header>
 
-<div class="container">
+<main class="container">
 
 <section class="panel">
   <h2>Il muro da un milione di pixel</h2>
 
   <p>
     Seleziona liberamente uno spazio.
-    Puoi acquistare anche un solo pixel.
+    Puoi scegliere anche un solo pixel.
   </p>
 
   <div class="controls">
     <button onclick="changeZoom(1.5)">+ Zoom</button>
-    <button onclick="changeZoom(1/1.5)">- Zoom</button>
+    <button onclick="changeZoom(1 / 1.5)">- Zoom</button>
     <button onclick="resetZoom()">Ripristina</button>
     <span id="zoomText">100%</span>
   </div>
@@ -193,9 +217,9 @@ small {
 
   <p>
     <small>
-      La griglia è visibile fin da subito.
-      Ogni quadratino grande rappresenta 10 × 10 pixel.
-      Puoi comunque selezionare anche un singolo pixel.
+      Griglia visibile fin da subito.
+      Ogni quadratino rappresenta 10 × 10 pixel reali.
+      Usa lo zoom per una selezione più precisa.
     </small>
   </p>
 </section>
@@ -228,11 +252,7 @@ small {
   >
 
   <div class="controls">
-    <button
-      id="previewBtn"
-      onclick="preview()"
-      disabled
-    >
+    <button id="previewBtn" onclick="preview()" disabled>
       Mostra anteprima
     </button>
 
@@ -243,16 +263,18 @@ small {
 
   <div class="note">
     Questa è una demo grafica.
-    Non vengono effettuati pagamenti.
-    Le immagini non vengono salvate online.
+    Nessun pagamento è attivo.
+    Le anteprime non vengono salvate online.
     Stripe e Supabase saranno collegati
-    prima del lancio ufficiale.
+    dopo i test.
   </div>
 </aside>
 
-</div>
+</main>
 
 <script>
+const SIZE = 1000;
+
 const wall = document.getElementById("wall");
 const stage = document.getElementById("stage");
 
@@ -270,39 +292,85 @@ let start = null;
 let dragging = false;
 let uploadedImage = null;
 
-// Disegna la griglia permanente.
-// 100 righe e 100 colonne.
-// Ogni quadrato contiene 100 pixel reali.
+/*
+  Disegniamo la griglia direttamente alla
+  risoluzione visualizzata sullo schermo.
+
+  Questo evita le linee irregolari causate
+  dal ridimensionamento di un canvas 1000x1000.
+*/
 
 function drawGrid() {
-  gridCtx.clearRect(0, 0, 1000, 1000);
+  const rect = wall.getBoundingClientRect();
+
+  const width = Math.max(1, wall.clientWidth);
+  const height = Math.max(1, wall.clientHeight);
+
+  const dpr = window.devicePixelRatio || 1;
+
+  grid.width = Math.round(width * dpr);
+  grid.height = Math.round(height * dpr);
+
+  gridCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  gridCtx.clearRect(0, 0, width, height);
+
+  const step = width / 100;
 
   gridCtx.beginPath();
-  gridCtx.strokeStyle = "#c1cad7";
-  gridCtx.lineWidth = 1;
+  gridCtx.strokeStyle = "#d9e0e8";
+  gridCtx.lineWidth = 0.65;
 
-  for (let i = 0; i <= 1000; i += 10) {
-    const p = Math.min(i + 0.5, 999.5);
+  for (let i = 1; i < 100; i++) {
+    const p = i * step;
 
     gridCtx.moveTo(p, 0);
-    gridCtx.lineTo(p, 1000);
+    gridCtx.lineTo(p, height);
 
     gridCtx.moveTo(0, p);
-    gridCtx.lineTo(1000, p);
+    gridCtx.lineTo(width, p);
   }
 
   gridCtx.stroke();
+
+  /*
+    A zoom elevato aggiungiamo anche
+    le divisioni dei singoli pixel.
+  */
+
+  if (step >= 20) {
+    const smallStep = width / SIZE;
+
+    gridCtx.beginPath();
+    gridCtx.strokeStyle = "#edf0f4";
+    gridCtx.lineWidth = 0.4;
+
+    for (let i = 1; i < SIZE; i++) {
+      if (i % 10 === 0) continue;
+
+      const p = i * smallStep;
+
+      gridCtx.moveTo(p, 0);
+      gridCtx.lineTo(p, height);
+
+      gridCtx.moveTo(0, p);
+      gridCtx.lineTo(width, p);
+    }
+
+    gridCtx.stroke();
+  }
 }
+
+/* Coordinate reali da 0 a 999 */
 
 function getPosition(event) {
   const rect = overlay.getBoundingClientRect();
 
   const x = Math.floor(
-    ((event.clientX - rect.left) / rect.width) * 1000
+    ((event.clientX - rect.left) / rect.width) * SIZE
   );
 
   const y = Math.floor(
-    ((event.clientY - rect.top) / rect.height) * 1000
+    ((event.clientY - rect.top) / rect.height) * SIZE
   );
 
   return {
@@ -321,7 +389,7 @@ function makeRectangle(a, b) {
 }
 
 function drawSelection() {
-  selectionCtx.clearRect(0, 0, 1000, 1000);
+  selectionCtx.clearRect(0, 0, SIZE, SIZE);
 
   if (!selection) return;
 
@@ -364,6 +432,8 @@ function updateInfo() {
   btn.disabled = false;
 }
 
+/* Selezione tramite mouse o touch */
+
 wall.addEventListener("pointerdown", event => {
   event.preventDefault();
 
@@ -394,6 +464,8 @@ wall.addEventListener("pointercancel", () => {
   dragging = false;
 });
 
+/* Zoom */
+
 function changeZoom(factor) {
   zoom = Math.max(1, Math.min(8, zoom * factor));
   applyZoom();
@@ -405,25 +477,50 @@ function resetZoom() {
 }
 
 function applyZoom() {
-  const available = Math.max(
-    200,
+  /*
+    Il muro parte da una dimensione che
+    entra nello spazio disponibile.
+
+    Quando ingrandisci, la stage diventa
+    scorrevole senza deformare il muro.
+  */
+
+  const availableWidth = Math.max(
+    100,
     stage.clientWidth - 24
   );
 
-  const size = Math.min(available, 700);
+  const availableHeight = Math.max(
+    100,
+    window.innerHeight * 0.70
+  );
 
-  wall.style.width =
-    Math.round(size * zoom) + "px";
+  const baseSize = Math.min(
+    availableWidth,
+    availableHeight,
+    850
+  );
+
+  const size = Math.round(baseSize * zoom);
+
+  wall.style.width = size + "px";
+  wall.style.height = size + "px";
 
   document.getElementById("zoomText").textContent =
     Math.round(zoom * 100) + "%";
+
+  drawGrid();
 }
+
+/* Cancella selezione */
 
 function clearSelection() {
   selection = null;
   drawSelection();
   updateInfo();
 }
+
+/* Caricamento immagine */
 
 document.getElementById("image").addEventListener(
   "change",
@@ -469,6 +566,8 @@ document.getElementById("image").addEventListener(
   }
 );
 
+/* Anteprima locale, senza pagamenti */
+
 function preview() {
   if (!selection) return;
 
@@ -493,7 +592,6 @@ function preview() {
 
 window.addEventListener("resize", applyZoom);
 
-drawGrid();
 applyZoom();
 updateInfo();
 </script>
