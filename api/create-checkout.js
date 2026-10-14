@@ -1,6 +1,55 @@
 
+
+const SITE_URL = "https://million-dollar-wall-v2.vercel.app";
+
+function supabaseHeaders(key) {
+  return {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json"
+  };
+}
+
+async function callSupabaseRpc(url, key, functionName, data) {
+  const response = await fetch(
+    `${url}/rest/v1/rpc/${functionName}`,
+    {
+      method: "POST",
+      headers: supabaseHeaders(key),
+      body: JSON.stringify(data)
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Supabase ${functionName}: HTTP ${response.status}`
+    );
+  }
+
+  return response.json();
+}
+
+async function expireStripeSession(stripeKey, sessionId) {
+  const response = await fetch(
+    `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}/expire`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${stripeKey}`
+      }
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Impossibile scadere la sessione Stripe: HTTP ${response.status}`
+    );
+  }
+}
+
 export default async function handler(req, res) {
-  // Sicurezza: acquisti disattivati fino al completamento dei test.
+  // BLOCCO DI SICUREZZA: nessun pagamento finché non
+  // abilitiamo esplicitamente la funzione.
   if (process.env.ENABLE_WALL_PAYMENTS !== "true") {
     return res.status(503).json({
       error: "Acquisti temporaneamente disattivati"
@@ -18,10 +67,8 @@ export default async function handler(req, res) {
 
   if (
     ![x, y, width, height].every(Number.isInteger) ||
-    x < 0 ||
-    y < 0 ||
-    width < 1 ||
-    height < 1 ||
+    x < 0 || y < 0 ||
+    width < 1 || height < 1 ||
     x + width > 1000 ||
     y + height > 1000
   ) {
@@ -33,7 +80,6 @@ export default async function handler(req, res) {
   const pixels = width * height;
   const amount = pixels * 100;
 
-  // Il prezzo è calcolato dal server: 1 euro per pixel.
   if (!Number.isSafeInteger(amount) || amount < 100) {
     return res.status(400).json({
       error: "Importo non valido"
@@ -46,50 +92,36 @@ export default async function handler(req, res) {
 
   if (!stripeKey || !supabaseUrl || !supabaseKey) {
     return res.status(503).json({
-      error: "Configurazione pagamenti incompleta"
+      error: "Configurazione incompleta"
     });
   }
 
-  const headers = {
-    apikey: supabaseKey,
-    Authorization: `Bearer ${supabaseKey}`,
-    "Content-Type": "application/json"
-  };
+  let spaceId = null;
+  let sessionId = null;
+  let sessionAttached = false;
 
   try {
-    // 1. Prenota i pixel nel database.
-    const reservationResponse = await fetch(
-      `${supabaseUrl}/rest/v1/rpc/reserve_wall_space`,
+    // 1. Prenotazione temporanea.
+    spaceId = await callSupabaseRpc(
+      supabaseUrl,
+      supabaseKey,
+      "reserve_wall_space",
       {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          p_x: x,
-          p_y: y,
-          p_width: width,
-          p_height: height,
-          p_color: /^#[0-9a-fA-F]{6}$/.test(color || "")
-            ? color
-            : "#ffffff"
-        })
+        p_x: x,
+        p_y: y,
+        p_width: width,
+        p_height: height,
+        p_color: /^#[0-9a-fA-F]{6}$/.test(color || "")
+          ? color
+          : "#ffffff"
       }
     );
 
-    if (!reservationResponse.ok) {
-      return res.status(409).json({
-        error: "Pixel non disponibili o prenotazione non riuscita"
-      });
-    }
-
-    const spaceId = await reservationResponse.json();
-
-    // 2. Crea la sessione Stripe.
-    const origin = "https://million-dollar-wall-v2.vercel.app";
-
+    // 2. Creazione sessione Checkout.
     const params = new URLSearchParams({
       mode: "payment",
-      success_url: `${origin}/?checkout=success`,
-      cancel_url: `${origin}/?checkout=cancel`,
+      success_url: `${SITE_URL}/?checkout=success`,
+      cancel_url: `${SITE_URL}/?checkout=cancel`,
       "line_items[0][price_data][currency]": "eur",
       "line_items[0][price_data][unit_amount]": String(amount),
       "line_items[0][price_data][product_data][name]":
@@ -117,45 +149,67 @@ export default async function handler(req, res) {
     const session = await stripeResponse.json();
 
     if (!stripeResponse.ok || !session.id || !session.url) {
-      console.error("Creazione Checkout fallita", stripeResponse.status);
-      return res.status(502).json({
-        error: "Impossibile creare il Checkout"
-      });
+      throw new Error(
+        `Creazione Checkout fallita: HTTP ${stripeResponse.status}`
+      );
     }
 
-    // 3. Collega la sessione Stripe alla prenotazione.
-    const attachResponse = await fetch(
-      `${supabaseUrl}/rest/v1/rpc/attach_wall_checkout`,
+    sessionId = session.id;
+
+    // 3. Associazione al database.
+    sessionAttached = await callSupabaseRpc(
+      supabaseUrl,
+      supabaseKey,
+      "attach_wall_checkout",
       {
-        method: "POST",
-        headers,
-        body: JSON.stringify({
-          p_space_id: spaceId,
-          p_stripe_session_id: session.id
-        })
+        p_space_id: spaceId,
+        p_stripe_session_id: sessionId
       }
     );
 
-    const attached = attachResponse.ok
-      ? await attachResponse.json()
-      : false;
-
-    if (attached !== true) {
-      // Non restituiamo un Checkout non collegato al database.
-      console.error("Collegamento Checkout fallito");
-      return res.status(502).json({
-        error: "Impossibile collegare il pagamento alla prenotazione"
-      });
+    if (sessionAttached !== true) {
+      throw new Error("Collegamento Stripe-Supabase fallito");
     }
 
+    // Restituisce il Checkout soltanto se collegato.
     return res.status(200).json({
       checkout_url: session.url
     });
 
   } catch (error) {
-    console.error("Errore create-checkout:", error);
-    return res.status(500).json({
-      error: "Errore durante la preparazione dell'acquisto"
+    console.error("Errore create-checkout:", error.message);
+
+    // Se Stripe ha creato una sessione, proviamo a scaderla.
+    if (sessionId) {
+      try {
+        await expireStripeSession(stripeKey, sessionId);
+      } catch (expireError) {
+        console.error(
+          "Errore scadenza sessione:",
+          expireError.message
+        );
+      }
+    }
+
+    // Libera le prenotazioni non collegate.
+    if (spaceId && !sessionAttached) {
+      try {
+        await callSupabaseRpc(
+          supabaseUrl,
+          supabaseKey,
+          "cancel_wall_reservation",
+          { p_space_id: spaceId }
+        );
+      } catch (cancelError) {
+        console.error(
+          "Errore annullamento prenotazione:",
+          cancelError.message
+        );
+      }
+    }
+
+    return res.status(502).json({
+      error: "Impossibile preparare l'acquisto"
     });
   }
 }
