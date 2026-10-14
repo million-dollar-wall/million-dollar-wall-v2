@@ -1,507 +1,947 @@
 
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Million Dollar Wall V2</title>
+
 <style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f3f5f8;color:#202b3b}
-header{background:#fff;text-align:center;padding:22px 12px;border-bottom:1px solid #e2e8f0}
-h1{margin:0;font-size:32px}
-h1 span{color:#159c64}
-header p{color:#64748b}
-.demo{color:#a16207;font-size:12px;font-weight:bold}
-main{max-width:1500px;margin:auto;padding:18px;display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:18px;align-items:start}
-.panel{min-width:0;padding:18px;background:white;border:1px solid #e2e8f0;border-radius:12px}
-h2{margin-top:0}
-.controls{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:14px 0}
-button{padding:11px 14px;background:#24354d;color:white;border:0;border-radius:8px;font-weight:bold;cursor:pointer}
-button:hover{background:#334b6b}
-button:disabled{opacity:.45;cursor:not-allowed}
-#stage{width:100%;display:flex;justify-content:center;align-items:flex-start;overflow:auto;background:#f1f4f8;padding:12px;border-radius:10px;max-height:75vh}
-#wall{position:relative;flex:0 0 auto;width:600px;height:600px;background:white;border:3px solid #d94b4b;cursor:crosshair;touch-action:none;overflow:hidden}
-#wall canvas{position:absolute;inset:0;display:block;width:100%;height:100%}
-#base{image-rendering:pixelated}
-#grid,#overlay{pointer-events:none}
-label{display:block;font-weight:bold;margin-top:18px;margin-bottom:8px}
-input[type=file],input[type=url]{width:100%}
-input[type=url]{padding:10px;border:1px solid #cbd5e1;border-radius:8px}
-.price{font-size:32px;color:#159c64;font-weight:bold;margin:12px 0}
-small{color:#64748b}
-.note{background:#fff3d6;border-radius:8px;padding:12px;margin-top:20px;font-size:13px;line-height:1.5}
-#connectionStatus,#availabilityStatus,#imageStatus{margin:10px 0;font-size:13px}
-#availabilityStatus{font-weight:bold}
-#connectionStatus{color:#64748b}
-#imageStatus{color:#64748b}
-@media(max-width:850px){main{grid-template-columns:1fr}h1{font-size:25px}}
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f3f5f8;
+  color: #202b3b;
+}
+
+header {
+  background: white;
+  text-align: center;
+  padding: 22px 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+h1 {
+  margin: 0;
+  font-size: 32px;
+}
+
+h1 span {
+  color: #159c64;
+}
+
+header p {
+  color: #64748b;
+}
+
+.demo {
+  color: #a16207;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+main {
+  max-width: 1500px;
+  margin: auto;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 18px;
+  align-items: start;
+}
+
+.panel {
+  min-width: 0;
+  padding: 18px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+h2 {
+  margin-top: 0;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0;
+}
+
+button {
+  padding: 11px 14px;
+  background: #24354d;
+  color: white;
+  border: 0;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #334b6b;
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+#stage {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: auto;
+  background: #f1f4f8;
+  padding: 12px;
+  border-radius: 10px;
+  max-height: 75vh;
+}
+
+#wall {
+  position: relative;
+  flex: 0 0 auto;
+  width: 600px;
+  height: 600px;
+  background: white;
+  border: 3px solid #d94b4b;
+  cursor: crosshair;
+  touch-action: none;
+  overflow: hidden;
+}
+
+#wall canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#base {
+  image-rendering: pixelated;
+}
+
+#grid,
+#overlay {
+  pointer-events: none;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin-top: 18px;
+  margin-bottom: 8px;
+}
+
+input[type="file"],
+input[type="url"] {
+  width: 100%;
+}
+
+input[type="url"] {
+  padding: 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+
+.price {
+  font-size: 32px;
+  color: #159c64;
+  font-weight: bold;
+  margin: 12px 0;
+}
+
+small {
+  color: #64748b;
+}
+
+.note {
+  background: #fff3d6;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 20px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+#connectionStatus,
+#availabilityStatus,
+#imageStatus {
+  margin: 10px 0;
+  font-size: 13px;
+}
+
+#availabilityStatus {
+  font-weight: bold;
+}
+
+#connectionStatus,
+#imageStatus {
+  color: #64748b;
+}
+
+@media (max-width: 850px) {
+  main {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    font-size: 25px;
+  }
+}
 </style>
 </head>
+
 <body>
 
 <header>
-<h1>The <span>Million Dollar</span> Wall</h1>
-<p>1.000.000 di pixel · 1 pixel = 1 €</p>
-<div class="demo">VERSIONE DEMO — PAGAMENTI DISATTIVATI</div>
+  <h1>The <span>Million Dollar</span> Wall</h1>
+  <p>1.000.000 di pixel · 1 pixel = 1 €</p>
+  <div class="demo">
+    VERSIONE DEMO — PAGAMENTI DISATTIVATI
+  </div>
 </header>
 
 <main>
+
 <section class="panel">
-<h2>Il muro da un milione di pixel</h2>
-<p>Seleziona uno spazio trascinando il mouse o il dito.</p>
 
-<div class="controls">
-<button onclick="changeZoom(2)">+ Zoom</button>
-<button onclick="changeZoom(.5)">- Zoom</button>
-<button onclick="resetZoom()">Ripristina</button>
-<span id="zoomText">100%</span>
-</div>
+  <h2>Il muro da un milione di pixel</h2>
 
-<div id="stage">
-<div id="wall">
-<canvas id="base" width="1000" height="1000"></canvas>
-<canvas id="grid"></canvas>
-<canvas id="overlay"></canvas>
-</div>
-</div>
+  <p>
+    Seleziona uno spazio trascinando il mouse o il dito.
+  </p>
 
-<p id="connectionStatus">Caricamento degli spazi venduti...</p>
-<p><small>1.000 colonne × 1.000 righe. Usa lo zoom per scegliere con precisione.</small></p>
+  <div class="controls">
+    <button onclick="changeZoom(2)">+ Zoom</button>
+    <button onclick="changeZoom(0.5)">- Zoom</button>
+    <button onclick="resetZoom()">Ripristina</button>
+    <span id="zoomText">100%</span>
+  </div>
+
+  <div id="stage">
+    <div id="wall">
+      <canvas id="base" width="1000" height="1000"></canvas>
+      <canvas id="grid"></canvas>
+      <canvas id="overlay"></canvas>
+    </div>
+  </div>
+
+  <p id="connectionStatus">
+    Caricamento degli spazi venduti...
+  </p>
+
+  <p>
+    <small>
+      1.000 colonne × 1.000 righe.
+      Ogni pixel costa 1 €.
+      Usa lo zoom per scegliere con precisione.
+    </small>
+  </p>
+
 </section>
 
 <aside class="panel">
-<h2>Il tuo spazio</h2>
-<div class="price" id="price">0 €</div>
-<small id="pixelCount">0 pixel × 1 €</small>
 
-<label for="color">Colore</label>
-<input type="color" id="color" value="#16a36a">
+  <h2>Il tuo spazio</h2>
 
-<label for="image">Immagine o logo (facoltativo)</label>
-<input type="file" id="image" accept="image/png,image/jpeg,image/webp">
-<p><small>PNG, JPG o WebP · massimo 5 MB</small></p>
-<p id="imageStatus"></p>
+  <div class="price" id="price">0 €</div>
+  <small id="pixelCount">0 pixel × 1 €</small>
 
-<label for="link">Link pubblicitario (facoltativo)</label>
-<input type="url" id="link" placeholder="https://tuosito.it">
+  <label for="color">Colore</label>
+  <input type="color" id="color" value="#16a36a">
 
-<div class="controls">
-<button id="checkBtn" onclick="checkAvailability()" disabled>Verifica disponibilità</button>
-</div>
+  <label for="image">Immagine o logo (facoltativo)</label>
+  <input
+    type="file"
+    id="image"
+    accept="image/png,image/jpeg,image/webp"
+  >
 
-<p id="availabilityStatus" aria-live="polite"></p>
+  <p>
+    <small>PNG, JPG o WebP · massimo 5 MB</small>
+  </p>
 
-<div class="controls">
-<button id="previewBtn" onclick="preview()" disabled>Mostra anteprima</button>
-<button onclick="clearSelection()">Cancella selezione</button>
-<button onclick="removePreview()">Rimuovi anteprima</button>
-</div>
+  <p id="imageStatus"></p>
 
-<div class="note">
-<strong>Anteprima gratuita.</strong>
-Puoi scegliere solo un colore, un'immagine, un link oppure combinarli.
-Nessun pagamento è attivo e le anteprime non vengono salvate online.
-</div>
+  <label for="link">Link pubblicitario (facoltativo)</label>
+  <input
+    type="url"
+    id="link"
+    placeholder="https://tuosito.it"
+  >
+
+  <div class="controls">
+    <button
+      id="checkBtn"
+      onclick="checkAvailability()"
+      disabled
+    >
+      Verifica disponibilità
+    </button>
+  </div>
+
+  <p id="availabilityStatus" aria-live="polite"></p>
+
+  <div class="controls">
+    <button
+      id="previewBtn"
+      onclick="preview()"
+      disabled
+    >
+      Mostra anteprima
+    </button>
+
+    <button onclick="clearSelection()">
+      Cancella selezione
+    </button>
+
+    <button onclick="removePreview()">
+      Rimuovi anteprima
+    </button>
+  </div>
+
+  <div class="note">
+    <strong>Anteprima gratuita.</strong>
+    Puoi scegliere solo un colore, un'immagine,
+    un link oppure combinarli.
+    Nessun pagamento è attivo.
+    Le anteprime non vengono salvate online.
+  </div>
+
 </aside>
 </main>
 
 <script>
-const SIZE=1000;
-const wall=document.getElementById("wall");
-const stage=document.getElementById("stage");
-const base=document.getElementById("base");
-const grid=document.getElementById("grid");
-const overlay=document.getElementById("overlay");
-const ctx=base.getContext("2d");
-const gridCtx=grid.getContext("2d");
-const overlayCtx=overlay.getContext("2d");
+const SIZE = 1000;
 
-const connectionStatus=document.getElementById("connectionStatus");
-const availabilityStatus=document.getElementById("availabilityStatus");
-const imageStatus=document.getElementById("imageStatus");
-const checkBtn=document.getElementById("checkBtn");
-const previewBtn=document.getElementById("previewBtn");
+const wall = document.getElementById("wall");
+const stage = document.getElementById("stage");
 
-let zoom=1;
-let selection=null;
-let start=null;
-let dragging=false;
-let uploadedImage=null;
-let imageLoading=false;
-let soldSpaces=[];
-let availabilityConfirmed=false;
-let checking=false;
-let checkVersion=0;
-let imageVersion=0;
-let previewData=null;
+const base = document.getElementById("base");
+const grid = document.getElementById("grid");
+const overlay = document.getElementById("overlay");
 
-function setupCanvas(canvas,context,width,height){
- const dpr=window.devicePixelRatio||1;
- canvas.width=Math.round(width*dpr);
- canvas.height=Math.round(height*dpr);
- context.setTransform(dpr,0,0,dpr,0,0);
+const ctx = base.getContext("2d");
+const gridCtx = grid.getContext("2d");
+const overlayCtx = overlay.getContext("2d");
+
+const connectionStatus =
+  document.getElementById("connectionStatus");
+
+const availabilityStatus =
+  document.getElementById("availabilityStatus");
+
+const imageStatus =
+  document.getElementById("imageStatus");
+
+const checkBtn =
+  document.getElementById("checkBtn");
+
+const previewBtn =
+  document.getElementById("previewBtn");
+
+let zoom = 1;
+let selection = null;
+let start = null;
+let dragging = false;
+let uploadedImage = null;
+let imageLoading = false;
+let soldSpaces = [];
+let availabilityConfirmed = false;
+let checking = false;
+let checkVersion = 0;
+let imageVersion = 0;
+let previewData = null;
+
+function setupCanvas(canvas, context, width, height) {
+  const dpr = window.devicePixelRatio || 1;
+
+  canvas.width = Math.round(width * dpr);
+  canvas.height = Math.round(height * dpr);
+
+  context.setTransform(dpr, 0, 0, dpr, 0, 0);
 }
 
-function drawGrid(){
- const width=wall.clientWidth;
- const height=wall.clientHeight;
- setupCanvas(grid,gridCtx,width,height);
- gridCtx.clearRect(0,0,width,height);
- const step=width/SIZE;
+function drawGrid() {
+  const width = wall.clientWidth;
+  const height = wall.clientHeight;
 
- // Mostra la griglia solo quando è abbastanza visibile.
- if(step<2)return;
+  setupCanvas(grid, gridCtx, width, height);
+  gridCtx.clearRect(0, 0, width, height);
 
- gridCtx.beginPath();
- gridCtx.strokeStyle="#d6dde6";
- gridCtx.lineWidth=Math.min(.55,step*.35);
- for(let i=1;i<SIZE;i++){
-  const p=i*step;
-  gridCtx.moveTo(p,0);
-  gridCtx.lineTo(p,height);
-  gridCtx.moveTo(0,p);
-  gridCtx.lineTo(width,p);
- }
- gridCtx.stroke();
-}
+  const step = width / SIZE;
 
-function getPosition(event){
- const rect=wall.getBoundingClientRect();
- const border=3;
- const width=rect.width-border*2;
- const height=rect.height-border*2;
- const x=Math.floor(((event.clientX-rect.left-border)/width)*SIZE);
- const y=Math.floor(((event.clientY-rect.top-border)/height)*SIZE);
- return{
-  x:Math.max(0,Math.min(999,x)),
-  y:Math.max(0,Math.min(999,y))
- };
-}
+  // Griglia sempre visibile, come nella versione originale.
+  gridCtx.beginPath();
+  gridCtx.strokeStyle = "#d6dde6";
+  gridCtx.lineWidth = Math.min(0.55, step * 0.35);
 
-function makeRectangle(a,b){
- return{
-  x:Math.min(a.x,b.x),
-  y:Math.min(a.y,b.y),
-  w:Math.abs(a.x-b.x)+1,
-  h:Math.abs(a.y-b.y)+1
- };
-}
+  for (let i = 1; i < SIZE; i++) {
+    const p = i * step;
 
-function rectanglesOverlap(a,b){
- return a.x<b.x+b.width &&
-        a.x+a.w>b.x &&
-        a.y<b.y+b.height &&
-        a.y+a.h>b.y;
-}
+    gridCtx.moveTo(p, 0);
+    gridCtx.lineTo(p, height);
 
-function selectionOverlapsSold(){
- return !!selection && soldSpaces.some(s=>rectanglesOverlap(selection,s));
-}
-
-function invalidateAvailability(){
- checkVersion++;
- availabilityConfirmed=false;
- checking=false;
- availabilityStatus.textContent="";
- updateInfo();
-}
-
-function drawSelection(){
- const width=wall.clientWidth;
- const height=wall.clientHeight;
- setupCanvas(overlay,overlayCtx,width,height);
- overlayCtx.clearRect(0,0,width,height);
- if(!selection)return;
-
- const scale=width/SIZE;
- const x=selection.x*scale;
- const y=selection.y*scale;
- const w=selection.w*scale;
- const h=selection.h*scale;
- const overlaps=selectionOverlapsSold();
-
- overlayCtx.fillStyle=overlaps?"rgba(220,38,38,.25)":"rgba(25,105,230,.25)";
- overlayCtx.fillRect(x,y,w,h);
- overlayCtx.strokeStyle=overlaps?"#dc2626":"#1558d6";
- overlayCtx.lineWidth=1.5;
- overlayCtx.strokeRect(x,y,w,h);
-}
-
-function updateInfo(){
- const price=document.getElementById("price");
- const count=document.getElementById("pixelCount");
- if(!selection){
-  price.textContent="0 €";
-  count.textContent="0 pixel × 1 €";
-  checkBtn.disabled=true;
-  previewBtn.disabled=true;
-  return;
- }
-
- const pixels=selection.w*selection.h;
- const overlaps=selectionOverlapsSold();
- price.textContent=pixels.toLocaleString("it-IT")+" €";
- count.textContent=overlaps
-  ?"Attenzione: lo spazio include pixel già venduti"
-  :pixels.toLocaleString("it-IT")+" pixel × 1 €";
-
- checkBtn.disabled=checking||overlaps;
- previewBtn.disabled=!availabilityConfirmed||checking||overlaps||imageLoading;
-}
-
-wall.addEventListener("pointerdown",event=>{
- if(event.button!==undefined && event.button!==0)return;
- event.preventDefault();
- invalidateAvailability();
- start=getPosition(event);
- selection=makeRectangle(start,start);
- dragging=true;
- wall.setPointerCapture(event.pointerId);
- drawSelection();
- updateInfo();
-});
-
-wall.addEventListener("pointermove",event=>{
- if(!dragging)return;
- invalidateAvailability();
- selection=makeRectangle(start,getPosition(event));
- drawSelection();
- updateInfo();
-});
-
-wall.addEventListener("pointerup",()=>{dragging=false});
-wall.addEventListener("pointercancel",()=>{dragging=false});
-
-function changeZoom(factor){
- zoom=Math.max(1,Math.min(32,zoom*factor));
- applyZoom();
-}
-
-function resetZoom(){
- zoom=1;
- applyZoom();
-}
-
-function applyZoom(){
- const availableWidth=Math.max(100,stage.clientWidth-24);
- const availableHeight=Math.max(100,window.innerHeight*.7);
- const baseSize=Math.min(availableWidth,availableHeight,850);
- const size=Math.round(baseSize*zoom);
- wall.style.width=size+"px";
- wall.style.height=size+"px";
- document.getElementById("zoomText").textContent=Math.round(zoom*100)+"%";
- drawGrid();
- drawSelection();
-}
-
-function clearSelection(){
- selection=null;
- invalidateAvailability();
- drawSelection();
- updateInfo();
-}
-
-document.getElementById("image").addEventListener("change",event=>{
- const version=++imageVersion;
- uploadedImage=null;
- imageLoading=false;
- imageStatus.textContent="";
- const file=event.target.files[0];
-
- if(!file){
-  updateInfo();
-  return;
- }
-
- const allowed=["image/png","image/jpeg","image/webp"];
- if(file.size>5*1024*1024){
-  alert("L'immagine non può superare 5 MB.");
-  event.target.value="";
-  updateInfo();
-  return;
- }
- if(!allowed.includes(file.type)){
-  alert("Formato non supportato. Usa PNG, JPG o WebP.");
-  event.target.value="";
-  updateInfo();
-  return;
- }
-
- imageLoading=true;
- imageStatus.textContent="Caricamento anteprima immagine...";
- updateInfo();
-
- const url=URL.createObjectURL(file);
- const image=new Image();
- image.onload=()=>{
-  URL.revokeObjectURL(url);
-  if(version!==imageVersion)return;
-  uploadedImage=image;
-  imageLoading=false;
-  imageStatus.textContent="✓ Immagine pronta per l'anteprima.";
-  updateInfo();
- };
- image.onerror=()=>{
-  URL.revokeObjectURL(url);
-  if(version!==imageVersion)return;
-  imageLoading=false;
-  event.target.value="";
-  imageStatus.textContent="Impossibile leggere l'immagine.";
-  updateInfo();
- };
- image.src=url;
-});
-
-function validateLink(){
- const raw=document.getElementById("link").value.trim();
- if(!raw)return "";
- try{
-  const url=new URL(raw);
-  if(!["https:","http:"].includes(url.protocol))throw Error();
-  return url.href;
- }catch{
-  throw new Error("Inserisci un link valido che inizi con https://");
- }
-}
-
-async function checkAvailability(){
- if(!selection||checking||selectionOverlapsSold())return;
- const requestVersion=++checkVersion;
- const {x,y,w,h}=selection;
- availabilityConfirmed=false;
- checking=true;
- availabilityStatus.textContent="Controllo disponibilità...";
- availabilityStatus.style.color="#64748b";
- updateInfo();
-
- try{
-  const response=await fetch("/api/check-space",{
-   method:"POST",
-   headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({x,y,width:w,height:h})
-  });
-  const data=await response.json();
-  if(requestVersion!==checkVersion)return;
-  if(!response.ok)throw new Error(data.error||"Errore nel controllo");
-
-  availabilityConfirmed=data.available===true;
-  availabilityStatus.textContent=availabilityConfirmed
-   ?"✓ Spazio disponibile! Puoi vedere l'anteprima."
-   :"✕ Spazio occupato. Scegli altri pixel.";
-  availabilityStatus.style.color=availabilityConfirmed?"#15803d":"#dc2626";
- }catch(error){
-  if(requestVersion!==checkVersion)return;
-  availabilityConfirmed=false;
-  availabilityStatus.textContent="Errore: "+error.message;
-  availabilityStatus.style.color="#dc2626";
- }finally{
-  if(requestVersion===checkVersion){
-   checking=false;
-   updateInfo();
-  }
- }
-}
-
-function preview(){
- if(!selection||!availabilityConfirmed||imageLoading)return;
- if(selectionOverlapsSold()){
-  alert("Questo spazio contiene pixel già venduti.");
-  return;
- }
- let link;
- try{link=validateLink()}
- catch(error){alert(error.message);return}
-
- previewData={
-  ...selection,
-  color:document.getElementById("color").value,
-  image:uploadedImage,
-  link
- };
- redrawWall();
- alert("Anteprima visualizzata! Non è un acquisto e non viene salvata online.");
-}
-
-function removePreview(){
- previewData=null;
- redrawWall();
-}
-
-function drawSpace(space){
- const {x,y,width,height,color}=space;
- ctx.fillStyle=color||"#ffffff";
- ctx.fillRect(x,y,width,height);
-}
-
-function redrawWall(){
- ctx.clearRect(0,0,SIZE,SIZE);
- ctx.fillStyle="#ffffff";
- ctx.fillRect(0,0,SIZE,SIZE);
-
- for(const space of soldSpaces){
-  drawSpace(space);
- }
-
- // Anteprima locale, sempre dietro agli spazi venduti.
- if(previewData){
-  const p=previewData;
-  ctx.fillStyle=p.color;
-  ctx.fillRect(p.x,p.y,p.w,p.h);
-  if(p.image)ctx.drawImage(p.image,p.x,p.y,p.w,p.h);
- }
-
- // Ridisegna i pixel venduti sopra l'anteprima.
- for(const space of soldSpaces){
-  drawSpace(space);
-  if(space._image){
-   ctx.drawImage(space._image,space.x,space.y,space.width,space.height);
-  }
- }
-}
-
-async function loadSoldSpaces(){
- connectionStatus.textContent="Caricamento degli spazi venduti...";
- try{
-  const response=await fetch("/api/spaces",{cache:"no-store"});
-  if(!response.ok)throw new Error("Errore API: "+response.status);
-  const data=await response.json();
-  if(!Array.isArray(data.spaces))throw new Error("Risposta API non valida");
-
-  soldSpaces=data.spaces;
-  redrawWall();
-
-  for(const space of soldSpaces){
-   if(!space.image_url)continue;
-   try{
-    const url=new URL(space.image_url,window.location.href);
-    if(!["https:","http:"].includes(url.protocol))continue;
-    const image=new Image();
-    image.onload=()=>{
-     space._image=image;
-     redrawWall();
-    };
-    image.onerror=()=>console.warn("Immagine non disponibile");
-    image.src=url.href;
-   }catch{
-    console.warn("URL immagine non valido");
-   }
+    gridCtx.moveTo(0, p);
+    gridCtx.lineTo(width, p);
   }
 
-  connectionStatus.textContent="Database collegato · "+soldSpaces.length+" spazi venduti caricati";
+  gridCtx.stroke();
+}
+
+function getPosition(event) {
+  const rect = wall.getBoundingClientRect();
+  const border = 3;
+
+  const width = rect.width - border * 2;
+  const height = rect.height - border * 2;
+
+  const x = Math.floor(
+    ((event.clientX - rect.left - border) / width) * SIZE
+  );
+
+  const y = Math.floor(
+    ((event.clientY - rect.top - border) / height) * SIZE
+  );
+
+  return {
+    x: Math.max(0, Math.min(999, x)),
+    y: Math.max(0, Math.min(999, y))
+  };
+}
+
+function makeRectangle(a, b) {
+  return {
+    x: Math.min(a.x, b.x),
+    y: Math.min(a.y, b.y),
+    w: Math.abs(a.x - b.x) + 1,
+    h: Math.abs(a.y - b.y) + 1
+  };
+}
+
+function rectanglesOverlap(a, b) {
+  return (
+    a.x < b.x + b.width &&
+    a.x + a.w > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.h > b.y
+  );
+}
+
+function selectionOverlapsSold() {
+  return !!selection && soldSpaces.some(
+    space => rectanglesOverlap(selection, space)
+  );
+}
+
+function invalidateAvailability() {
+  checkVersion++;
+  availabilityConfirmed = false;
+  checking = false;
+  availabilityStatus.textContent = "";
+  updateInfo();
+}
+
+function drawSelection() {
+  const width = wall.clientWidth;
+  const height = wall.clientHeight;
+
+  setupCanvas(overlay, overlayCtx, width, height);
+  overlayCtx.clearRect(0, 0, width, height);
+
+  if (!selection) return;
+
+  const scale = width / SIZE;
+
+  const x = selection.x * scale;
+  const y = selection.y * scale;
+  const w = selection.w * scale;
+  const h = selection.h * scale;
+
+  const overlaps = selectionOverlapsSold();
+
+  overlayCtx.fillStyle = overlaps
+    ? "rgba(220,38,38,0.25)"
+    : "rgba(25,105,230,0.25)";
+
+  overlayCtx.fillRect(x, y, w, h);
+
+  overlayCtx.strokeStyle = overlaps
+    ? "#dc2626"
+    : "#1558d6";
+
+  overlayCtx.lineWidth = 1.5;
+  overlayCtx.strokeRect(x, y, w, h);
+}
+
+function updateInfo() {
+  const price = document.getElementById("price");
+  const count = document.getElementById("pixelCount");
+
+  if (!selection) {
+    price.textContent = "0 €";
+    count.textContent = "0 pixel × 1 €";
+    checkBtn.disabled = true;
+    previewBtn.disabled = true;
+    return;
+  }
+
+  const pixels = selection.w * selection.h;
+  const overlaps = selectionOverlapsSold();
+
+  price.textContent =
+    pixels.toLocaleString("it-IT") + " €";
+
+  count.textContent = overlaps
+    ? "Attenzione: lo spazio include pixel già venduti"
+    : pixels.toLocaleString("it-IT") + " pixel × 1 €";
+
+  checkBtn.disabled = checking || overlaps;
+
+  previewBtn.disabled =
+    !availabilityConfirmed ||
+    checking ||
+    overlaps ||
+    imageLoading;
+}
+
+wall.addEventListener("pointerdown", event => {
+  if (event.button !== undefined && event.button !== 0) {
+    return;
+  }
+
+  event.preventDefault();
+
+  invalidateAvailability();
+
+  start = getPosition(event);
+  selection = makeRectangle(start, start);
+  dragging = true;
+
+  wall.setPointerCapture(event.pointerId);
+
   drawSelection();
   updateInfo();
- }catch(error){
-  console.error(error);
-  connectionStatus.textContent="Errore nel caricamento degli spazi venduti";
- }
+});
+
+wall.addEventListener("pointermove", event => {
+  if (!dragging) return;
+
+  invalidateAvailability();
+
+  selection = makeRectangle(start, getPosition(event));
+
+  drawSelection();
+  updateInfo();
+});
+
+wall.addEventListener("pointerup", () => {
+  dragging = false;
+});
+
+wall.addEventListener("pointercancel", () => {
+  dragging = false;
+});
+
+function changeZoom(factor) {
+  zoom = Math.max(1, Math.min(32, zoom * factor));
+  applyZoom();
 }
 
-window.addEventListener("resize",applyZoom);
+function resetZoom() {
+  zoom = 1;
+  applyZoom();
+}
+
+function applyZoom() {
+  const availableWidth = Math.max(
+    100,
+    stage.clientWidth - 24
+  );
+
+  const availableHeight = Math.max(
+    100,
+    window.innerHeight * 0.7
+  );
+
+  const baseSize = Math.min(
+    availableWidth,
+    availableHeight,
+    850
+  );
+
+  const size = Math.round(baseSize * zoom);
+
+  wall.style.width = size + "px";
+  wall.style.height = size + "px";
+
+  document.getElementById("zoomText").textContent =
+    Math.round(zoom * 100) + "%";
+
+  drawGrid();
+  drawSelection();
+}
+
+function clearSelection() {
+  selection = null;
+  invalidateAvailability();
+  drawSelection();
+  updateInfo();
+}
+
+document.getElementById("image").addEventListener(
+  "change",
+  event => {
+    const version = ++imageVersion;
+
+    uploadedImage = null;
+    imageLoading = false;
+    imageStatus.textContent = "";
+
+    const file = event.target.files[0];
+
+    if (!file) {
+      updateInfo();
+      return;
+    }
+
+    const allowed = [
+      "image/png",
+      "image/jpeg",
+      "image/webp"
+    ];
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("L'immagine non può superare 5 MB.");
+      event.target.value = "";
+      updateInfo();
+      return;
+    }
+
+    if (!allowed.includes(file.type)) {
+      alert("Formato non supportato. Usa PNG, JPG o WebP.");
+      event.target.value = "";
+      updateInfo();
+      return;
+    }
+
+    imageLoading = true;
+    imageStatus.textContent =
+      "Caricamento anteprima immagine...";
+
+    updateInfo();
+
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+
+      if (version !== imageVersion) return;
+
+      uploadedImage = image;
+      imageLoading = false;
+
+      imageStatus.textContent =
+        "✓ Immagine pronta per l'anteprima.";
+
+      updateInfo();
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+
+      if (version !== imageVersion) return;
+
+      imageLoading = false;
+      event.target.value = "";
+
+      imageStatus.textContent =
+        "Impossibile leggere l'immagine.";
+
+      updateInfo();
+    };
+
+    image.src = url;
+  }
+);
+
+function validateLink() {
+  const raw = document.getElementById("link").value.trim();
+
+  if (!raw) return "";
+
+  try {
+    const url = new URL(raw);
+
+    if (!["https:", "http:"].includes(url.protocol)) {
+      throw new Error("Protocollo non valido");
+    }
+
+    return url.href;
+  } catch {
+    throw new Error(
+      "Inserisci un link valido che inizi con https://"
+    );
+  }
+}
+
+async function checkAvailability() {
+  if (
+    !selection ||
+    checking ||
+    selectionOverlapsSold()
+  ) {
+    return;
+  }
+
+  const requestVersion = ++checkVersion;
+  const { x, y, w, h } = selection;
+
+  availabilityConfirmed = false;
+  checking = true;
+
+  availabilityStatus.textContent =
+    "Controllo disponibilità...";
+
+  availabilityStatus.style.color = "#64748b";
+
+  updateInfo();
+
+  try {
+    const response = await fetch("/api/check-space", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        x,
+        y,
+        width: w,
+        height: h
+      })
+    });
+
+    const data = await response.json();
+
+    if (requestVersion !== checkVersion) return;
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Errore nel controllo"
+      );
+    }
+
+    availabilityConfirmed = data.available === true;
+
+    availabilityStatus.textContent = availabilityConfirmed
+      ? "✓ Spazio disponibile! Puoi vedere l'anteprima."
+      : "✕ Spazio occupato. Scegli altri pixel.";
+
+    availabilityStatus.style.color = availabilityConfirmed
+      ? "#15803d"
+      : "#dc2626";
+
+  } catch (error) {
+    if (requestVersion !== checkVersion) return;
+
+    availabilityConfirmed = false;
+
+    availabilityStatus.textContent =
+      "Errore: " + error.message;
+
+    availabilityStatus.style.color = "#dc2626";
+
+  } finally {
+    if (requestVersion === checkVersion) {
+      checking = false;
+      updateInfo();
+    }
+  }
+}
+
+function preview() {
+  if (
+    !selection ||
+    !availabilityConfirmed ||
+    imageLoading
+  ) {
+    return;
+  }
+
+  if (selectionOverlapsSold()) {
+    alert("Questo spazio contiene pixel già venduti.");
+    return;
+  }
+
+  let link;
+
+  try {
+    link = validateLink();
+  } catch (error) {
+    alert(error.message);
+    return;
+  }
+
+  previewData = {
+    ...selection,
+    color: document.getElementById("color").value,
+    image: uploadedImage,
+    link
+  };
+
+  redrawWall();
+
+  alert(
+    "Anteprima visualizzata! Non è un acquisto " +
+    "e non viene salvata online."
+  );
+}
+
+function removePreview() {
+  previewData = null;
+  redrawWall();
+}
+
+function drawSpace(space) {
+  const {
+    x,
+    y,
+    width,
+    height,
+    color
+  } = space;
+
+  ctx.fillStyle = color || "#ffffff";
+  ctx.fillRect(x, y, width, height);
+}
+
+function redrawWall() {
+  ctx.clearRect(0, 0, SIZE, SIZE);
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, SIZE, SIZE);
+
+  // Disegna gli spazi venduti.
+  for (const space of soldSpaces) {
+    drawSpace(space);
+  }
+
+  // Disegna l'anteprima locale.
+  if (previewData) {
+    const p = previewData;
+
+    ctx.fillStyle = p.color;
+    ctx.fillRect(p.x, p.y, p.w, p.h);
+
+    if (p.image) {
+      ctx.drawImage(p.image, p.x, p.y, p.w, p.h);
+    }
+  }
+
+  // I pixel venduti hanno sempre la precedenza.
+  for (const space of soldSpaces) {
+    drawSpace(space);
+
+    if (space._image) {
+      ctx.drawImage(
+        space._image,
+        space.x,
+        space.y,
+        space.width,
+        space.height
+      );
+    }
+  }
+}
+
+async function loadSoldSpaces() {
+  connectionStatus.textContent =
+    "Caricamento degli spazi venduti...";
+
+  try {
+    const response = await fetch("/api/spaces", {
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error("Errore API: " + response.status);
+    }
+
+    const data = await response.json();
+
+    if (!Array.isArray(data.spaces)) {
+      throw new Error("Risposta API non valida");
+    }
+
+    soldSpaces = data.spaces;
+
+    redrawWall();
+
+    for (const space of soldSpaces) {
+      if (!space.image_url) continue;
+
+      try {
+        const url = new URL(
+          space.image_url,
+          window.location.href
+        );
+
+        if (
+          !["https:", "http:"].includes(url.protocol)
+        ) {
+          continue;
+        }
+
+        const image = new Image();
+
+        image.onload = () => {
+          space._image = image;
+          redrawWall();
+        };
+
+        image.onerror = () => {
+          console.warn("Immagine non disponibile");
+        };
+
+        image.src = url.href;
+
+      } catch {
+        console.warn("URL immagine non valido");
+      }
+    }
+
+    connectionStatus.textContent =
+      "Database collegato · " +
+      soldSpaces.length +
+      " spazi venduti caricati";
+
+    drawSelection();
+    updateInfo();
+
+  } catch (error) {
+    console.error(error);
+
+    connectionStatus.textContent =
+      "Errore nel caricamento degli spazi venduti";
+  }
+}
+
+window.addEventListener("resize", applyZoom);
+
 applyZoom();
 updateInfo();
 loadSoldSpaces();
 </script>
+
 </body>
 </html>
