@@ -1,7 +1,9 @@
 
+
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
+
     return res.status(405).json({
       error: "Metodo non consentito"
     });
@@ -37,46 +39,52 @@ export default async function handler(req, res) {
   }
 
   try {
-    const query = new URLSearchParams({
-      select: "id",
-      status: "in.(reserved,sold)",
-      x: `lt.${x + width}`,
-      y: `lt.${y + height}`,
-      "x+width": ""
-    });
-
-    // Recuperiamo gli spazi occupati e
-    // controlliamo le intersezioni sul server.
     const response = await fetch(
-      `${url}/rest/v1/wall_spaces?select=id,x,y,width,height&status=in.(reserved,sold)&x=lt.${x + width}&y=lt.${y + height}`,
+      `${url}/rest/v1/rpc/check_space_availability`,
       {
+        method: "POST",
         headers: {
           apikey: key,
-          Authorization: `Bearer ${key}`
-        }
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          p_x: x,
+          p_y: y,
+          p_width: width,
+          p_height: height
+        })
       }
     );
 
     if (!response.ok) {
+      console.error(
+        "Errore Supabase:",
+        response.status,
+        await response.text()
+      );
+
       return res.status(502).json({
         error: "Impossibile verificare lo spazio"
       });
     }
 
-    const spaces = await response.json();
+    const available = await response.json();
 
-    const occupied = spaces.some(space =>
-      space.x + space.width > x &&
-      space.y + space.height > y
-    );
+    if (typeof available !== "boolean") {
+      return res.status(502).json({
+        error: "Risposta non valida dal database"
+      });
+    }
 
     return res.status(200).json({
-      available: !occupied,
+      available,
       pixels: width * height,
       price_eur: width * height
     });
 
   } catch (error) {
+    console.error(error);
+
     return res.status(500).json({
       error: "Errore durante il controllo"
     });
