@@ -9,6 +9,14 @@ export default async function handler(req, res) {
     });
   }
 
+  // Blocco di sicurezza: le approvazioni
+  // rimangono disattivate fino alla verifica finale.
+  if (process.env.ENABLE_ADMIN_REVIEWS !== "true") {
+    return res.status(503).json({
+      error: "Approvazioni non ancora attive"
+    });
+  }
+
   const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
   const publicKey = process.env.SUPABASE_PUBLISHABLE_KEY;
   const secretKey = process.env.SUPABASE_SECRET_KEY;
@@ -28,11 +36,21 @@ export default async function handler(req, res) {
   }
 
   const token = authorization.slice(7).trim();
+
+  if (!token) {
+    return res.status(401).json({
+      error: "Sessione mancante"
+    });
+  }
+
   const { spaceId, action, reason } = req.body || {};
+
+  const uuidPattern =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   if (
     typeof spaceId !== "string" ||
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(spaceId)
+    !uuidPattern.test(spaceId)
   ) {
     return res.status(400).json({
       error: "ID pubblicità non valido"
@@ -55,7 +73,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Verifica l'identità dell'utente.
+    // 1. Verifica l'identità con Supabase Auth.
     const userResponse = await fetch(
       `${url}/auth/v1/user`,
       {
@@ -80,7 +98,7 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2. Verifica che l'utente sia amministratore.
+    // 2. Verifica che sia un amministratore.
     const adminParams = new URLSearchParams({
       user_id: `eq.${user.id}`,
       select: "user_id"
@@ -98,11 +116,6 @@ export default async function handler(req, res) {
     );
 
     if (!adminResponse.ok) {
-      console.error(
-        "Admin verification failed:",
-        adminResponse.status
-      );
-
       return res.status(503).json({
         error: "Impossibile verificare i permessi"
       });
@@ -116,8 +129,8 @@ export default async function handler(req, res) {
       });
     }
 
-    // 3. Aggiorna esclusivamente una pubblicità
-    // venduta e ancora in attesa di revisione.
+    // 3. Aggiorna solo gli annunci venduti
+    // e ancora in attesa di revisione.
     const params = new URLSearchParams({
       id: `eq.${spaceId}`,
       status: "eq.sold",
@@ -125,14 +138,20 @@ export default async function handler(req, res) {
       select: "id,approval_status"
     });
 
+    const newStatus =
+      action === "approve" ? "approved" : "rejected";
+
     const update = {
-      approval_status:
-        action === "approve" ? "approved" : "rejected",
+      approval_status: newStatus,
       reviewed_at: new Date().toISOString(),
       rejection_reason:
-        action === "reject" ? reason.trim().slice(0, 500) : null
+        action === "reject"
+          ? reason.trim().slice(0, 500)
+          : null
     };
 
+    // La chiave sb_secret_ va inviata come apikey.
+    // Non va utilizzata come Bearer JWT.
     const updateResponse = await fetch(
       `${url}/rest/v1/wall_spaces?${params}`,
       {
@@ -149,8 +168,7 @@ export default async function handler(req, res) {
     if (!updateResponse.ok) {
       console.error(
         "Review update failed:",
-        updateResponse.status,
-        (await updateResponse.text()).slice(0, 500)
+        updateResponse.status
       );
 
       return res.status(503).json({
@@ -168,7 +186,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      status: update.approval_status
+      status: newStatus
     });
 
   } catch (error) {
