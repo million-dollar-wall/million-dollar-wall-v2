@@ -9,14 +9,15 @@ export default async function handler(req, res) {
     });
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const publishableKey =
-    process.env.SUPABASE_PUBLISHABLE_KEY;
-  const secretKey = process.env.SUPABASE_SECRET_KEY;
+  const supabaseUrl =
+    process.env.SUPABASE_URL?.replace(/\/$/, "");
 
-  if (!supabaseUrl || !publishableKey || !secretKey) {
+  const publicKey =
+    process.env.SUPABASE_PUBLISHABLE_KEY;
+
+  if (!supabaseUrl || !publicKey) {
     return res.status(503).json({
-      error: "Configurazione server incompleta"
+      error: "Configurazione Supabase incompleta"
     });
   }
 
@@ -37,12 +38,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Verifica il token direttamente con Supabase Auth.
+    // 1. Verifica che il token sia valido.
     const userResponse = await fetch(
       `${supabaseUrl}/auth/v1/user`,
       {
         headers: {
-          apikey: publishableKey,
+          apikey: publicKey,
           Authorization: `Bearer ${token}`
         }
       }
@@ -62,32 +63,47 @@ export default async function handler(req, res) {
       });
     }
 
-    // Verifica che l'utente sia un amministratore.
+    // 2. Controlla che sia un amministratore.
+    // La policy RLS permette di leggere
+    // soltanto la propria riga.
+    const adminParams = new URLSearchParams({
+      user_id: `eq.${user.id}`,
+      select: "user_id"
+    });
+
     const adminResponse = await fetch(
-      `${supabaseUrl}/rest/v1/wall_admins?user_id=eq.${encodeURIComponent(user.id)}&select=user_id`,
+      `${supabaseUrl}/rest/v1/wall_admins?${adminParams}`,
       {
         headers: {
-          apikey: secretKey,
-          Authorization: `Bearer ${secretKey}`
+          apikey: publicKey,
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json"
         }
       }
     );
 
     if (!adminResponse.ok) {
-      throw new Error("Verifica amministratore fallita");
+      console.error(
+        "Admin verification failed:",
+        adminResponse.status
+      );
+
+      return res.status(503).json({
+        error: "Impossibile verificare l'amministratore"
+      });
     }
 
     const admins = await adminResponse.json();
 
     if (!Array.isArray(admins) || admins.length !== 1) {
       return res.status(403).json({
-        error: "Non hai i permessi di amministratore"
+        error: "Account non autorizzato"
       });
     }
 
-    // Recupera soltanto gli spazi pagati
-    // che attendono l'approvazione.
-    const params = new URLSearchParams({
+    // 3. Recupera le pubblicità in attesa.
+    // Non usiamo la chiave segreta.
+    const spacesParams = new URLSearchParams({
       select: "id,x,y,width,height,color,image_url,image_path,link_url,approval_status,created_at",
       status: "eq.sold",
       approval_status: "eq.pending_review",
@@ -96,24 +112,33 @@ export default async function handler(req, res) {
     });
 
     const spacesResponse = await fetch(
-      `${supabaseUrl}/rest/v1/wall_spaces?${params.toString()}`,
+      `${supabaseUrl}/rest/v1/wall_spaces?${spacesParams}`,
       {
         headers: {
-          apikey: secretKey,
-          Authorization: `Bearer ${secretKey}`,
+          apikey: publicKey,
+          Authorization: `Bearer ${token}`,
           Accept: "application/json"
         }
       }
     );
 
     if (!spacesResponse.ok) {
-      throw new Error("Caricamento pubblicità fallito");
+      console.error(
+        "Pending spaces fetch failed:",
+        spacesResponse.status
+      );
+
+      return res.status(503).json({
+        error: "Impossibile caricare le pubblicità"
+      });
     }
 
     const spaces = await spacesResponse.json();
 
     if (!Array.isArray(spaces)) {
-      throw new Error("Risposta database non valida");
+      return res.status(500).json({
+        error: "Risposta database non valida"
+      });
     }
 
     return res.status(200).json({
@@ -121,10 +146,13 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error("Admin pending error:", error);
+    console.error(
+      "Admin pending error:",
+      error.message
+    );
 
     return res.status(500).json({
-      error: "Impossibile caricare le pubblicità"
+      error: "Errore durante il caricamento"
     });
   }
 }
