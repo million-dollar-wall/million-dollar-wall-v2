@@ -9,31 +9,17 @@ export default async function handler(req, res) {
     });
   }
 
-  const supabaseUrl =
-    process.env.SUPABASE_URL?.replace(/\/$/, "");
+  const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
+  const publicKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+  const secretKey = process.env.SUPABASE_SECRET_KEY;
 
-  const publicKey =
-    process.env.SUPABASE_PUBLISHABLE_KEY;
-
-  const secretKey =
-    process.env.SUPABASE_SECRET_KEY;
-
-  if (!supabaseUrl || !publicKey || !secretKey) {
+  if (!url || !publicKey || !secretKey) {
     return res.status(503).json({
       error: "Configurazione Supabase incompleta"
     });
   }
 
-  // Per sicurezza, la funzione rimane disattivata
-  // finché non completiamo i controlli.
-  if (process.env.ENABLE_ADMIN_REVIEWS !== "true") {
-    return res.status(503).json({
-      error: "Approvazioni non ancora attive"
-    });
-  }
-
-  const authorization =
-    req.headers.authorization || "";
+  const authorization = req.headers.authorization || "";
 
   if (!authorization.startsWith("Bearer ")) {
     return res.status(401).json({
@@ -42,15 +28,14 @@ export default async function handler(req, res) {
   }
 
   const token = authorization.slice(7).trim();
-
   const { spaceId, action, reason } = req.body || {};
 
   if (
     typeof spaceId !== "string" ||
-    !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(spaceId)
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(spaceId)
   ) {
     return res.status(400).json({
-      error: "ID spazio non valido"
+      error: "ID pubblicità non valido"
     });
   }
 
@@ -60,10 +45,19 @@ export default async function handler(req, res) {
     });
   }
 
+  if (
+    action === "reject" &&
+    (typeof reason !== "string" || !reason.trim())
+  ) {
+    return res.status(400).json({
+      error: "Inserisci il motivo del rifiuto"
+    });
+  }
+
   try {
-    // 1. Verifica l'identità con Supabase Auth.
+    // 1. Verifica l'identità dell'utente.
     const userResponse = await fetch(
-      `${supabaseUrl}/auth/v1/user`,
+      `${url}/auth/v1/user`,
       {
         headers: {
           apikey: publicKey,
@@ -86,25 +80,31 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2. Verifica i permessi amministratore.
+    // 2. Verifica che l'utente sia amministratore.
     const adminParams = new URLSearchParams({
       user_id: `eq.${user.id}`,
       select: "user_id"
     });
 
     const adminResponse = await fetch(
-      `${supabaseUrl}/rest/v1/wall_admins?${adminParams}`,
+      `${url}/rest/v1/wall_admins?${adminParams}`,
       {
         headers: {
           apikey: publicKey,
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json"
         }
       }
     );
 
     if (!adminResponse.ok) {
+      console.error(
+        "Admin verification failed:",
+        adminResponse.status
+      );
+
       return res.status(503).json({
-        error: "Verifica amministratore fallita"
+        error: "Impossibile verificare i permessi"
       });
     }
 
@@ -112,32 +112,29 @@ export default async function handler(req, res) {
 
     if (!Array.isArray(admins) || admins.length !== 1) {
       return res.status(403).json({
-        error: "Permessi insufficienti"
+        error: "Account non autorizzato"
       });
     }
 
-    // 3. Modifica soltanto spazi venduti
-    // che sono ancora in attesa.
+    // 3. Aggiorna esclusivamente una pubblicità
+    // venduta e ancora in attesa di revisione.
     const params = new URLSearchParams({
       id: `eq.${spaceId}`,
       status: "eq.sold",
-      approval_status: "eq.pending_review"
+      approval_status: "eq.pending_review",
+      select: "id,approval_status"
     });
 
-    const newStatus =
-      action === "approve" ? "approved" : "rejected";
-
     const update = {
-      approval_status: newStatus,
+      approval_status:
+        action === "approve" ? "approved" : "rejected",
       reviewed_at: new Date().toISOString(),
       rejection_reason:
-        action === "reject"
-          ? String(reason || "").slice(0, 500)
-          : null
+        action === "reject" ? reason.trim().slice(0, 500) : null
     };
 
     const updateResponse = await fetch(
-      `${supabaseUrl}/rest/v1/wall_spaces?${params}`,
+      `${url}/rest/v1/wall_spaces?${params}`,
       {
         method: "PATCH",
         headers: {
@@ -151,8 +148,9 @@ export default async function handler(req, res) {
 
     if (!updateResponse.ok) {
       console.error(
-        "Admin review update failed:",
-        updateResponse.status
+        "Review update failed:",
+        updateResponse.status,
+        (await updateResponse.text()).slice(0, 500)
       );
 
       return res.status(503).json({
@@ -170,7 +168,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       success: true,
-      status: newStatus
+      status: update.approval_status
     });
 
   } catch (error) {
