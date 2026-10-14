@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -22,7 +21,7 @@ body {
 header {
   background: white;
   text-align: center;
-  padding: 20px 12px;
+  padding: 18px 12px;
   border-bottom: 1px solid #e2e8f0;
 }
 
@@ -36,13 +35,13 @@ h1 span {
 }
 
 header p {
-  margin: 9px 0;
   color: #64748b;
+  margin: 9px 0;
 }
 
 .demo {
-  font-size: 12px;
   color: #a16207;
+  font-size: 12px;
   font-weight: bold;
 }
 
@@ -80,14 +79,10 @@ button {
   padding: 11px 14px;
   background: #24354d;
   color: white;
-  border: none;
+  border: 0;
   border-radius: 8px;
   font-weight: bold;
   cursor: pointer;
-}
-
-button:hover {
-  background: #334b6b;
 }
 
 button:disabled {
@@ -131,19 +126,16 @@ button:disabled {
   image-rendering: pixelated;
 }
 
-#grid {
-  pointer-events: none;
-}
-
+#grid,
 #overlay {
   pointer-events: none;
 }
 
 label {
   display: block;
+  font-weight: bold;
   margin-top: 18px;
   margin-bottom: 8px;
-  font-weight: bold;
 }
 
 input[type="file"],
@@ -159,8 +151,8 @@ input[type="url"] {
 
 .price {
   font-size: 32px;
-  font-weight: bold;
   color: #159c64;
+  font-weight: bold;
   margin: 12px 0;
 }
 
@@ -170,10 +162,10 @@ small {
 
 .note {
   background: #fff3d6;
-  padding: 12px;
   border-radius: 8px;
-  font-size: 13px;
+  padding: 12px;
   margin-top: 20px;
+  font-size: 13px;
 }
 
 @media (max-width: 850px) {
@@ -199,7 +191,6 @@ small {
 <main>
 
 <section class="panel">
-
   <h2>Il muro da un milione di pixel</h2>
 
   <p>
@@ -224,11 +215,11 @@ small {
 
   <p>
     <small>
-      Il muro contiene 1.000 colonne e 1.000 righe.
-      Usa Zoom per distinguere meglio i singoli pixel.
+      1.000 colonne × 1.000 righe.
+      Ogni pixel costa 1 €.
+      Usa lo zoom per selezionare con maggiore precisione.
     </small>
   </p>
-
 </section>
 
 <aside class="panel">
@@ -271,10 +262,9 @@ small {
   </div>
 
   <div class="note">
-    Questa è una demo.
-    Non vengono effettuati pagamenti.
-    Le immagini e i colori visualizzati
-    non vengono salvati online.
+    Questa è una demo grafica.
+    Nessun pagamento è attivo.
+    Le immagini e i colori non vengono salvati online.
   </div>
 
 </aside>
@@ -301,13 +291,6 @@ let start = null;
 let dragging = false;
 let uploadedImage = null;
 
-/*
-  Un quadratino della griglia corrisponde
-  esattamente a una cella del muro 1000x1000.
-
-  Non esistono gruppi di 10x10 pixel.
-*/
-
 function setupCanvas(canvas, context, width, height) {
   const dpr = window.devicePixelRatio || 1;
 
@@ -327,29 +310,12 @@ function drawGrid() {
 
   const step = width / SIZE;
 
-  /*
-    Ogni linea separa un singolo pixel.
-
-    Quando i quadratini sono più piccoli
-    di un pixel fisico dello schermo,
-    non è possibile disegnare tutte le
-    linee in modo leggibile.
-
-    In quel caso il muro resta bianco,
-    senza creare linee irregolari.
-  */
-
-  const physicalStep =
-    step * (window.devicePixelRatio || 1);
-
-  if (physicalStep < 2) {
-    return;
-  }
+  // Disegna tutte le divisioni reali:
+  // 1000 colonne e 1000 righe.
 
   gridCtx.beginPath();
-
-  gridCtx.strokeStyle = "#cbd5e1";
-  gridCtx.lineWidth = Math.min(0.8, step * 0.18);
+  gridCtx.strokeStyle = "#d6dde6";
+  gridCtx.lineWidth = Math.min(0.55, step * 0.35);
 
   for (let i = 1; i < SIZE; i++) {
     const p = i * step;
@@ -369,23 +335,20 @@ function getPosition(event) {
 
   const border = 3;
 
-  const left = rect.left + border;
-  const top = rect.top + border;
-
   const width = rect.width - border * 2;
   const height = rect.height - border * 2;
 
   const x = Math.floor(
-    ((event.clientX - left) / width) * SIZE
+    ((event.clientX - rect.left - border) / width) * SIZE
   );
 
   const y = Math.floor(
-    ((event.clientY - top) / height) * SIZE
+    ((event.clientY - rect.top - border) / height) * SIZE
   );
 
   return {
-    x: Math.max(0, Math.min(SIZE - 1, x)),
-    y: Math.max(0, Math.min(SIZE - 1, y))
+    x: Math.max(0, Math.min(999, x)),
+    y: Math.max(0, Math.min(999, y))
   };
 }
 
@@ -415,7 +378,7 @@ function drawSelection() {
   const w = selection.w * scale;
   const h = selection.h * scale;
 
-  overlayCtx.fillStyle = "rgba(25, 105, 230, 0.25)";
+  overlayCtx.fillStyle = "rgba(25,105,230,0.25)";
   overlayCtx.fillRect(x, y, w, h);
 
   overlayCtx.strokeStyle = "#1558d6";
