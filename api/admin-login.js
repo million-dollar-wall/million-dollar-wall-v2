@@ -3,20 +3,18 @@ export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
   if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
     return res.status(405).json({
       error: "Metodo non consentito"
     });
   }
 
   const supabaseUrl = process.env.SUPABASE_URL;
-  const publishableKey =
-    process.env.SUPABASE_PUBLISHABLE_KEY;
+  const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
   const secretKey = process.env.SUPABASE_SECRET_KEY;
 
   if (!supabaseUrl || !publishableKey || !secretKey) {
     return res.status(503).json({
-      error: "Configurazione del server incompleta"
+      error: "Configurazione Supabase incompleta"
     });
   }
 
@@ -34,7 +32,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Verifica le credenziali tramite Supabase Auth.
+    // 1. Verifica email e password con Supabase.
     const authResponse = await fetch(
       `${supabaseUrl}/auth/v1/token?grant_type=password`,
       {
@@ -49,25 +47,35 @@ export default async function handler(req, res) {
 
     const auth = await authResponse.json();
 
-    if (!authResponse.ok || !auth.access_token) {
+    if (!authResponse.ok || !auth.access_token || !auth.user?.id) {
       return res.status(401).json({
         error: "Email o password non valide"
       });
     }
 
-    // Verifica sul server che l'utente sia amministratore.
+    // 2. Controlla che l'utente sia nella tabella amministratori.
+    const params = new URLSearchParams({
+      user_id: `eq.${auth.user.id}`,
+      select: "user_id"
+    });
+
     const adminResponse = await fetch(
-      `${supabaseUrl}/rest/v1/wall_admins?user_id=eq.${encodeURIComponent(auth.user.id)}&select=user_id`,
+      `${supabaseUrl}/rest/v1/wall_admins?${params}`,
       {
+        method: "GET",
         headers: {
           apikey: secretKey,
-          Authorization: `Bearer ${secretKey}`,
           Accept: "application/json"
         }
       }
     );
 
     if (!adminResponse.ok) {
+      console.error(
+        "Admin permission check failed:",
+        adminResponse.status
+      );
+
       return res.status(503).json({
         error: "Impossibile verificare i permessi"
       });
@@ -77,16 +85,17 @@ export default async function handler(req, res) {
 
     if (!Array.isArray(admins) || admins.length !== 1) {
       return res.status(403).json({
-        error: "Questo account non è amministratore"
+        error: "Account non autorizzato come amministratore"
       });
     }
 
+    // 3. Restituisce il token soltanto all'amministratore.
     return res.status(200).json({
       access_token: auth.access_token
     });
 
   } catch (error) {
-    console.error("Admin login error:", error);
+    console.error("Admin login error:", error.message);
 
     return res.status(500).json({
       error: "Errore durante l'accesso"
