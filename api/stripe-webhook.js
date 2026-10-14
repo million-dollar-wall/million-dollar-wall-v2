@@ -2,41 +2,23 @@
 import crypto from "node:crypto";
 
 export const config = {
-  api: {
-    bodyParser: false
-  }
+  api: { bodyParser: false }
 };
 
 function verifySignature(payload, header, secret) {
-  if (
-    typeof header !== "string" ||
-    !secret ||
-    !header.includes("v1=")
-  ) {
-    return false;
-  }
+  if (typeof header !== "string" || !secret) return false;
 
-  const parts = header.split(",");
-  const timestamp = parts
-    .find(p => p.startsWith("t="))
-    ?.slice(2);
-
+  const parts = header.split(",").map(p => p.trim());
+  const timestamp = parts.find(p => p.startsWith("t="))?.slice(2);
   const signatures = parts
     .filter(p => p.startsWith("v1="))
     .map(p => p.slice(3));
 
-  if (!timestamp || !/^\d+$/.test(timestamp)) {
-    return false;
-  }
+  if (!timestamp || !/^\d+$/.test(timestamp)) return false;
 
   const time = Number(timestamp);
-
-  if (
-    !Number.isSafeInteger(time) ||
-    Math.abs(Date.now() / 1000 - time) > 300
-  ) {
-    return false;
-  }
+  if (!Number.isSafeInteger(time)) return false;
+  if (Math.abs(Date.now() / 1000 - time) > 300) return false;
 
   const expected = crypto
     .createHmac("sha256", secret)
@@ -45,10 +27,7 @@ function verifySignature(payload, header, secret) {
     .digest();
 
   return signatures.some(signature => {
-    if (!/^[a-f0-9]{64}$/i.test(signature)) {
-      return false;
-    }
-
+    if (!/^[a-f0-9]{64}$/i.test(signature)) return false;
     return crypto.timingSafeEqual(
       expected,
       Buffer.from(signature, "hex")
@@ -57,6 +36,12 @@ function verifySignature(payload, header, secret) {
 }
 
 async function readBody(req) {
+  // Compatibile con richieste già lette dal runtime.
+  if (Buffer.isBuffer(req.body)) return req.body;
+  if (typeof req.body === "string") {
+    return Buffer.from(req.body, "utf8");
+  }
+
   const chunks = [];
   let size = 0;
 
@@ -66,11 +51,9 @@ async function readBody(req) {
       : Buffer.from(chunk);
 
     size += data.length;
-
     if (size > 1024 * 1024) {
       throw new Error("Payload troppo grande");
     }
-
     chunks.push(data);
   }
 
@@ -85,30 +68,52 @@ async function supabaseRequest(path, options = {}) {
     throw new Error("Configurazione Supabase mancante");
   }
 
-  const response = await fetch(
-    `${url}/rest/v1/${path}`,
-    {
-      ...options,
-      headers: {
-        apikey: key,
-        "Content-Type": "application/json",
-        ...(options.headers || {})
-      }
+  const response = await fetch(`${url}/rest/v1/${path}`, {
+    ...options,
+    headers: {
+      apikey: key,
+      "Content-Type": "application/json",
+      ...(options.headers || {})
     }
-  );
+  });
 
   if (!response.ok) {
-    throw new Error(
-      `Supabase HTTP ${response.status}: ${await response.text()}`
-    );
+    throw new Error(`Supabase HTTP ${response.status}`);
   }
 
   return response.json();
 }
 
+function getSpaceId(session) {
+  const id = session?.metadata?.space_id;
+
+  if (
+    typeof id !== "string" ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+  ) {
+    throw new Error("ID spazio non valido");
+  }
+
+  return id;
+}
+
+async function getSpace(spaceId) {
+  const rows = await supabaseRequest(
+    `wall_spaces?id=eq.${encodeURIComponent(spaceId)}` +
+    "&select=id,width,height,status,stripe_session_id"
+  );
+
+  if (!Array.isArray(rows) || rows.length !== 1) {
+    throw new Error("Spazio non trovato");
+  }
+
+  return rows[0];
+}
+
 async function confirmPayment(session) {
   if (
     !session ||
+    session.livemode !== true ||
     typeof session.id !== "string" ||
     !session.id.startsWith("cs_live_") ||
     session.mode !== "payment" ||
@@ -116,39 +121,24 @@ async function confirmPayment(session) {
     session.payment_status !== "paid" ||
     session.currency?.toLowerCase() !== "eur"
   ) {
-    throw new Error("Sessione Stripe non valida");
+    throw new Error("Sessione di pagamento non valida");
   }
 
-  const spaceId = session.metadata?.space_id;
+  const spaceId = getSpaceId(session);
+  const space = await getSpace(spaceId);
+  const pixels = space.width * space.height;
+  const amount = pixels * 100;
 
   if (
-    typeof spaceId !== "string" ||
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(spaceId)
-  ) {
-    throw new Error("Identificativo spazio non valido");
-  }
-
-  const rows = await supabaseRequest(
-    `wall_spaces?id=eq.${encodeURIComponent(spaceId)}` +
-    "&select=id,width,height,status,stripe_session_id"
-  );
-
-  if (!Array.isArray(rows) || rows.length !== 1) {
-    throw new Error("Prenotazione non trovata");
-  }
-
-  const space = rows[0];
-  const expectedAmount = space.width * space.height * 100;
-
-  if (
-    !Number.isSafeInteger(expectedAmount) ||
-    expectedAmount < 100 ||
-    session.amount_total !== expectedAmount ||
+    !Number.isSafeInteger(amount) ||
+    amount < 100 ||
+    session.amount_total !== amount ||
+    session.amount_subtotal !== amount ||
     space.stripe_session_id !== session.id ||
-    session.metadata?.expected_amount !== String(expectedAmount) ||
-    session.metadata?.pixels !== String(space.width * space.height)
+    session.metadata?.pixels !== String(pixels) ||
+    session.metadata?.expected_amount !== String(amount)
   ) {
-    throw new Error("Dati o importo del pagamento non corrispondenti");
+    throw new Error("Pagamento o prenotazione non corrispondenti");
   }
 
   const confirmed = await supabaseRequest(
@@ -163,12 +153,55 @@ async function confirmPayment(session) {
   );
 
   if (confirmed !== true) {
-    throw new Error(
-      "Pagamento ricevuto, ma prenotazione non confermabile"
-    );
+    throw new Error("Pagamento ricevuto ma pixel non assegnabili");
   }
 
-  console.log("Acquisto confermato:", session.id);
+  console.log("Pagamento confermato:", session.id);
+}
+
+async function handleExpired(session) {
+  if (
+    !session ||
+    session.livemode !== true ||
+    typeof session.id !== "string" ||
+    !session.id.startsWith("cs_live_") ||
+    session.status !== "expired" ||
+    session.payment_status === "paid"
+  ) {
+    throw new Error("Sessione scaduta non valida");
+  }
+
+  const spaceId = getSpaceId(session);
+  const space = await getSpace(spaceId);
+
+  // Non toccare spazi già venduti o modificati.
+  if (space.status === "sold") return;
+
+  if (
+    space.status !== "reserved" ||
+    space.stripe_session_id !== session.id
+  ) {
+    return;
+  }
+
+  // L'operazione di sblocco deve essere atomica e
+  // controllare la stessa sessione Stripe.
+  const released = await supabaseRequest(
+    "rpc/release_expired_wall_checkout",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        p_space_id: spaceId,
+        p_stripe_session_id: session.id
+      })
+    }
+  );
+
+  if (released !== true) {
+    throw new Error("Impossibile liberare la prenotazione");
+  }
+
+  console.log("Prenotazione scaduta liberata:", session.id);
 }
 
 export default async function handler(req, res) {
@@ -179,13 +212,15 @@ export default async function handler(req, res) {
     });
   }
 
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+
   if (
-    !process.env.STRIPE_WEBHOOK_SECRET ||
+    !secret ||
     !process.env.SUPABASE_URL ||
     !process.env.SUPABASE_SECRET_KEY
   ) {
     return res.status(503).json({
-      error: "Configurazione webhook incompleta"
+      error: "Configurazione incompleta"
     });
   }
 
@@ -193,7 +228,7 @@ export default async function handler(req, res) {
 
   try {
     payload = await readBody(req);
-  } catch (error) {
+  } catch {
     return res.status(413).json({
       error: "Payload non valido"
     });
@@ -203,7 +238,7 @@ export default async function handler(req, res) {
     !verifySignature(
       payload,
       req.headers["stripe-signature"],
-      process.env.STRIPE_WEBHOOK_SECRET
+      secret
     )
   ) {
     return res.status(400).json({
@@ -221,28 +256,20 @@ export default async function handler(req, res) {
     });
   }
 
-  if (event.type !== "checkout.session.completed") {
-    return res.status(200).json({
-      received: true
-    });
-  }
-
   try {
-    await confirmPayment(event.data?.object);
+    if (event.type === "checkout.session.completed") {
+      await confirmPayment(event.data?.object);
+    } else if (event.type === "checkout.session.expired") {
+      await handleExpired(event.data?.object);
+    }
 
-    return res.status(200).json({
-      received: true,
-      confirmed: true
-    });
+    return res.status(200).json({ received: true });
   } catch (error) {
-    console.error(
-      "Conferma pagamento fallita:",
-      error.message
-    );
+    console.error("Errore webhook:", error.message);
 
-    // Stripe potrà ritentare la consegna.
+    // Stripe potrà ritentare l'evento.
     return res.status(500).json({
-      error: "Conferma acquisto non riuscita"
+      error: "Evento non elaborato"
     });
   }
 }
