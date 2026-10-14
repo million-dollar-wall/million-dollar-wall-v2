@@ -1,29 +1,37 @@
 
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Amministrazione - Million Dollar Wall V2</title>
+
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   background: #f3f5f9;
   color: #172033;
   font-family: Arial, sans-serif;
 }
+
 header {
   background: #172033;
   color: white;
   padding: 24px;
   text-align: center;
 }
+
 main {
   max-width: 950px;
   margin: 25px auto;
   padding: 0 15px;
 }
+
 .card {
   background: white;
   border-radius: 12px;
@@ -31,6 +39,7 @@ main {
   margin-bottom: 18px;
   border: 1px solid #e2e8f0;
 }
+
 input {
   display: block;
   width: 100%;
@@ -39,6 +48,7 @@ input {
   border: 1px solid #cbd5e1;
   border-radius: 8px;
 }
+
 button {
   padding: 12px 18px;
   background: #176b50;
@@ -46,28 +56,55 @@ button {
   border: 0;
   border-radius: 8px;
   cursor: pointer;
+  margin-top: 5px;
 }
+
 button:disabled {
   opacity: .45;
   cursor: not-allowed;
 }
-.hidden { display: none; }
-.status { margin-top: 14px; }
+
+.hidden {
+  display: none;
+}
+
+.status {
+  margin-top: 14px;
+}
+
 .item {
   border: 1px solid #e2e8f0;
   padding: 16px;
   border-radius: 10px;
   margin-top: 15px;
 }
+
 .item img {
   max-width: 100%;
   max-height: 250px;
   object-fit: contain;
   background: #eee;
 }
-a { overflow-wrap: anywhere; }
+
+a {
+  overflow-wrap: anywhere;
+}
+
+.error {
+  color: #b91c1c;
+}
+
+.success {
+  color: #166534;
+}
+
+.notice {
+  color: #475569;
+  line-height: 1.5;
+}
 </style>
 </head>
+
 <body>
 
 <header>
@@ -81,14 +118,25 @@ a { overflow-wrap: anywhere; }
   <h2>Accesso amministratore</h2>
 
   <form id="loginForm">
-    <input id="email" type="email"
-      placeholder="La tua email" required autocomplete="username">
+    <input
+      id="email"
+      type="email"
+      placeholder="La tua email"
+      required
+      autocomplete="username"
+    >
 
-    <input id="password" type="password"
-      placeholder="La tua password" required
-      autocomplete="current-password">
+    <input
+      id="password"
+      type="password"
+      placeholder="La tua password"
+      required
+      autocomplete="current-password"
+    >
 
-    <button type="submit" id="loginBtn">Accedi</button>
+    <button type="submit" id="loginBtn">
+      Accedi
+    </button>
   </form>
 
   <p id="loginStatus" class="status"></p>
@@ -97,20 +145,21 @@ a { overflow-wrap: anywhere; }
 <section class="card hidden" id="dashboard">
   <h2>Pubblicità in attesa</h2>
 
-  <p id="adminStatus"></p>
+  <p id="adminStatus" class="status"></p>
 
-  <button id="refreshBtn">Aggiorna elenco</button>
+  <button id="refreshBtn">
+    Aggiorna elenco
+  </button>
+
   <button id="logoutBtn" style="background:#475569">
     Esci
   </button>
 
   <div id="items"></div>
 
-  <p>
-    <small>
-      Approvazione e rifiuto saranno disponibili
-      dopo l'attivazione delle API protette.
-    </small>
+  <p class="notice" id="reviewNotice">
+    Le operazioni di approvazione dipendono dalla
+    configurazione sicura delle API.
   </p>
 </section>
 
@@ -122,18 +171,30 @@ const dashboard = document.getElementById("dashboard");
 const loginStatus = document.getElementById("loginStatus");
 const adminStatus = document.getElementById("adminStatus");
 const items = document.getElementById("items");
+const reviewNotice = document.getElementById("reviewNotice");
 
 let token = null;
+let loading = false;
 
 function showLogin() {
   token = null;
   dashboard.classList.add("hidden");
   loginBox.classList.remove("hidden");
+  items.replaceChildren();
+  adminStatus.textContent = "";
 }
 
 function showDashboard() {
   loginBox.classList.add("hidden");
   dashboard.classList.remove("hidden");
+}
+
+async function readJson(response) {
+  try {
+    return await response.json();
+  } catch {
+    return {};
+  }
 }
 
 document.getElementById("loginForm")
@@ -142,19 +203,22 @@ document.getElementById("loginForm")
 
   const button = document.getElementById("loginBtn");
   button.disabled = true;
+  loginStatus.className = "status";
   loginStatus.textContent = "Accesso in corso...";
 
   try {
     const response = await fetch("/api/admin-login", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({
-        email: document.getElementById("email").value,
+        email: document.getElementById("email").value.trim(),
         password: document.getElementById("password").value
       })
     });
 
-    const data = await response.json();
+    const data = await readJson(response);
 
     if (!response.ok || !data.access_token) {
       throw new Error(data.error || "Accesso non riuscito");
@@ -169,35 +233,120 @@ document.getElementById("loginForm")
     await loadPending();
 
   } catch (error) {
+    loginStatus.className = "status error";
     loginStatus.textContent = error.message;
   } finally {
     button.disabled = false;
   }
 });
 
-async function loadPending() {
-  if (!token) return;
+async function reviewSpace(spaceId, action) {
+  if (!token) {
+    showLogin();
+    return;
+  }
 
-  adminStatus.textContent = "Caricamento...";
+  let reason = "";
+
+  if (action === "reject") {
+    reason = prompt("Inserisci il motivo del rifiuto:") || "";
+
+    if (!reason.trim()) {
+      alert("Inserisci un motivo per il rifiuto.");
+      return;
+    }
+  }
+
+  const confirmed = confirm(
+    action === "approve"
+      ? "Confermi l'approvazione di questa pubblicità?"
+      : "Confermi il rifiuto di questa pubblicità?"
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  const buttons = items.querySelectorAll("button");
+  buttons.forEach(button => {
+    button.disabled = true;
+  });
+
+  reviewNotice.className = "notice";
+  reviewNotice.textContent = "Verifica dei permessi in corso...";
+
+  try {
+    const response = await fetch("/api/admin-review", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({
+        spaceId,
+        action,
+        reason
+      })
+    });
+
+    const data = await readJson(response);
+
+    if (response.status === 401) {
+      showLogin();
+      throw new Error("Sessione scaduta. Accedi nuovamente.");
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Operazione non riuscita"
+      );
+    }
+
+    reviewNotice.className = "success";
+    reviewNotice.textContent =
+      action === "approve"
+        ? "Pubblicità approvata."
+        : "Pubblicità rifiutata.";
+
+    await loadPending();
+
+  } catch (error) {
+    reviewNotice.className = "error";
+    reviewNotice.textContent = error.message;
+  } finally {
+    items.querySelectorAll("button").forEach(button => {
+      button.disabled = false;
+    });
+  }
+}
+
+async function loadPending() {
+  if (!token || loading) return;
+
+  loading = true;
+  adminStatus.textContent = "Caricamento pubblicità...";
   items.replaceChildren();
 
   try {
     const response = await fetch("/api/admin-pending", {
+      method: "GET",
       headers: {
-        Authorization: "Bearer " + token
+        "Authorization": "Bearer " + token
       },
       cache: "no-store"
     });
 
-    const data = await response.json();
+    const data = await readJson(response);
 
-    if (response.status === 401 || response.status === 403) {
+    if (response.status === 401) {
       showLogin();
-      throw new Error("Accesso scaduto o non autorizzato");
+      throw new Error("Sessione scaduta. Accedi nuovamente.");
     }
 
     if (!response.ok) {
-      throw new Error(data.error || "Errore caricamento");
+      throw new Error(
+        data.error || "Impossibile caricare le pubblicità"
+      );
     }
 
     const spaces = Array.isArray(data.spaces)
@@ -206,6 +355,13 @@ async function loadPending() {
 
     adminStatus.textContent =
       spaces.length + " pubblicità in attesa";
+
+    if (spaces.length === 0) {
+      const empty = document.createElement("p");
+      empty.textContent = "Non ci sono pubblicità in attesa.";
+      items.appendChild(empty);
+      return;
+    }
 
     for (const space of spaces) {
       const card = document.createElement("div");
@@ -231,8 +387,9 @@ async function loadPending() {
       if (space.image_url) {
         const image = document.createElement("img");
         image.src = space.image_url;
-        image.alt = "Pubblicità da verificare";
+        image.alt = "Immagine pubblicitaria da verificare";
         image.referrerPolicy = "no-referrer";
+        image.loading = "lazy";
         card.appendChild(image);
       }
 
@@ -244,20 +401,28 @@ async function loadPending() {
 
       const approve = document.createElement("button");
       approve.textContent = "Approva";
-      approve.disabled = true;
+      approve.addEventListener("click", () => {
+        reviewSpace(space.id, "approve");
+      });
       card.appendChild(approve);
 
       const reject = document.createElement("button");
       reject.textContent = "Rifiuta";
-      reject.disabled = true;
+      reject.style.background = "#b91c1c";
       reject.style.marginLeft = "8px";
+      reject.addEventListener("click", () => {
+        reviewSpace(space.id, "reject");
+      });
       card.appendChild(reject);
 
       items.appendChild(card);
     }
 
   } catch (error) {
+    adminStatus.className = "status error";
     adminStatus.textContent = error.message;
+  } finally {
+    loading = false;
   }
 }
 
@@ -269,5 +434,6 @@ document.getElementById("logoutBtn")
 
 showLogin();
 </script>
+
 </body>
 </html>
