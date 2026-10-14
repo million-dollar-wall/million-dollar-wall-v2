@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -85,6 +86,10 @@ button {
   cursor: pointer;
 }
 
+button:hover {
+  background: #334b6b;
+}
+
 button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
@@ -168,6 +173,12 @@ small {
   font-size: 13px;
 }
 
+#connectionStatus {
+  margin: 10px 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
 @media (max-width: 850px) {
   main {
     grid-template-columns: 1fr;
@@ -191,6 +202,7 @@ small {
 <main>
 
 <section class="panel">
+
   <h2>Il muro da un milione di pixel</h2>
 
   <p>
@@ -213,6 +225,10 @@ small {
     </div>
   </div>
 
+  <p id="connectionStatus">
+    Caricamento degli spazi venduti...
+  </p>
+
   <p>
     <small>
       1.000 colonne × 1.000 righe.
@@ -220,6 +236,7 @@ small {
       Usa lo zoom per selezionare con maggiore precisione.
     </small>
   </p>
+
 </section>
 
 <aside class="panel">
@@ -264,7 +281,8 @@ small {
   <div class="note">
     Questa è una demo grafica.
     Nessun pagamento è attivo.
-    Le immagini e i colori non vengono salvati online.
+    Le anteprime non vengono salvate online.
+    Gli spazi già venduti vengono letti da Supabase.
   </div>
 
 </aside>
@@ -285,11 +303,15 @@ const ctx = base.getContext("2d");
 const gridCtx = grid.getContext("2d");
 const overlayCtx = overlay.getContext("2d");
 
+const connectionStatus =
+  document.getElementById("connectionStatus");
+
 let zoom = 1;
 let selection = null;
 let start = null;
 let dragging = false;
 let uploadedImage = null;
+let soldSpaces = [];
 
 function setupCanvas(canvas, context, width, height) {
   const dpr = window.devicePixelRatio || 1;
@@ -310,9 +332,6 @@ function drawGrid() {
 
   const step = width / SIZE;
 
-  // Disegna tutte le divisioni reali:
-  // 1000 colonne e 1000 righe.
-
   gridCtx.beginPath();
   gridCtx.strokeStyle = "#d6dde6";
   gridCtx.lineWidth = Math.min(0.55, step * 0.35);
@@ -332,7 +351,6 @@ function drawGrid() {
 
 function getPosition(event) {
   const rect = wall.getBoundingClientRect();
-
   const border = 3;
 
   const width = rect.width - border * 2;
@@ -361,6 +379,23 @@ function makeRectangle(a, b) {
   };
 }
 
+function rectanglesOverlap(a, b) {
+  return (
+    a.x < b.x + b.width &&
+    a.x + a.w > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.h > b.y
+  );
+}
+
+function selectionOverlapsSold() {
+  if (!selection) return false;
+
+  return soldSpaces.some(space =>
+    rectanglesOverlap(selection, space)
+  );
+}
+
 function drawSelection() {
   const width = wall.clientWidth;
   const height = wall.clientHeight;
@@ -378,10 +413,18 @@ function drawSelection() {
   const w = selection.w * scale;
   const h = selection.h * scale;
 
-  overlayCtx.fillStyle = "rgba(25,105,230,0.25)";
+  const overlaps = selectionOverlapsSold();
+
+  overlayCtx.fillStyle = overlaps
+    ? "rgba(220,38,38,0.25)"
+    : "rgba(25,105,230,0.25)";
+
   overlayCtx.fillRect(x, y, w, h);
 
-  overlayCtx.strokeStyle = "#1558d6";
+  overlayCtx.strokeStyle = overlaps
+    ? "#dc2626"
+    : "#1558d6";
+
   overlayCtx.lineWidth = 1.5;
   overlayCtx.strokeRect(x, y, w, h);
 }
@@ -402,6 +445,7 @@ function updateInfo() {
 
   const { x, y, w, h } = selection;
   const pixels = w * h;
+  const overlaps = selectionOverlapsSold();
 
   info.textContent =
     `X: ${x + 1}, Y: ${y + 1} — ${w} × ${h}`;
@@ -409,10 +453,11 @@ function updateInfo() {
   price.textContent =
     pixels.toLocaleString("it-IT") + " €";
 
-  count.textContent =
-    pixels.toLocaleString("it-IT") + " pixel × 1 €";
+  count.textContent = overlaps
+    ? "Attenzione: lo spazio include pixel già venduti"
+    : pixels.toLocaleString("it-IT") + " pixel × 1 €";
 
-  button.disabled = false;
+  button.disabled = overlaps;
 }
 
 wall.addEventListener("pointerdown", event => {
@@ -537,6 +582,11 @@ document.getElementById("image").addEventListener(
 function preview() {
   if (!selection) return;
 
+  if (selectionOverlapsSold()) {
+    alert("Questo spazio contiene pixel già venduti.");
+    return;
+  }
+
   const { x, y, w, h } = selection;
 
   ctx.fillStyle =
@@ -556,10 +606,94 @@ function preview() {
   );
 }
 
+/*
+  CARICAMENTO DEGLI SPAZI VENDUTI
+
+  Legge /api/spaces, che recupera
+  i dati dal nuovo progetto Supabase.
+
+  Non modifica il database.
+*/
+
+async function loadSoldSpaces() {
+  connectionStatus.textContent =
+    "Caricamento degli spazi venduti...";
+
+  try {
+    const response = await fetch("/api/spaces", {
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error("Errore API: " + response.status);
+    }
+
+    const data = await response.json();
+
+    if (!Array.isArray(data.spaces)) {
+      throw new Error("Risposta API non valida");
+    }
+
+    soldSpaces = data.spaces;
+
+    for (const space of soldSpaces) {
+      const {
+        x,
+        y,
+        width,
+        height,
+        color,
+        image_url
+      } = space;
+
+      ctx.fillStyle = color || "#ffffff";
+      ctx.fillRect(x, y, width, height);
+
+      if (image_url) {
+        const image = new Image();
+
+        image.onload = () => {
+          ctx.drawImage(
+            image,
+            x,
+            y,
+            width,
+            height
+          );
+        };
+
+        image.onerror = () => {
+          console.warn(
+            "Impossibile caricare immagine:",
+            image_url
+          );
+        };
+
+        image.src = image_url;
+      }
+    }
+
+    connectionStatus.textContent =
+      "Database collegato · " +
+      soldSpaces.length +
+      " spazi venduti caricati";
+
+    drawSelection();
+    updateInfo();
+
+  } catch (error) {
+    console.error(error);
+
+    connectionStatus.textContent =
+      "Errore nel caricamento degli spazi venduti";
+  }
+}
+
 window.addEventListener("resize", applyZoom);
 
 applyZoom();
 updateInfo();
+loadSoldSpaces();
 </script>
 
 </body>
