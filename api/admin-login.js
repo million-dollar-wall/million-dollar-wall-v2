@@ -1,4 +1,5 @@
 
+
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
@@ -8,11 +9,11 @@ export default async function handler(req, res) {
     });
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL;
-  const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;
+  const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
+  const publicKey = process.env.SUPABASE_PUBLISHABLE_KEY;
   const secretKey = process.env.SUPABASE_SECRET_KEY;
 
-  if (!supabaseUrl || !publishableKey || !secretKey) {
+  if (!url || !publicKey || !secretKey) {
     return res.status(503).json({
       error: "Configurazione Supabase incompleta"
     });
@@ -32,13 +33,13 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Verifica email e password con Supabase.
+    // Verifica email e password.
     const authResponse = await fetch(
-      `${supabaseUrl}/auth/v1/token?grant_type=password`,
+      `${url}/auth/v1/token?grant_type=password`,
       {
         method: "POST",
         headers: {
-          apikey: publishableKey,
+          apikey: publicKey,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({ email, password })
@@ -53,18 +54,19 @@ export default async function handler(req, res) {
       });
     }
 
-    // 2. Controlla che l'utente sia nella tabella amministratori.
+    // Verifica l'amministratore usando il token
+    // dell'utente e la chiave pubblica.
     const params = new URLSearchParams({
       user_id: `eq.${auth.user.id}`,
       select: "user_id"
     });
 
     const adminResponse = await fetch(
-      `${supabaseUrl}/rest/v1/wall_admins?${params}`,
+      `${url}/rest/v1/wall_admins?${params}`,
       {
-        method: "GET",
         headers: {
-          apikey: secretKey,
+          apikey: publicKey,
+          Authorization: `Bearer ${auth.access_token}`,
           Accept: "application/json"
         }
       }
@@ -89,7 +91,6 @@ export default async function handler(req, res) {
       });
     }
 
-    // 3. Restituisce il token soltanto all'amministratore.
     return res.status(200).json({
       access_token: auth.access_token
     });
