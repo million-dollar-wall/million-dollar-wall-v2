@@ -173,10 +173,18 @@ small {
   font-size: 13px;
 }
 
-#connectionStatus {
+#connectionStatus,
+#availabilityStatus {
   margin: 10px 0;
   font-size: 13px;
+}
+
+#connectionStatus {
   color: #64748b;
+}
+
+#availabilityStatus {
+  font-weight: bold;
 }
 
 @media (max-width: 850px) {
@@ -196,7 +204,9 @@ small {
 <header>
   <h1>The <span>Million Dollar</span> Wall</h1>
   <p>1.000.000 di pixel disponibili · 1 pixel = 1 €</p>
-  <div class="demo">VERSIONE DEMO — PAGAMENTI DISATTIVATI</div>
+  <div class="demo">
+    VERSIONE DEMO — PAGAMENTI DISATTIVATI
+  </div>
 </header>
 
 <main>
@@ -243,8 +253,6 @@ small {
 
   <h2>Il tuo spazio</h2>
 
-  <p id="selectionInfo">Nessuna selezione</p>
-
   <div class="price" id="price">0 €</div>
 
   <small id="pixelCount">0 pixel × 1 €</small>
@@ -259,7 +267,9 @@ small {
     accept="image/png,image/jpeg,image/webp"
   >
 
-  <p><small>Dimensione massima: 5 MB</small></p>
+  <p>
+    <small>Dimensione massima: 5 MB</small>
+  </p>
 
   <label for="link">Link pubblicitario</label>
   <input
@@ -269,7 +279,23 @@ small {
   >
 
   <div class="controls">
-    <button id="previewBtn" onclick="preview()" disabled>
+    <button
+      id="checkBtn"
+      onclick="checkAvailability()"
+      disabled
+    >
+      Verifica disponibilità
+    </button>
+  </div>
+
+  <p id="availabilityStatus" aria-live="polite"></p>
+
+  <div class="controls">
+    <button
+      id="previewBtn"
+      onclick="preview()"
+      disabled
+    >
       Mostra anteprima
     </button>
 
@@ -281,8 +307,8 @@ small {
   <div class="note">
     Questa è una demo grafica.
     Nessun pagamento è attivo.
+    La disponibilità viene controllata sul server.
     Le anteprime non vengono salvate online.
-    Gli spazi già venduti vengono letti da Supabase.
   </div>
 
 </aside>
@@ -306,12 +332,18 @@ const overlayCtx = overlay.getContext("2d");
 const connectionStatus =
   document.getElementById("connectionStatus");
 
+const availabilityStatus =
+  document.getElementById("availabilityStatus");
+
 let zoom = 1;
 let selection = null;
 let start = null;
 let dragging = false;
 let uploadedImage = null;
 let soldSpaces = [];
+let availabilityConfirmed = false;
+let checking = false;
+let checkVersion = 0;
 
 function setupCanvas(canvas, context, width, height) {
   const dpr = window.devicePixelRatio || 1;
@@ -327,7 +359,6 @@ function drawGrid() {
   const height = wall.clientHeight;
 
   setupCanvas(grid, gridCtx, width, height);
-
   gridCtx.clearRect(0, 0, width, height);
 
   const step = width / SIZE;
@@ -396,12 +427,18 @@ function selectionOverlapsSold() {
   );
 }
 
+function invalidateAvailability() {
+  checkVersion++;
+  availabilityConfirmed = false;
+  checking = false;
+  availabilityStatus.textContent = "";
+}
+
 function drawSelection() {
   const width = wall.clientWidth;
   const height = wall.clientHeight;
 
   setupCanvas(overlay, overlayCtx, width, height);
-
   overlayCtx.clearRect(0, 0, width, height);
 
   if (!selection) return;
@@ -430,25 +467,22 @@ function drawSelection() {
 }
 
 function updateInfo() {
-  const info = document.getElementById("selectionInfo");
   const price = document.getElementById("price");
   const count = document.getElementById("pixelCount");
-  const button = document.getElementById("previewBtn");
+  const previewBtn = document.getElementById("previewBtn");
+  const checkBtn = document.getElementById("checkBtn");
 
   if (!selection) {
-    info.textContent = "Nessuna selezione";
     price.textContent = "0 €";
     count.textContent = "0 pixel × 1 €";
-    button.disabled = true;
+    previewBtn.disabled = true;
+    checkBtn.disabled = true;
     return;
   }
 
-  const { x, y, w, h } = selection;
+  const { w, h } = selection;
   const pixels = w * h;
   const overlaps = selectionOverlapsSold();
-
-  info.textContent =
-    `X: ${x + 1}, Y: ${y + 1} — ${w} × ${h}`;
 
   price.textContent =
     pixels.toLocaleString("it-IT") + " €";
@@ -457,11 +491,16 @@ function updateInfo() {
     ? "Attenzione: lo spazio include pixel già venduti"
     : pixels.toLocaleString("it-IT") + " pixel × 1 €";
 
-  button.disabled = overlaps;
+  checkBtn.disabled = checking;
+
+  previewBtn.disabled =
+    !availabilityConfirmed || checking || overlaps;
 }
 
 wall.addEventListener("pointerdown", event => {
   event.preventDefault();
+
+  invalidateAvailability();
 
   start = getPosition(event);
   selection = makeRectangle(start, start);
@@ -475,6 +514,8 @@ wall.addEventListener("pointerdown", event => {
 
 wall.addEventListener("pointermove", event => {
   if (!dragging) return;
+
+  invalidateAvailability();
 
   selection = makeRectangle(start, getPosition(event));
 
@@ -531,6 +572,7 @@ function applyZoom() {
 
 function clearSelection() {
   selection = null;
+  invalidateAvailability();
   drawSelection();
   updateInfo();
 }
@@ -579,8 +621,81 @@ document.getElementById("image").addEventListener(
   }
 );
 
+async function checkAvailability() {
+  if (!selection || checking) return;
+
+  const requestVersion = ++checkVersion;
+  const { x, y, w, h } = selection;
+
+  availabilityConfirmed = false;
+  checking = true;
+
+  availabilityStatus.textContent =
+    "Controllo disponibilità in corso...";
+
+  availabilityStatus.style.color = "#64748b";
+  updateInfo();
+
+  try {
+    const response = await fetch("/api/check-space", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        x,
+        y,
+        width: w,
+        height: h
+      })
+    });
+
+    const data = await response.json();
+
+    if (requestVersion !== checkVersion) return;
+
+    if (!response.ok) {
+      throw new Error(
+        data.error || "Errore nel controllo"
+      );
+    }
+
+    if (data.available === true) {
+      availabilityConfirmed = true;
+
+      availabilityStatus.textContent =
+        "✓ Spazio disponibile! Puoi vedere l'anteprima.";
+
+      availabilityStatus.style.color = "#15803d";
+    } else {
+      availabilityConfirmed = false;
+
+      availabilityStatus.textContent =
+        "✕ Spazio occupato. Scegli altri pixel.";
+
+      availabilityStatus.style.color = "#dc2626";
+    }
+
+  } catch (error) {
+    if (requestVersion !== checkVersion) return;
+
+    availabilityConfirmed = false;
+
+    availabilityStatus.textContent =
+      "Errore: " + error.message;
+
+    availabilityStatus.style.color = "#dc2626";
+
+  } finally {
+    if (requestVersion === checkVersion) {
+      checking = false;
+      updateInfo();
+    }
+  }
+}
+
 function preview() {
-  if (!selection) return;
+  if (!selection || !availabilityConfirmed) return;
 
   if (selectionOverlapsSold()) {
     alert("Questo spazio contiene pixel già venduti.");
@@ -598,22 +713,11 @@ function preview() {
     ctx.drawImage(uploadedImage, x, y, w, h);
   }
 
-  drawSelection();
-
   alert(
     "Anteprima applicata. " +
     "Non è un acquisto e non viene salvata online."
   );
 }
-
-/*
-  CARICAMENTO DEGLI SPAZI VENDUTI
-
-  Legge /api/spaces, che recupera
-  i dati dal nuovo progetto Supabase.
-
-  Non modifica il database.
-*/
 
 async function loadSoldSpaces() {
   connectionStatus.textContent =
