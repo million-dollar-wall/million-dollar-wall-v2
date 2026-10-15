@@ -1,5 +1,4 @@
 
-
 const SITE_URL = "https://million-dollar-wall-v2.vercel.app";
 
 function supabaseHeaders(key) {
@@ -49,8 +48,6 @@ async function expireStripeSession(stripeKey, sessionId) {
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
-  // Gli acquisti rimangono disattivati
-  // fino all'abilitazione esplicita su Vercel.
   if (process.env.ENABLE_WALL_PAYMENTS !== "true") {
     return res.status(503).json({
       error: "Acquisti temporaneamente disattivati"
@@ -125,8 +122,6 @@ export default async function handler(req, res) {
     const params = new URLSearchParams({
       mode: "payment",
 
-      // Stripe sostituisce automaticamente
-      // questo segnaposto con la sessione reale.
       success_url:
         `${SITE_URL}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
 
@@ -146,8 +141,6 @@ export default async function handler(req, res) {
       "metadata[pixels]": String(pixels),
       "metadata[expected_amount]": String(amount),
 
-      "payment_method_types[0]": "card",
-
       expires_at:
         String(Math.floor(Date.now() / 1000) + 1800)
     });
@@ -158,8 +151,7 @@ export default async function handler(req, res) {
         method: "POST",
         headers: {
           Authorization: `Bearer ${stripeKey}`,
-          "Content-Type":
-            "application/x-www-form-urlencoded"
+          "Content-Type": "application/x-www-form-urlencoded"
         },
         body: params.toString()
       }
@@ -173,6 +165,11 @@ export default async function handler(req, res) {
       !session.url ||
       !session.id.startsWith("cs_live_")
     ) {
+      console.error(
+        "Errore Stripe Checkout:",
+        session.error?.message || `HTTP ${stripeResponse.status}`
+      );
+
       throw new Error(
         `Creazione Checkout fallita: HTTP ${stripeResponse.status}`
       );
@@ -197,8 +194,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // Restituisce il Checkout soltanto dopo
-    // il collegamento corretto.
     return res.status(200).json({
       checkout_url: session.url
     });
