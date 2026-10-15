@@ -17,6 +17,7 @@ function verifySignature(payload, header, secret) {
   if (!timestamp || !/^\d+$/.test(timestamp)) return false;
 
   const time = Number(timestamp);
+
   if (!Number.isSafeInteger(time)) return false;
   if (Math.abs(Date.now() / 1000 - time) > 300) return false;
 
@@ -28,6 +29,7 @@ function verifySignature(payload, header, secret) {
 
   return signatures.some(signature => {
     if (!/^[a-f0-9]{64}$/i.test(signature)) return false;
+
     return crypto.timingSafeEqual(
       expected,
       Buffer.from(signature, "hex")
@@ -36,8 +38,8 @@ function verifySignature(payload, header, secret) {
 }
 
 async function readBody(req) {
-  // Compatibile con richieste già lette dal runtime.
   if (Buffer.isBuffer(req.body)) return req.body;
+
   if (typeof req.body === "string") {
     return Buffer.from(req.body, "utf8");
   }
@@ -51,9 +53,11 @@ async function readBody(req) {
       : Buffer.from(chunk);
 
     size += data.length;
+
     if (size > 1024 * 1024) {
       throw new Error("Payload troppo grande");
     }
+
     chunks.push(data);
   }
 
@@ -61,7 +65,7 @@ async function readBody(req) {
 }
 
 async function supabaseRequest(path, options = {}) {
-  const url = process.env.SUPABASE_URL;
+  const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
   const key = process.env.SUPABASE_SECRET_KEY;
 
   if (!url || !key) {
@@ -100,7 +104,7 @@ function getSpaceId(session) {
 async function getSpace(spaceId) {
   const rows = await supabaseRequest(
     `wall_spaces?id=eq.${encodeURIComponent(spaceId)}` +
-    "&select=id,width,height,status,stripe_session_id"
+    "&select=id,width,height,status,stripe_session_id,approval_status,image_path"
   );
 
   if (!Array.isArray(rows) || rows.length !== 1) {
@@ -108,6 +112,51 @@ async function getSpace(spaceId) {
   }
 
   return rows[0];
+}
+
+async function approveColorSpace(spaceId, sessionId) {
+  const params = new URLSearchParams({
+    id: `eq.${spaceId}`,
+    status: "eq.sold",
+    stripe_session_id: `eq.${sessionId}`,
+    approval_status: "eq.pending_review",
+    image_path: "is.null",
+    select: "id"
+  });
+
+  const updated = await supabaseRequest(
+    `wall_spaces?${params}`,
+    {
+      method: "PATCH",
+      headers: {
+        Prefer: "return=representation"
+      },
+      body: JSON.stringify({
+        approval_status: "approved",
+        reviewed_at: new Date().toISOString()
+      })
+    }
+  );
+
+  if (Array.isArray(updated) && updated.length === 1) {
+    console.log("Pixel colorati pubblicati:", spaceId);
+    return;
+  }
+
+  const space = await getSpace(spaceId);
+
+  if (
+    space.status === "sold" &&
+    space.stripe_session_id === sessionId &&
+    space.approval_status === "approved" &&
+    !space.image_path
+  ) {
+    return;
+  }
+
+  throw new Error(
+    "Impossibile pubblicare automaticamente lo spazio"
+  );
 }
 
 async function confirmPayment(session) {
@@ -126,6 +175,7 @@ async function confirmPayment(session) {
 
   const spaceId = getSpaceId(session);
   const space = await getSpace(spaceId);
+
   const pixels = space.width * space.height;
   const amount = pixels * 100;
 
@@ -138,7 +188,9 @@ async function confirmPayment(session) {
     session.metadata?.pixels !== String(pixels) ||
     session.metadata?.expected_amount !== String(amount)
   ) {
-    throw new Error("Pagamento o prenotazione non corrispondenti");
+    throw new Error(
+      "Pagamento o prenotazione non corrispondenti"
+    );
   }
 
   const confirmed = await supabaseRequest(
@@ -153,10 +205,18 @@ async function confirmPayment(session) {
   );
 
   if (confirmed !== true) {
-    throw new Error("Pagamento ricevuto ma pixel non assegnabili");
+    throw new Error(
+      "Pagamento ricevuto ma pixel non assegnabili"
+    );
   }
 
   console.log("Pagamento confermato:", session.id);
+
+  // Pubblicazione automatica SOLO per acquisti
+  // esplicitamente identificati come colore.
+  if (session.metadata?.content_type === "color") {
+    await approveColorSpace(spaceId, session.id);
+  }
 }
 
 async function handleExpired(session) {
@@ -174,7 +234,6 @@ async function handleExpired(session) {
   const spaceId = getSpaceId(session);
   const space = await getSpace(spaceId);
 
-  // Non toccare spazi già venduti o modificati.
   if (space.status === "sold") return;
 
   if (
@@ -184,8 +243,6 @@ async function handleExpired(session) {
     return;
   }
 
-  // L'operazione di sblocco deve essere atomica e
-  // controllare la stessa sessione Stripe.
   const released = await supabaseRequest(
     "rpc/release_expired_wall_checkout",
     {
@@ -198,15 +255,21 @@ async function handleExpired(session) {
   );
 
   if (released !== true) {
-    throw new Error("Impossibile liberare la prenotazione");
+    throw new Error(
+      "Impossibile liberare la prenotazione"
+    );
   }
 
-  console.log("Prenotazione scaduta liberata:", session.id);
+  console.log(
+    "Prenotazione scaduta liberata:",
+    session.id
+  );
 }
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
+
     return res.status(405).json({
       error: "Metodo non consentito"
     });
@@ -263,11 +326,16 @@ export default async function handler(req, res) {
       await handleExpired(event.data?.object);
     }
 
-    return res.status(200).json({ received: true });
-  } catch (error) {
-    console.error("Errore webhook:", error.message);
+    return res.status(200).json({
+      received: true
+    });
 
-    // Stripe potrà ritentare l'evento.
+  } catch (error) {
+    console.error(
+      "Errore webhook:",
+      error.message
+    );
+
     return res.status(500).json({
       error: "Evento non elaborato"
     });
