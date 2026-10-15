@@ -1,4 +1,5 @@
 
+
 const SITE_URL = "https://million-dollar-wall-v2.vercel.app";
 
 function supabaseHeaders(key) {
@@ -46,8 +47,10 @@ async function expireStripeSession(stripeKey, sessionId) {
 }
 
 export default async function handler(req, res) {
-  // SICUREZZA: acquisti disattivati finché non
-  // vengono abilitati esplicitamente su Vercel.
+  res.setHeader("Cache-Control", "no-store");
+
+  // Gli acquisti rimangono disattivati
+  // fino all'abilitazione esplicita su Vercel.
   if (process.env.ENABLE_WALL_PAYMENTS !== "true") {
     return res.status(503).json({
       error: "Acquisti temporaneamente disattivati"
@@ -56,6 +59,7 @@ export default async function handler(req, res) {
 
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
+
     return res.status(405).json({
       error: "Metodo non consentito"
     });
@@ -101,7 +105,7 @@ export default async function handler(req, res) {
   let sessionAttached = false;
 
   try {
-    // 1. Prenotazione temporanea dei pixel.
+    // 1. Prenota temporaneamente i pixel.
     spaceId = await callSupabaseRpc(
       supabaseUrl,
       supabaseKey,
@@ -117,21 +121,35 @@ export default async function handler(req, res) {
       }
     );
 
-    // 2. Preparazione della sessione Stripe Checkout.
+    // 2. Prepara Stripe Checkout.
     const params = new URLSearchParams({
       mode: "payment",
-      success_url: `${SITE_URL}/?checkout=success`,
+
+      // Stripe sostituisce automaticamente
+      // questo segnaposto con la sessione reale.
+      success_url:
+        `${SITE_URL}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+
       cancel_url: `${SITE_URL}/?checkout=cancel`,
+
       "line_items[0][price_data][currency]": "eur",
-      "line_items[0][price_data][unit_amount]": String(amount),
+
+      "line_items[0][price_data][unit_amount]":
+        String(amount),
+
       "line_items[0][price_data][product_data][name]":
         `Spazio pubblicitario ${width} x ${height} pixel`,
+
       "line_items[0][quantity]": "1",
+
       "metadata[space_id]": String(spaceId),
       "metadata[pixels]": String(pixels),
       "metadata[expected_amount]": String(amount),
+
       "payment_method_types[0]": "card",
-      expires_at: String(Math.floor(Date.now() / 1000) + 1800)
+
+      expires_at:
+        String(Math.floor(Date.now() / 1000) + 1800)
     });
 
     const stripeResponse = await fetch(
@@ -140,7 +158,8 @@ export default async function handler(req, res) {
         method: "POST",
         headers: {
           Authorization: `Bearer ${stripeKey}`,
-          "Content-Type": "application/x-www-form-urlencoded"
+          "Content-Type":
+            "application/x-www-form-urlencoded"
         },
         body: params.toString()
       }
@@ -148,7 +167,12 @@ export default async function handler(req, res) {
 
     const session = await stripeResponse.json();
 
-    if (!stripeResponse.ok || !session.id || !session.url) {
+    if (
+      !stripeResponse.ok ||
+      !session.id ||
+      !session.url ||
+      !session.id.startsWith("cs_live_")
+    ) {
       throw new Error(
         `Creazione Checkout fallita: HTTP ${stripeResponse.status}`
       );
@@ -156,7 +180,7 @@ export default async function handler(req, res) {
 
     sessionId = session.id;
 
-    // 3. Associazione della sessione Stripe alla prenotazione.
+    // 3. Collega Stripe alla prenotazione.
     sessionAttached = await callSupabaseRpc(
       supabaseUrl,
       supabaseKey,
@@ -168,18 +192,23 @@ export default async function handler(req, res) {
     );
 
     if (sessionAttached !== true) {
-      throw new Error("Collegamento Stripe-Supabase fallito");
+      throw new Error(
+        "Collegamento Stripe-Supabase fallito"
+      );
     }
 
-    // Il Checkout viene restituito solo dopo l'associazione.
+    // Restituisce il Checkout soltanto dopo
+    // il collegamento corretto.
     return res.status(200).json({
       checkout_url: session.url
     });
 
   } catch (error) {
-    console.error("Errore create-checkout:", error.message);
+    console.error(
+      "Errore create-checkout:",
+      error.message
+    );
 
-    // Se necessario, prova a scadere la sessione Stripe.
     if (sessionId) {
       try {
         await expireStripeSession(stripeKey, sessionId);
@@ -191,7 +220,6 @@ export default async function handler(req, res) {
       }
     }
 
-    // Annulla soltanto prenotazioni non collegate.
     if (spaceId && !sessionAttached) {
       try {
         await callSupabaseRpc(
