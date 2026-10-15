@@ -1,3 +1,4 @@
+
 const SITE_URL = "https://million-dollar-wall-v2.vercel.app";
 
 function supabaseHeaders(key) {
@@ -61,7 +62,36 @@ export default async function handler(req, res) {
     });
   }
 
-  const { x, y, width, height, color } = req.body || {};
+  const {
+    x,
+    y,
+    width,
+    height,
+    color,
+    content_type
+  } = req.body || {};
+
+  // Compatibilità con gli acquisti colore esistenti.
+  const contentType = content_type === undefined
+    ? "color"
+    : content_type;
+
+  if (!["color", "image"].includes(contentType)) {
+    return res.status(400).json({
+      error: "Tipo di acquisto non valido"
+    });
+  }
+
+  // Non permettere pagamenti per immagini
+  // finché il caricamento non sarà pronto.
+  if (
+    contentType === "image" &&
+    process.env.ENABLE_IMAGE_UPLOADS !== "true"
+  ) {
+    return res.status(503).json({
+      error: "Acquisto immagini non ancora disponibile"
+    });
+  }
 
   if (
     ![x, y, width, height].every(Number.isInteger) ||
@@ -77,9 +107,13 @@ export default async function handler(req, res) {
     });
   }
 
+  const selectedColor = contentType === "image"
+    ? "#ffffff"
+    : color;
+
   if (
-    typeof color !== "string" ||
-    !/^#[0-9a-fA-F]{6}$/.test(color)
+    typeof selectedColor !== "string" ||
+    !/^#[0-9a-fA-F]{6}$/.test(selectedColor)
   ) {
     return res.status(400).json({
       error: "Colore non valido"
@@ -99,7 +133,8 @@ export default async function handler(req, res) {
   }
 
   const stripeKey = process.env.STRIPE_SECRET_KEY;
-  const supabaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, "");
+  const supabaseUrl =
+    process.env.SUPABASE_URL?.replace(/\/$/, "");
   const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 
   if (!stripeKey || !supabaseUrl || !supabaseKey) {
@@ -113,7 +148,7 @@ export default async function handler(req, res) {
   let sessionAttached = false;
 
   try {
-    // 1. Prenota i pixel nel database.
+    // 1. Prenota lo spazio.
     spaceId = await callSupabaseRpc(
       supabaseUrl,
       supabaseKey,
@@ -123,20 +158,22 @@ export default async function handler(req, res) {
         p_y: y,
         p_width: width,
         p_height: height,
-        p_color: color
+        p_color: selectedColor
       }
     );
 
     if (
       typeof spaceId !== "string" ||
-      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(spaceId)
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(spaceId)
     ) {
       throw new Error("Prenotazione non valida");
     }
 
-    // 2. Crea una sessione Stripe LIVE.
-    // Questo endpoint vende ESCLUSIVAMENTE pixel colorati.
-    // Il tipo non viene accettato dal browser.
+    // 2. Crea il Checkout Stripe.
+    const productName = contentType === "image"
+      ? `Spazio pubblicitario ${width} x ${height}`
+      : `Pixel colorati ${width} x ${height}`;
+
     const params = new URLSearchParams({
       mode: "payment",
 
@@ -153,7 +190,7 @@ export default async function handler(req, res) {
         String(amount),
 
       "line_items[0][price_data][product_data][name]":
-        `Pixel colorati ${width} x ${height}`,
+        productName,
 
       "line_items[0][quantity]":
         "1",
@@ -167,9 +204,10 @@ export default async function handler(req, res) {
       "metadata[expected_amount]":
         String(amount),
 
-      // Identifica in modo sicuro il tipo di acquisto.
+      // Il webhook usa questo valore per
+      // decidere se pubblicare automaticamente.
       "metadata[content_type]":
-        "color",
+        contentType,
 
       expires_at:
         String(Math.floor(Date.now() / 1000) + 1800)
@@ -219,7 +257,7 @@ export default async function handler(req, res) {
 
     sessionId = session.id;
 
-    // 3. Associa Stripe alla prenotazione.
+    // 3. Collega Stripe alla prenotazione.
     sessionAttached = await callSupabaseRpc(
       supabaseUrl,
       supabaseKey,
@@ -236,7 +274,7 @@ export default async function handler(req, res) {
       );
     }
 
-    // 4. Invia il cliente al pagamento.
+    // 4. Restituisci l'URL di pagamento.
     return res.status(200).json({
       checkout_url: checkoutUrl.href
     });
@@ -247,7 +285,6 @@ export default async function handler(req, res) {
       error.message
     );
 
-    // Annulla la sessione Stripe se creata.
     if (sessionId) {
       try {
         await expireStripeSession(
@@ -262,7 +299,6 @@ export default async function handler(req, res) {
       }
     }
 
-    // Libera i pixel se Stripe non è stato associato.
     if (spaceId && !sessionAttached) {
       try {
         await callSupabaseRpc(
@@ -286,3 +322,4 @@ export default async function handler(req, res) {
     });
   }
 }
+
