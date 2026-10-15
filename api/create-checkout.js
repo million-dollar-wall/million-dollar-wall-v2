@@ -1,4 +1,3 @@
-
 const SITE_URL = "https://million-dollar-wall-v2.vercel.app";
 
 function supabaseHeaders(key) {
@@ -48,17 +47,17 @@ async function expireStripeSession(stripeKey, sessionId) {
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
 
-  if (process.env.ENABLE_WALL_PAYMENTS !== "true") {
-    return res.status(503).json({
-      error: "Acquisti temporaneamente disattivati"
-    });
-  }
-
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
 
     return res.status(405).json({
       error: "Metodo non consentito"
+    });
+  }
+
+  if (process.env.ENABLE_WALL_PAYMENTS !== "true") {
+    return res.status(503).json({
+      error: "Acquisti temporaneamente disattivati"
     });
   }
 
@@ -78,17 +77,29 @@ export default async function handler(req, res) {
     });
   }
 
+  if (
+    typeof color !== "string" ||
+    !/^#[0-9a-fA-F]{6}$/.test(color)
+  ) {
+    return res.status(400).json({
+      error: "Colore non valido"
+    });
+  }
+
   const pixels = width * height;
   const amount = pixels * 100;
 
-  if (!Number.isSafeInteger(amount) || amount < 100) {
+  if (
+    !Number.isSafeInteger(amount) ||
+    amount < 100
+  ) {
     return res.status(400).json({
       error: "Importo non valido"
     });
   }
 
   const stripeKey = process.env.STRIPE_SECRET_KEY;
-  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, "");
   const supabaseKey = process.env.SUPABASE_SECRET_KEY;
 
   if (!stripeKey || !supabaseUrl || !supabaseKey) {
@@ -102,7 +113,7 @@ export default async function handler(req, res) {
   let sessionAttached = false;
 
   try {
-    // 1. Prenota temporaneamente i pixel.
+    // 1. Prenota i pixel nel database.
     spaceId = await callSupabaseRpc(
       supabaseUrl,
       supabaseKey,
@@ -112,34 +123,53 @@ export default async function handler(req, res) {
         p_y: y,
         p_width: width,
         p_height: height,
-        p_color: /^#[0-9a-fA-F]{6}$/.test(color || "")
-          ? color
-          : "#ffffff"
+        p_color: color
       }
     );
 
-    // 2. Prepara Stripe Checkout.
+    if (
+      typeof spaceId !== "string" ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(spaceId)
+    ) {
+      throw new Error("Prenotazione non valida");
+    }
+
+    // 2. Crea una sessione Stripe LIVE.
+    // Questo endpoint vende ESCLUSIVAMENTE pixel colorati.
+    // Il tipo non viene accettato dal browser.
     const params = new URLSearchParams({
       mode: "payment",
 
       success_url:
         `${SITE_URL}/?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
 
-      cancel_url: `${SITE_URL}/?checkout=cancel`,
+      cancel_url:
+        `${SITE_URL}/?checkout=cancel`,
 
-      "line_items[0][price_data][currency]": "eur",
+      "line_items[0][price_data][currency]":
+        "eur",
 
       "line_items[0][price_data][unit_amount]":
         String(amount),
 
       "line_items[0][price_data][product_data][name]":
-        `Spazio pubblicitario ${width} x ${height} pixel`,
+        `Pixel colorati ${width} x ${height}`,
 
-      "line_items[0][quantity]": "1",
+      "line_items[0][quantity]":
+        "1",
 
-      "metadata[space_id]": String(spaceId),
-      "metadata[pixels]": String(pixels),
-      "metadata[expected_amount]": String(amount),
+      "metadata[space_id]":
+        spaceId,
+
+      "metadata[pixels]":
+        String(pixels),
+
+      "metadata[expected_amount]":
+        String(amount),
+
+      // Identifica in modo sicuro il tipo di acquisto.
+      "metadata[content_type]":
+        "color",
 
       expires_at:
         String(Math.floor(Date.now() / 1000) + 1800)
@@ -151,7 +181,8 @@ export default async function handler(req, res) {
         method: "POST",
         headers: {
           Authorization: `Bearer ${stripeKey}`,
-          "Content-Type": "application/x-www-form-urlencoded"
+          "Content-Type":
+            "application/x-www-form-urlencoded"
         },
         body: params.toString()
       }
@@ -161,23 +192,34 @@ export default async function handler(req, res) {
 
     if (
       !stripeResponse.ok ||
-      !session.id ||
-      !session.url ||
-      !session.id.startsWith("cs_live_")
+      typeof session.id !== "string" ||
+      !session.id.startsWith("cs_live_") ||
+      typeof session.url !== "string"
     ) {
       console.error(
-        "Errore Stripe Checkout:",
-        session.error?.message || `HTTP ${stripeResponse.status}`
+        "Errore Stripe:",
+        session.error?.message ||
+        stripeResponse.status
       );
 
-      throw new Error(
-        `Creazione Checkout fallita: HTTP ${stripeResponse.status}`
-      );
+      throw new Error("Creazione Checkout fallita");
+    }
+
+    const checkoutUrl = new URL(session.url);
+
+    if (
+      checkoutUrl.protocol !== "https:" ||
+      ![
+        "checkout.stripe.com",
+        "pay.stripe.com"
+      ].includes(checkoutUrl.hostname)
+    ) {
+      throw new Error("URL Checkout non valido");
     }
 
     sessionId = session.id;
 
-    // 3. Collega Stripe alla prenotazione.
+    // 3. Associa Stripe alla prenotazione.
     sessionAttached = await callSupabaseRpc(
       supabaseUrl,
       supabaseKey,
@@ -194,8 +236,9 @@ export default async function handler(req, res) {
       );
     }
 
+    // 4. Invia il cliente al pagamento.
     return res.status(200).json({
-      checkout_url: session.url
+      checkout_url: checkoutUrl.href
     });
 
   } catch (error) {
@@ -204,9 +247,13 @@ export default async function handler(req, res) {
       error.message
     );
 
+    // Annulla la sessione Stripe se creata.
     if (sessionId) {
       try {
-        await expireStripeSession(stripeKey, sessionId);
+        await expireStripeSession(
+          stripeKey,
+          sessionId
+        );
       } catch (expireError) {
         console.error(
           "Errore scadenza sessione:",
@@ -215,13 +262,16 @@ export default async function handler(req, res) {
       }
     }
 
+    // Libera i pixel se Stripe non è stato associato.
     if (spaceId && !sessionAttached) {
       try {
         await callSupabaseRpc(
           supabaseUrl,
           supabaseKey,
           "cancel_wall_reservation",
-          { p_space_id: spaceId }
+          {
+            p_space_id: spaceId
+          }
         );
       } catch (cancelError) {
         console.error(
