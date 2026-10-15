@@ -39,11 +39,16 @@ export default async function handler(req, res) {
 
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
-    return fail(res, 405, "Metodo non consentito");
+
+    return fail(
+      res,
+      405,
+      "Metodo non consentito"
+    );
   }
 
-  // I caricamenti rimangono disattivati
-  // fino all'abilitazione esplicita.
+  // Rimane disattivato fino al completamento
+  // e alla verifica dell'intero sistema.
   if (
     process.env.ENABLE_WALL_PAYMENTS !== "true" ||
     process.env.ENABLE_IMAGE_UPLOADS !== "true"
@@ -77,11 +82,16 @@ export default async function handler(req, res) {
     typeof imagePath !== "string" ||
     imagePath.length > 150
   ) {
-    return fail(res, 400, "Richiesta non valida");
+    return fail(
+      res,
+      400,
+      "Richiesta non valida"
+    );
   }
 
   try {
-    // 1. Verifica il pagamento con Stripe.
+    // 1. Verifica il pagamento direttamente
+    // con Stripe.
     const stripeResponse = await fetch(
       "https://api.stripe.com/v1/checkout/sessions/" +
         encodeURIComponent(sessionId),
@@ -118,8 +128,18 @@ export default async function handler(req, res) {
       );
     }
 
-    // 2. Verifica che l'immagine appartenga
-    // allo spazio effettivamente acquistato.
+    // 2. Accetta soltanto gli acquisti
+    // effettuati per immagini o loghi.
+    // Gli acquisti "solo colore" sono esclusi.
+    if (session.metadata?.content_type !== "image") {
+      return fail(
+        res,
+        403,
+        "Questo acquisto non include immagini"
+      );
+    }
+
+    // 3. Identifica lo spazio pagato.
     const spaceId = session.metadata?.space_id;
 
     if (
@@ -133,6 +153,8 @@ export default async function handler(req, res) {
       );
     }
 
+    // Il percorso deve appartenere
+    // esclusivamente allo spazio acquistato.
     const allowedPath = new RegExp(
       "^" + spaceId +
         "/advertisement\\.(png|jpg|webp)$",
@@ -147,7 +169,8 @@ export default async function handler(req, res) {
       );
     }
 
-    // 3. Controlla lo stato nel database.
+    // 4. Controlla lo stato dello spazio
+    // nel database Supabase.
     const params = new URLSearchParams({
       id: "eq." + spaceId,
       select:
@@ -172,7 +195,11 @@ export default async function handler(req, res) {
       !Array.isArray(rows) ||
       rows.length !== 1
     ) {
-      return fail(res, 404, "Spazio non trovato");
+      return fail(
+        res,
+        404,
+        "Spazio non trovato"
+      );
     }
 
     const space = rows[0];
@@ -189,10 +216,13 @@ export default async function handler(req, res) {
       );
     }
 
+    // Consente di ripetere la conferma
+    // senza registrare due volte il file.
     if (space.image_path === imagePath) {
       return res.status(200).json({
         success: true,
-        status: "pending_review"
+        status: "pending_review",
+        message: "Immagine già registrata"
       });
     }
 
@@ -204,7 +234,7 @@ export default async function handler(req, res) {
       );
     }
 
-    // 4. Controlla il prezzo realmente pagato.
+    // 5. Controlla l'importo realmente pagato.
     const pixels = space.width * space.height;
     const expected = pixels * 100;
 
@@ -224,7 +254,7 @@ export default async function handler(req, res) {
       );
     }
 
-    // 5. Verifica che il file esista davvero
+    // 6. Verifica che il file esista
     // nello Storage privato di Supabase.
     const encodedPath = imagePath
       .split("/")
@@ -279,8 +309,8 @@ export default async function handler(req, res) {
       );
     }
 
-    // 6. Registra il logo soltanto se
-    // nessun altro logo è già associato.
+    // 7. Registra il file soltanto se
+    // non ne esiste già uno associato.
     const updateParams = new URLSearchParams({
       id: "eq." + spaceId,
       status: "eq.sold",
@@ -292,7 +322,8 @@ export default async function handler(req, res) {
 
     const updated = await readJSON(
       await fetch(
-        url + "/rest/v1/wall_spaces?" + updateParams,
+        url + "/rest/v1/wall_spaces?" +
+          updateParams,
         {
           method: "PATCH",
           headers: {
@@ -318,11 +349,14 @@ export default async function handler(req, res) {
       );
     }
 
-    // 7. Il logo resta in attesa
+    // 8. Non pubblica automaticamente.
+    // L'immagine rimane in attesa
     // dell'approvazione dell'amministratore.
     return res.status(200).json({
       success: true,
-      status: "pending_review"
+      status: "pending_review",
+      message:
+        "Immagine caricata. In attesa di approvazione."
     });
 
   } catch (error) {
