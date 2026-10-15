@@ -1,241 +1,282 @@
 
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
+
 <title>The Million Dollar Wall</title>
 
 <style>
-*{box-sizing:border-box}
-
-body{
-  margin:0;
-  background:#f3f6fa;
-  color:#202b3b;
-  font-family:Arial,Helvetica,sans-serif;
+* {
+  box-sizing: border-box;
 }
 
-header{
-  background:white;
-  border-bottom:1px solid #e2e8f0;
-  text-align:center;
-  padding:25px 15px;
+body {
+  margin: 0;
+  background: #f3f6fa;
+  color: #202b3b;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
-h1{font-size:32px;margin:0}
-h1 span{color:#159c64}
-header p{color:#64748b;margin-bottom:0}
-
-main{
-  max-width:1500px;
-  margin:auto;
-  padding:20px;
-  display:grid;
-  grid-template-columns:minmax(0,1fr) 365px;
-  gap:20px;
-  align-items:start;
+header {
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+  padding: 25px 15px;
 }
 
-.panel{
-  background:white;
-  border:1px solid #e2e8f0;
-  border-radius:14px;
-  padding:20px;
-  min-width:0;
+h1 {
+  font-size: 32px;
+  margin: 0;
 }
 
-h2{margin:0 0 12px}
-
-.muted{
-  color:#64748b;
-  font-size:13px;
-  line-height:1.6;
+h1 span {
+  color: #159c64;
 }
 
-button{
-  background:#24354d;
-  color:white;
-  border:none;
-  border-radius:9px;
-  padding:12px 14px;
-  font-weight:bold;
-  cursor:pointer;
+header p {
+  color: #64748b;
+  margin-bottom: 0;
 }
 
-button:hover:not(:disabled){filter:brightness(1.1)}
-button:disabled{opacity:.45;cursor:not-allowed}
-
-.secondary{
-  background:#e8edf3;
-  color:#24354d;
+main {
+  max-width: 1500px;
+  margin: auto;
+  padding: 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 365px;
+  gap: 20px;
+  align-items: start;
 }
 
-.primary{
-  background:#159c64;
-  width:100%;
-  font-size:15px;
-  padding:16px;
+.panel {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 20px;
+  min-width: 0;
 }
 
-.controls{
-  display:flex;
-  flex-wrap:wrap;
-  gap:8px;
-  margin:15px 0;
-  align-items:center;
+h2 {
+  margin: 0 0 12px;
 }
 
-#stage{
-  width:100%;
-  max-height:75vh;
-  overflow:auto;
-  background:#edf2f7;
-  padding:12px;
-  border-radius:10px;
+.muted {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.6;
 }
 
-#wall{
-  position:relative;
-  width:600px;
-  height:600px;
-  background:white;
-  border:3px solid #dc5757;
-  cursor:crosshair;
-  touch-action:none;
-  overflow:hidden;
+button {
+  background: #24354d;
+  color: white;
+  border: none;
+  border-radius: 9px;
+  padding: 12px 14px;
+  font-weight: bold;
+  cursor: pointer;
 }
 
-#wall canvas{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  display:block;
+button:hover:not(:disabled) {
+  filter: brightness(1.1);
 }
 
-#base{image-rendering:pixelated}
-#grid,#overlay{pointer-events:none}
-
-.priceBox{
-  background:#eefaf3;
-  padding:18px;
-  border-radius:12px;
-  margin:18px 0;
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
-.priceBox strong{
-  display:block;
-  font-size:36px;
-  color:#159c64;
-  margin:7px 0;
+.secondary {
+  background: #e8edf3;
+  color: #24354d;
 }
 
-.step{
-  margin-top:24px;
-  margin-bottom:13px;
-  font-size:15px;
-  font-weight:bold;
-  display:flex;
-  gap:10px;
-  align-items:center;
+.primary {
+  background: #159c64;
+  width: 100%;
+  font-size: 15px;
+  padding: 16px;
 }
 
-.stepNumber{
-  background:#dff5e8;
-  color:#128452;
-  border-radius:50%;
-  width:28px;
-  height:28px;
-  display:inline-flex;
-  justify-content:center;
-  align-items:center;
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 15px 0;
+  align-items: center;
 }
 
-.options{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
+#stage {
+  width: 100%;
+  max-height: 75vh;
+  overflow: auto;
+  background: #edf2f7;
+  padding: 12px;
+  border-radius: 10px;
 }
 
-.option{
-  display:block;
-  border:2px solid #e2e8f0;
-  border-radius:11px;
-  padding:13px;
-  cursor:pointer;
-  font-size:14px;
+#wall {
+  position: relative;
+  width: 600px;
+  height: 600px;
+  background: white;
+  border: 3px solid #dc5757;
+  cursor: crosshair;
+  touch-action: none;
+  overflow: hidden;
 }
 
-.option:has(input:checked){
-  border-color:#159c64;
-  background:#f0fbf5;
+#wall canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
-.option small{
-  display:block;
-  color:#64748b;
-  margin-top:7px;
-  line-height:1.5;
+#base {
+  image-rendering: pixelated;
 }
 
-.field{margin-top:17px}
-
-.field label{
-  display:block;
-  font-size:13px;
-  font-weight:bold;
-  margin-bottom:8px;
+#grid,
+#overlay {
+  pointer-events: none;
 }
 
-input[type=color]{
-  width:70px;
-  height:44px;
-  cursor:pointer;
+.priceBox {
+  background: #eefaf3;
+  padding: 18px;
+  border-radius: 12px;
+  margin: 18px 0;
 }
 
-input[type=file],input[type=url]{width:100%}
-
-input[type=url]{
-  border:1px solid #cbd5e1;
-  border-radius:8px;
-  padding:12px;
+.priceBox strong {
+  display: block;
+  font-size: 36px;
+  color: #159c64;
+  margin: 7px 0;
 }
 
-.status{
-  font-size:13px;
-  line-height:1.6;
-  overflow-wrap:anywhere;
+.step {
+  margin-top: 24px;
+  margin-bottom: 13px;
+  font-size: 15px;
+  font-weight: bold;
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
-.notice{
-  background:#fff5df;
-  border-radius:9px;
-  padding:13px;
-  font-size:13px;
-  line-height:1.6;
-  margin-top:17px;
+.stepNumber {
+  background: #dff5e8;
+  color: #128452;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
 }
 
-.hidden{display:none!important}
-
-#afterPayment{
-  display:none;
-  background:#effaf3;
-  border:1px solid #c8ead6;
-  padding:16px;
-  border-radius:11px;
-  margin-top:18px;
+.options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
-@media(max-width:900px){
-  main{
-    grid-template-columns:1fr;
-    padding:12px;
+.option {
+  display: block;
+  border: 2px solid #e2e8f0;
+  border-radius: 11px;
+  padding: 13px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.option:has(input:checked) {
+  border-color: #159c64;
+  background: #f0fbf5;
+}
+
+.option small {
+  display: block;
+  color: #64748b;
+  margin-top: 7px;
+  line-height: 1.5;
+}
+
+.field {
+  margin-top: 17px;
+}
+
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+input[type="color"] {
+  width: 70px;
+  height: 44px;
+  cursor: pointer;
+}
+
+input[type="file"],
+input[type="url"] {
+  width: 100%;
+}
+
+input[type="url"] {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.status {
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.notice {
+  background: #fff5df;
+  border-radius: 9px;
+  padding: 13px;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 17px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+#afterPayment {
+  display: none;
+  background: #effaf3;
+  border: 1px solid #c8ead6;
+  padding: 16px;
+  border-radius: 11px;
+  margin-top: 18px;
+}
+
+@media (max-width: 900px) {
+  main {
+    grid-template-columns: 1fr;
+    padding: 12px;
   }
-  .panel{padding:15px}
-  h1{font-size:26px}
+
+  .panel {
+    padding: 15px;
+  }
+
+  h1 {
+    font-size: 26px;
+  }
 }
 </style>
 </head>
@@ -260,10 +301,13 @@ input[type=url]{
 
   <div class="controls">
     <button onclick="changeZoom(2)">+ Zoom</button>
+
     <button onclick="changeZoom(0.5)">− Zoom</button>
+
     <button class="secondary" onclick="resetZoom()">
       Ripristina
     </button>
+
     <strong id="zoomText">100%</strong>
   </div>
 
@@ -310,6 +354,7 @@ input[type=url]{
   </p>
 
   <div class="controls">
+
     <button
       id="checkBtn"
       onclick="checkAvailability()"
@@ -322,6 +367,7 @@ input[type=url]{
       onclick="clearSelection()">
       Cancella selezione
     </button>
+
   </div>
 
   <p id="availabilityStatus" class="status"></p>
@@ -340,7 +386,9 @@ input[type=url]{
         value="color"
         checked
         onchange="changeContentType()">
+
       <strong>Solo colore</strong>
+
       <small>
         Colora un pixel o un intero rettangolo.
       </small>
@@ -352,7 +400,9 @@ input[type=url]{
         name="contentType"
         value="image"
         onchange="changeContentType()">
+
       <strong>Immagine / logo</strong>
+
       <small>
         Foto, disegno o pubblicità con link.
       </small>
@@ -361,14 +411,24 @@ input[type=url]{
   </div>
 
   <div id="colorFields" class="field">
+
     <label for="color">Scegli il colore</label>
-    <input type="color" id="color" value="#16a36a">
+
+    <input
+      type="color"
+      id="color"
+      value="#16a36a">
+
   </div>
 
   <div id="imageFields" class="hidden">
 
     <div class="field">
-      <label for="image">Carica la tua immagine</label>
+
+      <label for="image">
+        Carica la tua immagine per l'anteprima
+      </label>
+
       <input
         type="file"
         id="image"
@@ -377,11 +437,13 @@ input[type=url]{
       <p class="muted">
         PNG, JPG o WebP · massimo 5 MB.
       </p>
+
     </div>
 
     <p id="imageStatus" class="status"></p>
 
     <div class="field">
+
       <label for="link">
         Link cliccabile (facoltativo)
       </label>
@@ -392,15 +454,16 @@ input[type=url]{
         placeholder="https://tuosito.it">
 
       <p class="muted">
-        Per collegare il tuo spazio a un sito
-        o a un profilo social.
+        Il collegamento sarà disponibile quando
+        attiveremo gli acquisti con immagini.
       </p>
+
     </div>
 
     <div class="notice">
       Puoi vedere l'anteprima gratuitamente.
-      Gli acquisti con immagini e link non sono
-      ancora attivi.
+      Gli acquisti con immagini e link
+      non sono ancora attivi.
     </div>
 
   </div>
@@ -411,6 +474,7 @@ input[type=url]{
   </div>
 
   <div class="controls">
+
     <button
       id="previewBtn"
       class="secondary"
@@ -424,6 +488,7 @@ input[type=url]{
       onclick="removePreview()">
       Rimuovi anteprima
     </button>
+
   </div>
 
   <p id="previewStatus" class="muted">
@@ -440,21 +505,54 @@ input[type=url]{
 
   <p id="checkoutStatus" class="status"></p>
 
+  <!-- SEZIONE DOPO IL PAGAMENTO -->
+
   <section id="afterPayment">
+
     <h3>Ritorno dal pagamento</h3>
 
-    <p class="muted">
-      Sei tornato da Stripe.
-      Il pagamento viene verificato dal server.
+    <p id="returnStatus" class="muted">
+      Verifica del pagamento in corso.
     </p>
 
-    <p>
-      I pixel colorati vengono pubblicati
-      dopo la conferma del pagamento.
-    </p>
+    <div id="postPaymentUpload" class="hidden">
+
+      <div class="field">
+
+        <label for="postPaymentFile">
+          Carica il logo acquistato
+        </label>
+
+        <input
+          id="postPaymentFile"
+          type="file"
+          accept="image/png,image/jpeg,image/webp">
+
+        <p class="muted">
+          PNG, JPG o WebP · massimo 5 MB.
+        </p>
+
+      </div>
+
+      <button
+        id="uploadBtn"
+        class="primary"
+        onclick="uploadPaidImage()">
+        Carica il logo
+      </button>
+
+      <p
+        id="uploadStatus"
+        class="status"
+        role="status">
+      </p>
+
+    </div>
+
   </section>
 
   <div class="notice">
+
     <strong>Informazioni importanti</strong>
 
     <p>
@@ -463,12 +561,14 @@ input[type=url]{
     </p>
 
     <p>
-      Immagini e loghi saranno attivati
+      Immagini e loghi saranno attivati soltanto
       dopo il completamento dei test.
     </p>
+
   </div>
 
 </aside>
+
 </main>
 
 <script>
@@ -507,6 +607,9 @@ let checkVersion = 0;
 
 let checkoutInProgress = false;
 
+let paidImageSessionId = null;
+let uploadInProgress = false;
+
 function contentType() {
   return document.querySelector(
     'input[name="contentType"]:checked'
@@ -517,11 +620,13 @@ function changeContentType() {
   const imageMode = contentType() === "image";
 
   $("colorFields").classList.toggle(
-    "hidden", imageMode
+    "hidden",
+    imageMode
   );
 
   $("imageFields").classList.toggle(
-    "hidden", !imageMode
+    "hidden",
+    !imageMode
   );
 
   removePreview();
@@ -534,11 +639,19 @@ function setupCanvas(canvas, context, width, height) {
   canvas.width = Math.round(width * dpr);
   canvas.height = Math.round(height * dpr);
 
-  context.setTransform(dpr, 0, 0, dpr, 0, 0);
+  context.setTransform(
+    dpr,
+    0,
+    0,
+    dpr,
+    0,
+    0
+  );
 }
 
 function getPosition(event) {
   const rect = wall.getBoundingClientRect();
+
   const border = 3;
 
   const width = rect.width - border * 2;
@@ -582,28 +695,39 @@ function selectionOverlapsSold() {
   );
 }
 
-/*
-  GRIGLIA CORRETTA:
-  visibile anche allo zoom normale.
-*/
+// GRIGLIA SEMPRE VISIBILE
+
 function drawGrid() {
   const width = wall.clientWidth;
   const height = wall.clientHeight;
 
-  setupCanvas(grid, gridCtx, width, height);
-  gridCtx.clearRect(0, 0, width, height);
+  setupCanvas(
+    grid,
+    gridCtx,
+    width,
+    height
+  );
+
+  gridCtx.clearRect(
+    0,
+    0,
+    width,
+    height
+  );
 
   const pixelSize = width / SIZE;
 
-  // Mostra blocchi da 10 pixel allo zoom normale.
-  // Quando abbastanza ingrandito mostra ogni pixel.
   const interval = pixelSize >= 3 ? 1 : 10;
 
   gridCtx.beginPath();
   gridCtx.strokeStyle = "#cbd5e1";
   gridCtx.lineWidth = 0.7;
 
-  for (let i = interval; i < SIZE; i += interval) {
+  for (
+    let i = interval;
+    i < SIZE;
+    i += interval
+  ) {
     const p = i * pixelSize;
 
     gridCtx.moveTo(p, 0);
@@ -620,8 +744,19 @@ function drawSelection() {
   const width = wall.clientWidth;
   const height = wall.clientHeight;
 
-  setupCanvas(overlay, overlayCtx, width, height);
-  overlayCtx.clearRect(0, 0, width, height);
+  setupCanvas(
+    overlay,
+    overlayCtx,
+    width,
+    height
+  );
+
+  overlayCtx.clearRect(
+    0,
+    0,
+    width,
+    height
+  );
 
   if (!selection) return;
 
@@ -729,7 +864,8 @@ function updateBuyButton() {
 function updateInfo() {
   if (!selection) {
     $("price").textContent = "0 €";
-    $("pixelCount").textContent = "0 pixel × 1 €";
+    $("pixelCount").textContent =
+      "0 pixel × 1 €";
 
     $("checkBtn").disabled = true;
     $("previewBtn").disabled = true;
@@ -763,47 +899,56 @@ function updateInfo() {
 
 function invalidateAvailability() {
   checkVersion++;
+
   availabilityConfirmed = false;
   checking = false;
 
   $("availabilityStatus").textContent = "";
+
   updateInfo();
 }
 
-wall.addEventListener("pointerdown", event => {
-  if (
-    event.button !== undefined &&
-    event.button !== 0
-  ) return;
+wall.addEventListener(
+  "pointerdown",
+  event => {
+    if (
+      event.button !== undefined &&
+      event.button !== 0
+    ) return;
 
-  event.preventDefault();
+    event.preventDefault();
 
-  invalidateAvailability();
-  removePreview();
+    invalidateAvailability();
+    removePreview();
 
-  start = getPosition(event);
-  selection = makeRectangle(start, start);
-  dragging = true;
+    start = getPosition(event);
+    selection = makeRectangle(start, start);
 
-  wall.setPointerCapture(event.pointerId);
+    dragging = true;
 
-  drawSelection();
-  updateInfo();
-});
+    wall.setPointerCapture(event.pointerId);
 
-wall.addEventListener("pointermove", event => {
-  if (!dragging) return;
+    drawSelection();
+    updateInfo();
+  }
+);
 
-  invalidateAvailability();
+wall.addEventListener(
+  "pointermove",
+  event => {
+    if (!dragging) return;
 
-  selection = makeRectangle(
-    start,
-    getPosition(event)
-  );
+    invalidateAvailability();
 
-  drawSelection();
-  updateInfo();
-});
+    selection = makeRectangle(
+      start,
+      getPosition(event)
+    );
+
+    drawSelection();
+    updateInfo();
+  }
+);
 
 wall.addEventListener("pointerup", () => {
   dragging = false;
@@ -870,80 +1015,81 @@ $("color").addEventListener("input", () => {
   removePreview();
 });
 
-$("image").addEventListener("change", event => {
-  const version = ++imageVersion;
+$("image").addEventListener(
+  "change",
+  event => {
+    const version = ++imageVersion;
 
-  uploadedImage = null;
-  imageLoading = false;
-
-  $("imageStatus").textContent = "";
-
-  const file = event.target.files[0];
-
-  if (!file) {
-    updateInfo();
-    return;
-  }
-
-  const allowedTypes = [
-    "image/png",
-    "image/jpeg",
-    "image/webp"
-  ];
-
-  if (
-    !allowedTypes.includes(file.type) ||
-    file.size < 1 ||
-    file.size > 5 * 1024 * 1024
-  ) {
-    $("imageStatus").textContent =
-      "Usa PNG, JPG o WebP, massimo 5 MB.";
-
-    event.target.value = "";
-    updateInfo();
-    return;
-  }
-
-  imageLoading = true;
-
-  $("imageStatus").textContent =
-    "Preparazione anteprima...";
-
-  updateInfo();
-
-  const url = URL.createObjectURL(file);
-  const image = new Image();
-
-  image.onload = () => {
-    URL.revokeObjectURL(url);
-
-    if (version !== imageVersion) return;
-
-    uploadedImage = image;
-    imageLoading = false;
-
-    $("imageStatus").textContent =
-      "✓ Immagine pronta per l'anteprima.";
-
-    updateInfo();
-  };
-
-  image.onerror = () => {
-    URL.revokeObjectURL(url);
-
-    if (version !== imageVersion) return;
-
-    imageLoading = false;
     uploadedImage = null;
+    imageLoading = false;
+
+    $("imageStatus").textContent = "";
+
+    const file = event.target.files[0];
+
+    if (!file) {
+      updateInfo();
+      return;
+    }
+
+    if (
+      ![
+        "image/png",
+        "image/jpeg",
+        "image/webp"
+      ].includes(file.type) ||
+      file.size < 1 ||
+      file.size > 5 * 1024 * 1024
+    ) {
+      $("imageStatus").textContent =
+        "Usa PNG, JPG o WebP, massimo 5 MB.";
+
+      event.target.value = "";
+      updateInfo();
+      return;
+    }
+
+    imageLoading = true;
 
     $("imageStatus").textContent =
-      "Impossibile leggere l'immagine.";
+      "Preparazione anteprima...";
 
     updateInfo();
-  };
 
-  image.src = url;
-});
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+
+      if (version !== imageVersion) return;
+
+      uploadedImage = image;
+      imageLoading = false;
+
+      $("imageStatus").textContent =
+        "✓ Immagine pronta per l'anteprima.";
+
+      updateInfo();
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+
+      if (version !== imageVersion) return;
+
+      imageLoading = false;
+      uploadedImage = null;
+
+      $("imageStatus").textContent =
+        "Impossibile leggere l'immagine.";
+
+      updateInfo();
+    };
+
+    image.src = url;
+  }
+);
 
 async function checkAvailability() {
   if (
@@ -953,6 +1099,7 @@ async function checkAvailability() {
   ) return;
 
   const version = ++checkVersion;
+
   const { x, y, w, h } = selection;
 
   checking = true;
@@ -1039,6 +1186,7 @@ function preview() {
   ) {
     $("imageStatus").textContent =
       "Seleziona prima un'immagine.";
+
     return;
   }
 
@@ -1059,6 +1207,7 @@ function preview() {
 
 function removePreview() {
   previewData = null;
+
   redrawWall();
 
   $("previewStatus").textContent =
@@ -1072,7 +1221,9 @@ async function loadSoldSpaces() {
   try {
     const response = await fetch(
       "/api/spaces",
-      { cache: "no-store" }
+      {
+        cache: "no-store"
+      }
     );
 
     if (!response.ok) {
@@ -1088,6 +1239,7 @@ async function loadSoldSpaces() {
     }
 
     soldSpaces = data.spaces;
+
     redrawWall();
 
     for (const space of soldSpaces) {
@@ -1169,7 +1321,8 @@ async function startCheckout() {
           y: selection.y,
           width: selection.w,
           height: selection.h,
-          color: $("color").value
+          color: $("color").value,
+          content_type: "color"
         })
       }
     );
@@ -1212,7 +1365,16 @@ async function startCheckout() {
   }
 }
 
-function initializeCheckoutReturn() {
+// CONTROLLO DEL RITORNO DA STRIPE
+
+function validSessionId(id) {
+  return (
+    typeof id === "string" &&
+    /^cs_live_[A-Za-z0-9]+$/.test(id)
+  );
+}
+
+async function initializeCheckoutReturn() {
   const params = new URLSearchParams(
     window.location.search
   );
@@ -1220,38 +1382,247 @@ function initializeCheckoutReturn() {
   const checkout = params.get("checkout");
   const sessionId = params.get("session_id");
 
-  if (
-    checkout === "success" &&
-    typeof sessionId === "string" &&
-    /^cs_live_[A-Za-z0-9]+$/.test(sessionId)
-  ) {
-    $("afterPayment").style.display = "block";
-
-    $("checkoutStatus").textContent =
-      "Ritorno da Stripe ricevuto. " +
-      "Il pagamento viene verificato dal server.";
-
-  } else if (checkout === "cancel") {
+  if (checkout === "cancel") {
     $("checkoutStatus").textContent =
       "Pagamento annullato.";
 
-  } else if (checkout === "success") {
-    $("checkoutStatus").textContent =
-      "Riferimento al pagamento mancante.";
+    return;
   }
 
-  if (sessionId) {
-    const cleanUrl = new URL(
-      window.location.href
+  if (checkout !== "success") return;
+
+  $("afterPayment").style.display = "block";
+
+  if (!validSessionId(sessionId)) {
+    $("returnStatus").textContent =
+      "Riferimento al pagamento mancante o non valido.";
+
+    return;
+  }
+
+  $("returnStatus").textContent =
+    "Verifica del pagamento in corso...";
+
+  try {
+    const response = await fetch(
+      "/api/checkout-status?session_id=" +
+        encodeURIComponent(sessionId),
+      {
+        cache: "no-store"
+      }
     );
 
-    cleanUrl.searchParams.delete("session_id");
+    if (response.status === 404) {
+      $("returnStatus").textContent =
+        "Pagamento inviato a Stripe. " +
+        "Attendi la conferma e aggiorna il muro. " +
+        "La verifica per le immagini sarà disponibile " +
+        "quando attiveremo il servizio.";
 
-    window.history.replaceState(
-      {},
-      "",
-      cleanUrl.href
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        "Verifica non disponibile"
+      );
+    }
+
+    const data = await response.json();
+
+    if (data.paid !== true) {
+      $("returnStatus").textContent =
+        "Pagamento non ancora confermato.";
+
+      return;
+    }
+
+    if (data.content_type === "image") {
+      $("returnStatus").textContent =
+        "Pagamento immagine confermato. " +
+        "Ora puoi caricare il logo.";
+
+      paidImageSessionId = sessionId;
+
+      $("postPaymentUpload").classList.remove(
+        "hidden"
+      );
+
+    } else {
+      $("returnStatus").textContent =
+        "Pagamento confermato. " +
+        "I pixel colorati saranno visibili " +
+        "dopo l'elaborazione del server.";
+
+      loadSoldSpaces();
+    }
+
+  } catch {
+    $("returnStatus").textContent =
+      "Impossibile verificare ora il pagamento. " +
+      "Non effettuare un secondo pagamento.";
+  }
+}
+
+// CARICAMENTO LOGO DOPO PAGAMENTO VERIFICATO
+
+async function uploadPaidImage() {
+  if (
+    uploadInProgress ||
+    !validSessionId(paidImageSessionId)
+  ) return;
+
+  const file = $("postPaymentFile").files[0];
+
+  if (
+    !file ||
+    ![
+      "image/png",
+      "image/jpeg",
+      "image/webp"
+    ].includes(file.type) ||
+    file.size < 1 ||
+    file.size > 5 * 1024 * 1024
+  ) {
+    $("uploadStatus").textContent =
+      "Scegli un PNG, JPG o WebP di massimo 5 MB.";
+
+    return;
+  }
+
+  uploadInProgress = true;
+  $("uploadBtn").disabled = true;
+
+  $("uploadStatus").textContent =
+    "Autorizzazione del caricamento...";
+
+  try {
+    // 1. Chiede al server il permesso
+    // temporaneo di caricare l'immagine.
+
+    const auth = await fetch(
+      "/api/upload-image",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          sessionId: paidImageSessionId,
+          contentType: file.type,
+          fileSize: file.size
+        })
+      }
     );
+
+    const data = await auth.json();
+
+    if (!auth.ok || !data.success) {
+      throw new Error(
+        data.error || "Autorizzazione negata"
+      );
+    }
+
+    if (
+      data.bucket !== "wall-images" ||
+      typeof data.path !== "string" ||
+      typeof data.token !== "string"
+    ) {
+      throw new Error(
+        "Risposta caricamento non valida"
+      );
+    }
+
+    // 2. Carica il file direttamente
+    // nello Storage privato di Supabase.
+    // Non utilizza chiavi segrete nel browser.
+
+    const supabaseUrl =
+      "https://zaivqtihriaflcgzffqt.supabase.co";
+
+    const encodedPath = data.path
+      .split("/")
+      .map(encodeURIComponent)
+      .join("/");
+
+    $("uploadStatus").textContent =
+      "Invio dell'immagine...";
+
+    const uploadUrl =
+      supabaseUrl +
+      "/storage/v1/object/upload/sign/" +
+      encodeURIComponent(data.bucket) +
+      "/" +
+      encodedPath +
+      "?token=" +
+      encodeURIComponent(data.token);
+
+    const sent = await fetch(
+      uploadUrl,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type,
+          "x-upsert": "false"
+        },
+        body: file
+      }
+    );
+
+    if (!sent.ok) {
+      throw new Error(
+        "Invio a Supabase non riuscito " +
+        "(HTTP " + sent.status + ")"
+      );
+    }
+
+    // 3. Chiede al server di registrare
+    // l'immagine nello spazio acquistato.
+
+    $("uploadStatus").textContent =
+      "Registrazione dell'immagine...";
+
+    const confirm = await fetch(
+      "/api/confirm-image",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          sessionId: paidImageSessionId,
+          imagePath: data.path
+        })
+      }
+    );
+
+    const result = await confirm.json();
+
+    if (!confirm.ok || !result.success) {
+      throw new Error(
+        result.error || "Conferma non riuscita"
+      );
+    }
+
+    // 4. Il logo rimane in attesa
+    // dell'approvazione dell'amministratore.
+
+    $("uploadStatus").textContent =
+      "✓ Immagine ricevuta, " +
+      "in attesa di approvazione.";
+
+    $("postPaymentFile").disabled = true;
+    $("uploadBtn").classList.add("hidden");
+
+  } catch (error) {
+    $("uploadStatus").textContent =
+      "Errore: " +
+      error.message +
+      ". Non ripetere il pagamento.";
+
+  } finally {
+    uploadInProgress = false;
+    $("uploadBtn").disabled = false;
   }
 }
 
@@ -1260,14 +1631,13 @@ window.addEventListener(
   applyZoom
 );
 
-initializeCheckoutReturn();
 changeContentType();
 applyZoom();
 updateInfo();
 loadSoldSpaces();
+initializeCheckoutReturn();
 
 </script>
+
 </body>
 </html>
-
-
