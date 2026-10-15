@@ -1,6 +1,13 @@
 
 
 const BUCKET = "wall-images";
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+const IMAGE_TYPES = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp"
+};
 
 function validSessionId(value) {
   return (
@@ -16,38 +23,39 @@ function validUUID(value) {
   );
 }
 
-function validImageType(value) {
-  return [
-    "image/png",
-    "image/jpeg",
-    "image/webp"
-  ].includes(value);
+function serverError(res, status, message) {
+  return res.status(status).json({
+    success: false,
+    error: message
+  });
 }
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Content-Type-Options", "nosniff");
 
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
-    return res.status(405).json({
-      error: "Metodo non consentito"
-    });
+
+    return serverError(
+      res,
+      405,
+      "Metodo non consentito"
+    );
   }
 
-  // Il caricamento rimane spento finché
-  // non avremo completato tutti i componenti.
-  if (process.env.ENABLE_IMAGE_UPLOADS !== "true") {
-    return res.status(503).json({
-      error: "Caricamento immagini non ancora attivo"
-    });
-  }
-
-  // Non consentire caricamenti mentre gli
-  // acquisti del sito sono ancora disattivati.
-  if (process.env.ENABLE_WALL_PAYMENTS !== "true") {
-    return res.status(503).json({
-      error: "Acquisti non ancora attivi"
-    });
+  // BLOCCO DI SICUREZZA:
+  // nessun caricamento finché il sistema
+  // non viene completato e verificato.
+  if (
+    process.env.ENABLE_IMAGE_UPLOADS !== "true" ||
+    process.env.ENABLE_WALL_PAYMENTS !== "true"
+  ) {
+    return serverError(
+      res,
+      503,
+      "Caricamento immagini non ancora attivo"
+    );
   }
 
   const supabaseUrl =
@@ -59,38 +67,73 @@ export default async function handler(req, res) {
   const stripeKey =
     process.env.STRIPE_SECRET_KEY;
 
-  if (!supabaseUrl || !supabaseKey || !stripeKey) {
-    return res.status(503).json({
-      error: "Configurazione server incompleta"
-    });
+  if (
+    !supabaseUrl ||
+    !supabaseKey ||
+    !stripeKey
+  ) {
+    return serverError(
+      res,
+      503,
+      "Configurazione server incompleta"
+    );
   }
 
-  const { sessionId, contentType } = req.body || {};
+  const {
+    sessionId,
+    contentType,
+    fileSize
+  } = req.body || {};
+
+  if (!validSessionId(sessionId)) {
+    return serverError(
+      res,
+      400,
+      "Sessione di pagamento non valida"
+    );
+  }
 
   if (
-    !validSessionId(sessionId) ||
-    !validImageType(contentType)
+    typeof contentType !== "string" ||
+    !Object.hasOwn(IMAGE_TYPES, contentType)
   ) {
-    return res.status(400).json({
-      error: "Dati del caricamento non validi"
-    });
+    return serverError(
+      res,
+      400,
+      "Formato non valido. Usa PNG, JPG o WebP."
+    );
+  }
+
+  if (
+    !Number.isInteger(fileSize) ||
+    fileSize < 1 ||
+    fileSize > MAX_IMAGE_SIZE
+  ) {
+    return serverError(
+      res,
+      400,
+      "L'immagine deve essere inferiore a 5 MB"
+    );
   }
 
   try {
-    // Verifica la sessione direttamente su Stripe.
+    // 1. Verifica il pagamento con Stripe.
     const stripeResponse = await fetch(
       `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,
       {
         headers: {
           Authorization: `Bearer ${stripeKey}`
-        }
+        },
+        cache: "no-store"
       }
     );
 
     if (!stripeResponse.ok) {
-      return res.status(403).json({
-        error: "Impossibile verificare il pagamento"
-      });
+      return serverError(
+        res,
+        403,
+        "Pagamento non verificabile"
+      );
     }
 
     const session = await stripeResponse.json();
@@ -103,21 +146,27 @@ export default async function handler(req, res) {
       session.payment_status !== "paid" ||
       session.currency?.toLowerCase() !== "eur"
     ) {
-      return res.status(403).json({
-        error: "Pagamento non confermato"
-      });
+      return serverError(
+        res,
+        403,
+        "Pagamento non confermato"
+      );
     }
 
+    // 2. Recupera lo spazio acquistato
+    // dai metadati verificati di Stripe.
     const spaceId = session.metadata?.space_id;
 
     if (!validUUID(spaceId)) {
-      return res.status(403).json({
-        error: "Spazio pubblicitario non valido"
-      });
+      return serverError(
+        res,
+        403,
+        "Spazio pubblicitario non valido"
+      );
     }
 
-    // Verifica che il database abbia già
-    // assegnato i pixel a questo pagamento.
+    // 3. Controlla che il database confermi
+    // l'acquisto dello stesso spazio.
     const query = new URLSearchParams({
       id: `eq.${spaceId}`,
       select:
@@ -128,57 +177,83 @@ export default async function handler(req, res) {
       `${supabaseUrl}/rest/v1/wall_spaces?${query}`,
       {
         headers: {
-          apikey: supabaseKey
-        }
+          apikey: supabaseKey,
+          Accept: "application/json"
+        },
+        cache: "no-store"
       }
     );
 
     if (!spaceResponse.ok) {
-      throw new Error("Lettura spazio non riuscita");
+      throw new Error(
+        `Database HTTP ${spaceResponse.status}`
+      );
     }
 
     const spaces = await spaceResponse.json();
-    const space = spaces?.[0];
 
     if (
-      spaces.length !== 1 ||
+      !Array.isArray(spaces) ||
+      spaces.length !== 1
+    ) {
+      return serverError(
+        res,
+        404,
+        "Spazio pubblicitario non trovato"
+      );
+    }
+
+    const space = spaces[0];
+
+    if (
       space.status !== "sold" ||
       space.stripe_session_id !== sessionId ||
       space.approval_status !== "pending_review" ||
       space.image_path
     ) {
-      return res.status(409).json({
-        error: "Spazio non disponibile per il caricamento"
-      });
+      return serverError(
+        res,
+        409,
+        "Questo spazio non accetta nuovi caricamenti"
+      );
     }
 
+    // 4. Controlla che il prezzo pagato
+    // corrisponda esattamente ai pixel.
     const expectedAmount =
       space.width * space.height * 100;
 
     if (
       !Number.isSafeInteger(expectedAmount) ||
+      expectedAmount < 100 ||
       session.amount_total !== expectedAmount ||
       session.amount_subtotal !== expectedAmount ||
       session.metadata?.expected_amount !==
         String(expectedAmount)
     ) {
-      return res.status(403).json({
-        error: "Importo del pagamento non corrispondente"
-      });
+      return serverError(
+        res,
+        403,
+        "Importo del pagamento non corrispondente"
+      );
     }
 
-    const extension = {
-      "image/png": "png",
-      "image/jpeg": "jpg",
-      "image/webp": "webp"
-    }[contentType];
+    // 5. Prepara un percorso privato
+    // appartenente soltanto allo spazio pagato.
+    const extension = IMAGE_TYPES[contentType];
 
-    const imagePath = `${spaceId}/advertisement.${extension}`;
+    const imagePath =
+      `${spaceId}/advertisement.${extension}`;
 
-    // Richiede a Supabase un'autorizzazione
-    // temporanea per caricare nel bucket privato.
+    const encodedPath = imagePath
+      .split("/")
+      .map(encodeURIComponent)
+      .join("/");
+
+    // 6. Richiede a Supabase un token temporaneo
+    // per caricare il file nel bucket privato.
     const uploadResponse = await fetch(
-      `${supabaseUrl}/storage/v1/object/upload/sign/${BUCKET}/${imagePath}`,
+      `${supabaseUrl}/storage/v1/object/upload/sign/${BUCKET}/${encodedPath}`,
       {
         method: "POST",
         headers: {
@@ -193,34 +268,44 @@ export default async function handler(req, res) {
 
     if (!uploadResponse.ok) {
       throw new Error(
-        `Autorizzazione Storage fallita: ${uploadResponse.status}`
+        `Storage HTTP ${uploadResponse.status}`
       );
     }
 
     const uploadData = await uploadResponse.json();
 
-    if (!uploadData.token) {
-      throw new Error("Token caricamento mancante");
+    if (
+      typeof uploadData.token !== "string" ||
+      !uploadData.token
+    ) {
+      throw new Error(
+        "Autorizzazione caricamento mancante"
+      );
     }
 
-    // Non restituisce mai la chiave segreta.
+    // 7. Restituisce soltanto le informazioni
+    // necessarie al caricamento.
+    // Nessuna chiave segreta viene inviata.
     return res.status(200).json({
       success: true,
       bucket: BUCKET,
       path: imagePath,
       token: uploadData.token,
       contentType,
-      maxBytes: 5 * 1024 * 1024
+      maxBytes: MAX_IMAGE_SIZE,
+      message: "Caricamento autorizzato"
     });
 
   } catch (error) {
     console.error(
-      "Upload authorization error:",
+      "Upload image error:",
       error.message
     );
 
-    return res.status(503).json({
-      error: "Impossibile autorizzare il caricamento"
-    });
+    return serverError(
+      res,
+      503,
+      "Impossibile autorizzare il caricamento"
+    );
   }
 }
