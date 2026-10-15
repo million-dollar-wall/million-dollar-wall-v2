@@ -1,0 +1,240 @@
+
+const BUCKET = "wall-images";
+
+function validSessionId(value) {
+  return (
+    typeof value === "string" &&
+    /^cs_live_[A-Za-z0-9]+$/.test(value)
+  );
+}
+
+function validUUID(value) {
+  return (
+    typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+  );
+}
+
+export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store");
+
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    return res.status(405).json({
+      error: "Metodo non consentito"
+    });
+  }
+
+  // Manteniamo la funzione disattivata
+  // fino al completamento dei test.
+  if (
+    process.env.ENABLE_IMAGE_UPLOADS !== "true" ||
+    process.env.ENABLE_WALL_PAYMENTS !== "true"
+  ) {
+    return res.status(503).json({
+      error: "Conferma immagini non ancora attiva"
+    });
+  }
+
+  const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
+  const key = process.env.SUPABASE_SECRET_KEY;
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+
+  if (!url || !key || !stripeKey) {
+    return res.status(503).json({
+      error: "Configurazione server incompleta"
+    });
+  }
+
+  const { sessionId, imagePath } = req.body || {};
+
+  if (
+    !validSessionId(sessionId) ||
+    typeof imagePath !== "string"
+  ) {
+    return res.status(400).json({
+      error: "Dati non validi"
+    });
+  }
+
+  try {
+    // Verifica il pagamento direttamente con Stripe.
+    const stripeResponse = await fetch(
+      `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,
+      {
+        headers: {
+          Authorization: `Bearer ${stripeKey}`
+        }
+      }
+    );
+
+    if (!stripeResponse.ok) {
+      return res.status(403).json({
+        error: "Pagamento non verificabile"
+      });
+    }
+
+    const session = await stripeResponse.json();
+
+    if (
+      session.id !== sessionId ||
+      session.livemode !== true ||
+      session.mode !== "payment" ||
+      session.status !== "complete" ||
+      session.payment_status !== "paid" ||
+      session.currency?.toLowerCase() !== "eur"
+    ) {
+      return res.status(403).json({
+        error: "Pagamento non confermato"
+      });
+    }
+
+    const spaceId = session.metadata?.space_id;
+
+    if (!validUUID(spaceId)) {
+      return res.status(403).json({
+        error: "Spazio non valido"
+      });
+    }
+
+    // Il percorso deve appartenere allo spazio pagato.
+    const expectedPrefix = `${spaceId}/`;
+
+    if (
+      !imagePath.startsWith(expectedPrefix) ||
+      !/^advertisement\.(png|jpg|webp)$/.test(
+        imagePath.slice(expectedPrefix.length)
+      )
+    ) {
+      return res.status(400).json({
+        error: "Percorso immagine non valido"
+      });
+    }
+
+    // Controlla che l'immagine esista davvero
+    // nel bucket privato di Supabase.
+    const storageResponse = await fetch(
+      `${url}/storage/v1/object/info/${BUCKET}/${imagePath}`,
+      {
+        headers: {
+          apikey: key
+        }
+      }
+    );
+
+    if (!storageResponse.ok) {
+      return res.status(404).json({
+        error: "Immagine non trovata"
+      });
+    }
+
+    const objectInfo = await storageResponse.json();
+
+    if (
+      objectInfo?.metadata?.size > 5 * 1024 * 1024
+    ) {
+      return res.status(400).json({
+        error: "Immagine troppo grande"
+      });
+    }
+
+    // Recupera lo spazio pubblicitario.
+    const query = new URLSearchParams({
+      id: `eq.${spaceId}`,
+      select:
+        "id,width,height,status,stripe_session_id,approval_status,image_path"
+    });
+
+    const spaceResponse = await fetch(
+      `${url}/rest/v1/wall_spaces?${query}`,
+      {
+        headers: {
+          apikey: key
+        }
+      }
+    );
+
+    if (!spaceResponse.ok) {
+      throw new Error("Lettura spazio fallita");
+    }
+
+    const spaces = await spaceResponse.json();
+    const space = spaces?.[0];
+
+    if (
+      spaces.length !== 1 ||
+      space.status !== "sold" ||
+      space.stripe_session_id !== sessionId ||
+      space.approval_status !== "pending_review" ||
+      space.image_path
+    ) {
+      return res.status(409).json({
+        error: "Spazio non disponibile"
+      });
+    }
+
+    const expectedAmount =
+      space.width * space.height * 100;
+
+    if (
+      !Number.isSafeInteger(expectedAmount) ||
+      session.amount_total !== expectedAmount ||
+      session.amount_subtotal !== expectedAmount ||
+      session.metadata?.expected_amount !==
+        String(expectedAmount)
+    ) {
+      return res.status(403).json({
+        error: "Importo non corrispondente"
+      });
+    }
+
+    // Aggiorna solo uno spazio ancora idoneo.
+    const updateQuery = new URLSearchParams({
+      id: `eq.${spaceId}`,
+      status: "eq.sold",
+      stripe_session_id: `eq.${sessionId}`,
+      approval_status: "eq.pending_review",
+      image_path: "is.null",
+      select: "id"
+    });
+
+    const updateResponse = await fetch(
+      `${url}/rest/v1/wall_spaces?${updateQuery}`,
+      {
+        method: "PATCH",
+        headers: {
+          apikey: key,
+          "Content-Type": "application/json",
+          Prefer: "return=representation"
+        },
+        body: JSON.stringify({
+          image_path: imagePath
+        })
+      }
+    );
+
+    if (!updateResponse.ok) {
+      throw new Error("Salvataggio immagine fallito");
+    }
+
+    const updated = await updateResponse.json();
+
+    if (!Array.isArray(updated) || updated.length !== 1) {
+      return res.status(409).json({
+        error: "Immagine già registrata o spazio modificato"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Immagine registrata e in attesa di approvazione"
+    });
+
+  } catch (error) {
+    console.error("Confirm image error:", error.message);
+
+    return res.status(503).json({
+      error: "Impossibile confermare l'immagine"
+    });
+  }
+}
