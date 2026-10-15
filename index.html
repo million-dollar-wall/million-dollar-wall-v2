@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -8,34 +7,45 @@
 <title>The Million Dollar Wall</title>
 
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
   background: #f3f6fa;
-  color: #1d2939;
+  color: #202b3b;
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 header {
-  background: white;
-  text-align: center;
-  padding: 24px 15px;
+  background: #ffffff;
   border-bottom: 1px solid #e2e8f0;
+  text-align: center;
+  padding: 25px 15px;
 }
 
-h1 { margin: 0; font-size: 32px; }
-h1 span { color: #159664; }
+h1 {
+  font-size: 32px;
+  margin: 0;
+}
 
-header p { color: #64748b; }
+h1 span {
+  color: #159c64;
+}
+
+header p {
+  color: #64748b;
+  margin-bottom: 0;
+}
 
 main {
-  max-width: 1450px;
+  max-width: 1500px;
   margin: auto;
-  padding: 18px;
+  padding: 20px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 360px;
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 365px;
+  gap: 20px;
   align-items: start;
 }
 
@@ -47,22 +57,28 @@ main {
   min-width: 0;
 }
 
-h2 { margin-top: 0; }
+h2 {
+  margin: 0 0 12px;
+}
 
-.muted, small {
+.muted {
   color: #64748b;
   font-size: 13px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 button {
-  border: 0;
-  background: #26364b;
+  background: #24354d;
   color: white;
+  border: none;
   border-radius: 9px;
   padding: 12px 14px;
   font-weight: bold;
   cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  filter: brightness(1.12);
 }
 
 button:disabled {
@@ -71,43 +87,40 @@ button:disabled {
 }
 
 .secondary {
-  background: #e9eef4;
-  color: #26364b;
+  background: #e8edf3;
+  color: #24354d;
 }
 
 .primary {
-  background: #159664;
+  background: #159c64;
   width: 100%;
-  padding: 15px;
   font-size: 15px;
+  padding: 16px;
 }
 
-.buttons {
+.controls {
   display: flex;
-  gap: 8px;
   flex-wrap: wrap;
-  margin: 12px 0;
+  gap: 8px;
+  margin: 15px 0;
+  align-items: center;
 }
-
-.buttons button { flex: 1; }
 
 #stage {
   width: 100%;
-  display: flex;
+  max-height: 75vh;
   overflow: auto;
   background: #edf2f7;
   padding: 12px;
   border-radius: 10px;
-  max-height: 75vh;
 }
 
 #wall {
   position: relative;
   width: 600px;
   height: 600px;
-  flex: 0 0 auto;
-  border: 3px solid #e45c58;
   background: white;
+  border: 3px solid #dc5757;
   cursor: crosshair;
   touch-action: none;
   overflow: hidden;
@@ -118,11 +131,67 @@ button:disabled {
   inset: 0;
   width: 100%;
   height: 100%;
+  display: block;
 }
 
-#base { image-rendering: pixelated; }
-#grid, #overlay { pointer-events: none; }
+#base {
+  image-rendering: pixelated;
+}
 
-.total {
-  background: #eef9f3;
-  border-radius: 
+#grid,
+#overlay {
+  pointer-events: none;
+}
+
+.priceBox {
+  background: #eefaf3;
+  padding: 18px;
+  border-radius: 12px;
+  margin: 18px 0;
+}
+
+.priceBox strong {
+  display: block;
+  font-size: 36px;
+  color: #159c64;
+  margin: 7px 0;
+}
+
+.step {
+  margin-top: 24px;
+  margin-bottom: 13px;
+  font-size: 15px;
+  font-weight: bold;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.stepNumber {
+  background: #dff5e8;
+  color: #128452;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.option {
+  display: block;
+  border: 2px solid #e2e8f0;
+  border-radius: 11px;
+  padding: 13px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.option:has(input:checked) {
+  border-color: #159
