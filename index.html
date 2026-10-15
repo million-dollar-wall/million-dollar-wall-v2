@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -7,273 +8,234 @@
 <title>The Million Dollar Wall</title>
 
 <style>
-* {
-  box-sizing: border-box;
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:#f3f6fa;
+  color:#202b3b;
+  font-family:Arial,Helvetica,sans-serif;
 }
 
-body {
-  margin: 0;
-  background: #f3f6fa;
-  color: #202b3b;
-  font-family: Arial, Helvetica, sans-serif;
+header{
+  background:white;
+  border-bottom:1px solid #e2e8f0;
+  text-align:center;
+  padding:25px 15px;
 }
 
-header {
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: center;
-  padding: 25px 15px;
+h1{font-size:32px;margin:0}
+h1 span{color:#159c64}
+header p{color:#64748b;margin-bottom:0}
+
+main{
+  max-width:1500px;
+  margin:auto;
+  padding:20px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 365px;
+  gap:20px;
+  align-items:start;
 }
 
-h1 {
-  font-size: 32px;
-  margin: 0;
+.panel{
+  background:white;
+  border:1px solid #e2e8f0;
+  border-radius:14px;
+  padding:20px;
+  min-width:0;
 }
 
-h1 span {
-  color: #159c64;
+h2{margin:0 0 12px}
+
+.muted{
+  color:#64748b;
+  font-size:13px;
+  line-height:1.6;
 }
 
-header p {
-  color: #64748b;
-  margin-bottom: 0;
+button{
+  background:#24354d;
+  color:white;
+  border:none;
+  border-radius:9px;
+  padding:12px 14px;
+  font-weight:bold;
+  cursor:pointer;
 }
 
-main {
-  max-width: 1500px;
-  margin: auto;
-  padding: 20px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 365px;
-  gap: 20px;
-  align-items: start;
+button:hover:not(:disabled){filter:brightness(1.1)}
+button:disabled{opacity:.45;cursor:not-allowed}
+
+.secondary{
+  background:#e8edf3;
+  color:#24354d;
 }
 
-.panel {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 20px;
-  min-width: 0;
+.primary{
+  background:#159c64;
+  width:100%;
+  font-size:15px;
+  padding:16px;
 }
 
-h2 {
-  margin: 0 0 12px;
+.controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin:15px 0;
+  align-items:center;
 }
 
-.muted {
-  color: #64748b;
-  font-size: 13px;
-  line-height: 1.6;
+#stage{
+  width:100%;
+  max-height:75vh;
+  overflow:auto;
+  background:#edf2f7;
+  padding:12px;
+  border-radius:10px;
 }
 
-button {
-  background: #24354d;
-  color: white;
-  border: none;
-  border-radius: 9px;
-  padding: 12px 14px;
-  font-weight: bold;
-  cursor: pointer;
+#wall{
+  position:relative;
+  width:600px;
+  height:600px;
+  background:white;
+  border:3px solid #dc5757;
+  cursor:crosshair;
+  touch-action:none;
+  overflow:hidden;
 }
 
-button:hover:not(:disabled) {
-  filter: brightness(1.12);
+#wall canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
 }
 
-button:disabled {
-  opacity: .45;
-  cursor: not-allowed;
+#base{image-rendering:pixelated}
+#grid,#overlay{pointer-events:none}
+
+.priceBox{
+  background:#eefaf3;
+  padding:18px;
+  border-radius:12px;
+  margin:18px 0;
 }
 
-.secondary {
-  background: #e8edf3;
-  color: #24354d;
+.priceBox strong{
+  display:block;
+  font-size:36px;
+  color:#159c64;
+  margin:7px 0;
 }
 
-.primary {
-  background: #159c64;
-  width: 100%;
-  font-size: 15px;
-  padding: 16px;
+.step{
+  margin-top:24px;
+  margin-bottom:13px;
+  font-size:15px;
+  font-weight:bold;
+  display:flex;
+  gap:10px;
+  align-items:center;
 }
 
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 15px 0;
-  align-items: center;
+.stepNumber{
+  background:#dff5e8;
+  color:#128452;
+  border-radius:50%;
+  width:28px;
+  height:28px;
+  display:inline-flex;
+  justify-content:center;
+  align-items:center;
 }
 
-#stage {
-  width: 100%;
-  max-height: 75vh;
-  overflow: auto;
-  background: #edf2f7;
-  padding: 12px;
-  border-radius: 10px;
+.options{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
 }
 
-#wall {
-  position: relative;
-  width: 600px;
-  height: 600px;
-  background: white;
-  border: 3px solid #dc5757;
-  cursor: crosshair;
-  touch-action: none;
-  overflow: hidden;
+.option{
+  display:block;
+  border:2px solid #e2e8f0;
+  border-radius:11px;
+  padding:13px;
+  cursor:pointer;
+  font-size:14px;
 }
 
-#wall canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
+.option:has(input:checked){
+  border-color:#159c64;
+  background:#f0fbf5;
 }
 
-#base {
-  image-rendering: pixelated;
+.option small{
+  display:block;
+  color:#64748b;
+  margin-top:7px;
+  line-height:1.5;
 }
 
-#grid,
-#overlay {
-  pointer-events: none;
+.field{margin-top:17px}
+
+.field label{
+  display:block;
+  font-size:13px;
+  font-weight:bold;
+  margin-bottom:8px;
 }
 
-.priceBox {
-  background: #eefaf3;
-  padding: 18px;
-  border-radius: 12px;
-  margin: 18px 0;
+input[type=color]{
+  width:70px;
+  height:44px;
+  cursor:pointer;
 }
 
-.priceBox strong {
-  display: block;
-  font-size: 36px;
-  color: #159c64;
-  margin: 7px 0;
+input[type=file],input[type=url]{width:100%}
+
+input[type=url]{
+  border:1px solid #cbd5e1;
+  border-radius:8px;
+  padding:12px;
 }
 
-.step {
-  margin-top: 24px;
-  margin-bottom: 13px;
-  font-size: 15px;
-  font-weight: bold;
-  display: flex;
-  gap: 10px;
-  align-items: center;
+.status{
+  font-size:13px;
+  line-height:1.6;
+  overflow-wrap:anywhere;
 }
 
-.stepNumber {
-  background: #dff5e8;
-  color: #128452;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
+.notice{
+  background:#fff5df;
+  border-radius:9px;
+  padding:13px;
+  font-size:13px;
+  line-height:1.6;
+  margin-top:17px;
 }
 
-.options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+.hidden{display:none!important}
+
+#afterPayment{
+  display:none;
+  background:#effaf3;
+  border:1px solid #c8ead6;
+  padding:16px;
+  border-radius:11px;
+  margin-top:18px;
 }
 
-.option {
-  display: block;
-  border: 2px solid #e2e8f0;
-  border-radius: 11px;
-  padding: 13px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.option:has(input:checked) {
-  border-color: #159c64;
-  background: #f0fbf5;
-}
-
-.option small {
-  display: block;
-  color: #64748b;
-  margin-top: 7px;
-  line-height: 1.5;
-}
-
-.field {
-  margin-top: 17px;
-}
-
-.field label {
-  display: block;
-  font-size: 13px;
-  font-weight: bold;
-  margin-bottom: 8px;
-}
-
-input[type="color"] {
-  width: 70px;
-  height: 44px;
-  cursor: pointer;
-}
-
-input[type="file"],
-input[type="url"] {
-  width: 100%;
-}
-
-input[type="url"] {
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.status {
-  font-size: 13px;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-
-.notice {
-  background: #fff5df;
-  border-radius: 9px;
-  padding: 13px;
-  font-size: 13px;
-  line-height: 1.6;
-  margin-top: 17px;
-}
-
-.hidden {
-  display: none !important;
-}
-
-#afterPayment {
-  display: none;
-  background: #effaf3;
-  border: 1px solid #c8ead6;
-  padding: 16px;
-  border-radius: 11px;
-  margin-top: 18px;
-}
-
-@media(max-width: 900px) {
-  main {
-    grid-template-columns: 1fr;
-    padding: 12px;
+@media(max-width:900px){
+  main{
+    grid-template-columns:1fr;
+    padding:12px;
   }
-
-  .panel {
-    padding: 15px;
-  }
-
-  h1 {
-    font-size: 26px;
-  }
+  .panel{padding:15px}
+  h1{font-size:26px}
 }
 </style>
 </head>
@@ -318,8 +280,8 @@ input[type="url"] {
   </p>
 
   <p class="muted">
-    Il muro contiene 1000 colonne e 1000 righe.
-    Usa lo zoom per selezionare i pixel con precisione.
+    La griglia mostra blocchi di 10 × 10 pixel.
+    Aumenta lo zoom per vedere i singoli pixel.
   </p>
 
 </section>
@@ -351,15 +313,13 @@ input[type="url"] {
     <button
       id="checkBtn"
       onclick="checkAvailability()"
-      disabled
-    >
+      disabled>
       Verifica disponibilità
     </button>
 
     <button
       class="secondary"
-      onclick="clearSelection()"
-    >
+      onclick="clearSelection()">
       Cancella selezione
     </button>
   </div>
@@ -379,8 +339,7 @@ input[type="url"] {
         name="contentType"
         value="color"
         checked
-        onchange="changeContentType()"
-      >
+        onchange="changeContentType()">
       <strong>Solo colore</strong>
       <small>
         Colora un pixel o un intero rettangolo.
@@ -392,8 +351,7 @@ input[type="url"] {
         type="radio"
         name="contentType"
         value="image"
-        onchange="changeContentType()"
-      >
+        onchange="changeContentType()">
       <strong>Immagine / logo</strong>
       <small>
         Foto, disegno o pubblicità con link.
@@ -404,11 +362,7 @@ input[type="url"] {
 
   <div id="colorFields" class="field">
     <label for="color">Scegli il colore</label>
-    <input
-      type="color"
-      id="color"
-      value="#16a36a"
-    >
+    <input type="color" id="color" value="#16a36a">
   </div>
 
   <div id="imageFields" class="hidden">
@@ -418,8 +372,8 @@ input[type="url"] {
       <input
         type="file"
         id="image"
-        accept="image/png,image/jpeg,image/webp"
-      >
+        accept="image/png,image/jpeg,image/webp">
+
       <p class="muted">
         PNG, JPG o WebP · massimo 5 MB.
       </p>
@@ -435,8 +389,7 @@ input[type="url"] {
       <input
         type="url"
         id="link"
-        placeholder="https://tuosito.it"
-      >
+        placeholder="https://tuosito.it">
 
       <p class="muted">
         Per collegare il tuo spazio a un sito
@@ -445,9 +398,9 @@ input[type="url"] {
     </div>
 
     <div class="notice">
-      Puoi visualizzare gratuitamente l'anteprima.
-      Gli acquisti con immagine e link saranno
-      attivati dopo il completamento dei test.
+      Puoi vedere l'anteprima gratuitamente.
+      Gli acquisti con immagini e link non sono
+      ancora attivi.
     </div>
 
   </div>
@@ -458,23 +411,19 @@ input[type="url"] {
   </div>
 
   <div class="controls">
-
     <button
       id="previewBtn"
       class="secondary"
       onclick="preview()"
-      disabled
-    >
+      disabled>
       Mostra anteprima
     </button>
 
     <button
       class="secondary"
-      onclick="removePreview()"
-    >
+      onclick="removePreview()">
       Rimuovi anteprima
     </button>
-
   </div>
 
   <p id="previewStatus" class="muted">
@@ -485,8 +434,7 @@ input[type="url"] {
     id="buyBtn"
     class="primary"
     onclick="startCheckout()"
-    disabled
-  >
+    disabled>
     Seleziona i pixel per acquistare
   </button>
 
@@ -497,37 +445,30 @@ input[type="url"] {
 
     <p class="muted">
       Sei tornato da Stripe.
-      La conferma del pagamento avviene
-      sul server.
+      Il pagamento viene verificato dal server.
     </p>
 
     <p>
-      Per i pixel colorati non devi caricare
-      alcuna immagine.
-    </p>
-
-    <p>
-      Lo spazio sarà visibile dopo
-      l'approvazione.
+      I pixel colorati vengono pubblicati
+      dopo la conferma del pagamento.
     </p>
   </section>
 
   <div class="notice">
     <strong>Informazioni importanti</strong>
+
     <p>
       I pagamenti dei pixel colorati sono reali.
-      Gli spazi acquistati vengono registrati
-      dopo la conferma di Stripe.
+      Il prezzo è di 1 € per pixel.
     </p>
+
     <p>
-      La pubblicazione automatica dei colori
-      e il caricamento delle immagini
-      sono ancora in preparazione.
+      Immagini e loghi saranno attivati
+      dopo il completamento dei test.
     </p>
   </div>
 
 </aside>
-
 </main>
 
 <script>
@@ -576,13 +517,11 @@ function changeContentType() {
   const imageMode = contentType() === "image";
 
   $("colorFields").classList.toggle(
-    "hidden",
-    imageMode
+    "hidden", imageMode
   );
 
   $("imageFields").classList.toggle(
-    "hidden",
-    !imageMode
+    "hidden", !imageMode
   );
 
   removePreview();
@@ -643,6 +582,10 @@ function selectionOverlapsSold() {
   );
 }
 
+/*
+  GRIGLIA CORRETTA:
+  visibile anche allo zoom normale.
+*/
 function drawGrid() {
   const width = wall.clientWidth;
   const height = wall.clientHeight;
@@ -650,16 +593,18 @@ function drawGrid() {
   setupCanvas(grid, gridCtx, width, height);
   gridCtx.clearRect(0, 0, width, height);
 
-  const step = width / SIZE;
+  const pixelSize = width / SIZE;
 
-  if (step < 3) return;
+  // Mostra blocchi da 10 pixel allo zoom normale.
+  // Quando abbastanza ingrandito mostra ogni pixel.
+  const interval = pixelSize >= 3 ? 1 : 10;
 
   gridCtx.beginPath();
-  gridCtx.strokeStyle = "#d7dfe8";
-  gridCtx.lineWidth = 0.5;
+  gridCtx.strokeStyle = "#cbd5e1";
+  gridCtx.lineWidth = 0.7;
 
-  for (let i = 1; i < SIZE; i++) {
-    const p = i * step;
+  for (let i = interval; i < SIZE; i += interval) {
+    const p = i * pixelSize;
 
     gridCtx.moveTo(p, 0);
     gridCtx.lineTo(p, height);
@@ -822,7 +767,6 @@ function invalidateAvailability() {
   checking = false;
 
   $("availabilityStatus").textContent = "";
-
   updateInfo();
 }
 
@@ -830,9 +774,7 @@ wall.addEventListener("pointerdown", event => {
   if (
     event.button !== undefined &&
     event.button !== 0
-  ) {
-    return;
-  }
+  ) return;
 
   event.preventDefault();
 
@@ -1008,12 +950,9 @@ async function checkAvailability() {
     !selection ||
     checking ||
     selectionOverlapsSold()
-  ) {
-    return;
-  }
+  ) return;
 
   const version = ++checkVersion;
-
   const { x, y, w, h } = selection;
 
   checking = true;
@@ -1036,8 +975,8 @@ async function checkAvailability() {
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          x: x,
-          y: y,
+          x,
+          y,
           width: w,
           height: h
         })
@@ -1092,9 +1031,7 @@ function preview() {
     !availabilityConfirmed ||
     selectionOverlapsSold() ||
     imageLoading
-  ) {
-    return;
-  }
+  ) return;
 
   if (
     contentType() === "image" &&
@@ -1135,9 +1072,7 @@ async function loadSoldSpaces() {
   try {
     const response = await fetch(
       "/api/spaces",
-      {
-        cache: "no-store"
-      }
+      { cache: "no-store" }
     );
 
     if (!response.ok) {
@@ -1153,7 +1088,6 @@ async function loadSoldSpaces() {
     }
 
     soldSpaces = data.spaces;
-
     redrawWall();
 
     for (const space of soldSpaces) {
@@ -1169,9 +1103,7 @@ async function loadSoldSpaces() {
           !["https:", "http:"].includes(
             url.protocol
           )
-        ) {
-          continue;
-        }
+        ) continue;
 
         const image = new Image();
 
@@ -1189,9 +1121,7 @@ async function loadSoldSpaces() {
         image.src = url.href;
 
       } catch {
-        console.warn(
-          "URL immagine non valido"
-        );
+        console.warn("URL immagine non valido");
       }
     }
 
@@ -1218,9 +1148,7 @@ async function startCheckout() {
     !availabilityConfirmed ||
     selectionOverlapsSold() ||
     contentType() !== "color"
-  ) {
-    return;
-  }
+  ) return;
 
   checkoutInProgress = true;
   updateBuyButton();
@@ -1317,9 +1245,7 @@ function initializeCheckoutReturn() {
       window.location.href
     );
 
-    cleanUrl.searchParams.delete(
-      "session_id"
-    );
+    cleanUrl.searchParams.delete("session_id");
 
     window.history.replaceState(
       {},
@@ -1341,7 +1267,6 @@ updateInfo();
 loadSoldSpaces();
 
 </script>
-
 </body>
 </html>
 
