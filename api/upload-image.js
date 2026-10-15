@@ -1,5 +1,4 @@
 
-
 const BUCKET = "wall-images";
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
@@ -19,11 +18,11 @@ function validSessionId(value) {
 function validUUID(value) {
   return (
     typeof value === "string" &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
   );
 }
 
-function serverError(res, status, message) {
+function fail(res, status, message) {
   return res.status(status).json({
     success: false,
     error: message
@@ -36,22 +35,16 @@ export default async function handler(req, res) {
 
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
-
-    return serverError(
-      res,
-      405,
-      "Metodo non consentito"
-    );
+    return fail(res, 405, "Metodo non consentito");
   }
 
-  // BLOCCO DI SICUREZZA:
-  // nessun caricamento finché il sistema
-  // non viene completato e verificato.
+  // Il caricamento resta disattivato finché
+  // non completiamo tutti i controlli.
   if (
     process.env.ENABLE_IMAGE_UPLOADS !== "true" ||
     process.env.ENABLE_WALL_PAYMENTS !== "true"
   ) {
-    return serverError(
+    return fail(
       res,
       503,
       "Caricamento immagini non ancora attivo"
@@ -67,12 +60,8 @@ export default async function handler(req, res) {
   const stripeKey =
     process.env.STRIPE_SECRET_KEY;
 
-  if (
-    !supabaseUrl ||
-    !supabaseKey ||
-    !stripeKey
-  ) {
-    return serverError(
+  if (!supabaseUrl || !supabaseKey || !stripeKey) {
+    return fail(
       res,
       503,
       "Configurazione server incompleta"
@@ -86,7 +75,7 @@ export default async function handler(req, res) {
   } = req.body || {};
 
   if (!validSessionId(sessionId)) {
-    return serverError(
+    return fail(
       res,
       400,
       "Sessione di pagamento non valida"
@@ -95,9 +84,12 @@ export default async function handler(req, res) {
 
   if (
     typeof contentType !== "string" ||
-    !Object.hasOwn(IMAGE_TYPES, contentType)
+    !Object.prototype.hasOwnProperty.call(
+      IMAGE_TYPES,
+      contentType
+    )
   ) {
-    return serverError(
+    return fail(
       res,
       400,
       "Formato non valido. Usa PNG, JPG o WebP."
@@ -109,27 +101,29 @@ export default async function handler(req, res) {
     fileSize < 1 ||
     fileSize > MAX_IMAGE_SIZE
   ) {
-    return serverError(
+    return fail(
       res,
       400,
-      "L'immagine deve essere inferiore a 5 MB"
+      "Immagine troppo grande o vuota. Massimo 5 MB."
     );
   }
 
   try {
-    // 1. Verifica il pagamento con Stripe.
+    // 1. Verifica il pagamento direttamente
+    // con Stripe, senza fidarsi del browser.
     const stripeResponse = await fetch(
-      `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,
+      "https://api.stripe.com/v1/checkout/sessions/" +
+        encodeURIComponent(sessionId),
       {
         headers: {
-          Authorization: `Bearer ${stripeKey}`
+          Authorization: "Bearer " + stripeKey
         },
         cache: "no-store"
       }
     );
 
     if (!stripeResponse.ok) {
-      return serverError(
+      return fail(
         res,
         403,
         "Pagamento non verificabile"
@@ -146,35 +140,46 @@ export default async function handler(req, res) {
       session.payment_status !== "paid" ||
       session.currency?.toLowerCase() !== "eur"
     ) {
-      return serverError(
+      return fail(
         res,
         403,
         "Pagamento non confermato"
       );
     }
 
-    // 2. Recupera lo spazio acquistato
-    // dai metadati verificati di Stripe.
+    // CONTROLLO FONDAMENTALE:
+    // soltanto gli acquisti per immagini
+    // possono caricare un file.
+    if (session.metadata?.content_type !== "image") {
+      return fail(
+        res,
+        403,
+        "Questo acquisto non include immagini"
+      );
+    }
+
+    // 2. Identifica lo spazio acquistato.
     const spaceId = session.metadata?.space_id;
 
     if (!validUUID(spaceId)) {
-      return serverError(
+      return fail(
         res,
         403,
         "Spazio pubblicitario non valido"
       );
     }
 
-    // 3. Controlla che il database confermi
-    // l'acquisto dello stesso spazio.
+    // 3. Verifica che lo spazio sia venduto
+    // e ancora in attesa di revisione.
     const query = new URLSearchParams({
-      id: `eq.${spaceId}`,
+      id: "eq." + spaceId,
       select:
-        "id,width,height,status,stripe_session_id,approval_status,image_path"
+        "id,width,height,status," +
+        "stripe_session_id,approval_status,image_path"
     });
 
     const spaceResponse = await fetch(
-      `${supabaseUrl}/rest/v1/wall_spaces?${query}`,
+      supabaseUrl + "/rest/v1/wall_spaces?" + query,
       {
         headers: {
           apikey: supabaseKey,
@@ -186,7 +191,7 @@ export default async function handler(req, res) {
 
     if (!spaceResponse.ok) {
       throw new Error(
-        `Database HTTP ${spaceResponse.status}`
+        "Database HTTP " + spaceResponse.status
       );
     }
 
@@ -196,7 +201,7 @@ export default async function handler(req, res) {
       !Array.isArray(spaces) ||
       spaces.length !== 1
     ) {
-      return serverError(
+      return fail(
         res,
         404,
         "Spazio pubblicitario non trovato"
@@ -211,17 +216,16 @@ export default async function handler(req, res) {
       space.approval_status !== "pending_review" ||
       space.image_path
     ) {
-      return serverError(
+      return fail(
         res,
         409,
         "Questo spazio non accetta nuovi caricamenti"
       );
     }
 
-    // 4. Controlla che il prezzo pagato
-    // corrisponda esattamente ai pixel.
-    const expectedAmount =
-      space.width * space.height * 100;
+    // 4. Verifica l'importo realmente pagato.
+    const pixels = space.width * space.height;
+    const expectedAmount = pixels * 100;
 
     if (
       !Number.isSafeInteger(expectedAmount) ||
@@ -229,31 +233,35 @@ export default async function handler(req, res) {
       session.amount_total !== expectedAmount ||
       session.amount_subtotal !== expectedAmount ||
       session.metadata?.expected_amount !==
-        String(expectedAmount)
+        String(expectedAmount) ||
+      session.metadata?.pixels !== String(pixels)
     ) {
-      return serverError(
+      return fail(
         res,
         403,
         "Importo del pagamento non corrispondente"
       );
     }
 
-    // 5. Prepara un percorso privato
-    // appartenente soltanto allo spazio pagato.
+    // 5. Prepara il percorso nel bucket privato.
     const extension = IMAGE_TYPES[contentType];
 
     const imagePath =
-      `${spaceId}/advertisement.${extension}`;
+      spaceId + "/advertisement." + extension;
 
     const encodedPath = imagePath
       .split("/")
       .map(encodeURIComponent)
       .join("/");
 
-    // 6. Richiede a Supabase un token temporaneo
-    // per caricare il file nel bucket privato.
+    // 6. Genera un'autorizzazione temporanea
+    // per caricare il file su Supabase Storage.
     const uploadResponse = await fetch(
-      `${supabaseUrl}/storage/v1/object/upload/sign/${BUCKET}/${encodedPath}`,
+      supabaseUrl +
+        "/storage/v1/object/upload/sign/" +
+        BUCKET +
+        "/" +
+        encodedPath,
       {
         method: "POST",
         headers: {
@@ -268,7 +276,7 @@ export default async function handler(req, res) {
 
     if (!uploadResponse.ok) {
       throw new Error(
-        `Storage HTTP ${uploadResponse.status}`
+        "Storage HTTP " + uploadResponse.status
       );
     }
 
@@ -283,8 +291,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // 7. Restituisce soltanto le informazioni
-    // necessarie al caricamento.
     // Nessuna chiave segreta viene inviata.
     return res.status(200).json({
       success: true,
@@ -302,7 +308,7 @@ export default async function handler(req, res) {
       error.message
     );
 
-    return serverError(
+    return fail(
       res,
       503,
       "Impossibile autorizzare il caricamento"
