@@ -4,10 +4,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
 <title>The Million Dollar Wall V2</title>
 
 <style>
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
@@ -23,9 +26,18 @@ header {
   border-bottom: 1px solid #e2e8f0;
 }
 
-h1 { margin: 0; font-size: 32px; }
-h1 span { color: #159c64; }
-header p { color: #64748b; }
+h1 {
+  margin: 0;
+  font-size: 32px;
+}
+
+h1 span {
+  color: #159c64;
+}
+
+header p {
+  color: #64748b;
+}
 
 .demo {
   color: #a16207;
@@ -51,7 +63,9 @@ main {
   border-radius: 12px;
 }
 
-h2 { margin-top: 0; }
+h2 {
+  margin-top: 0;
+}
 
 .controls {
   display: flex;
@@ -71,11 +85,19 @@ button {
   cursor: pointer;
 }
 
-button:hover { background: #334b6b; }
+button:hover {
+  background: #334b6b;
+}
 
 button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+#buyBtn,
+#uploadBtn {
+  background: #159c64;
+  width: 100%;
 }
 
 #stage {
@@ -110,9 +132,12 @@ button:disabled {
   height: 100%;
 }
 
-#base { image-rendering: pixelated; }
+#base {
+  image-rendering: pixelated;
+}
 
-#grid, #overlay {
+#grid,
+#overlay {
   pointer-events: none;
 }
 
@@ -141,7 +166,9 @@ input[type="url"] {
   margin: 12px 0;
 }
 
-small { color: #64748b; }
+small {
+  color: #64748b;
+}
 
 .note {
   background: #fff3d6;
@@ -155,9 +182,11 @@ small { color: #64748b; }
 #connectionStatus,
 #availabilityStatus,
 #imageStatus,
-#checkoutStatus {
+#checkoutStatus,
+#uploadStatus {
   margin: 10px 0;
   font-size: 13px;
+  line-height: 1.5;
 }
 
 #availabilityStatus {
@@ -169,18 +198,31 @@ small { color: #64748b; }
   color: #64748b;
 }
 
-#buyBtn {
-  background: #159c64;
-  width: 100%;
+#afterPayment {
+  display: none;
+  margin-top: 20px;
+  padding: 16px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
 }
 
-#checkoutStatus {
-  line-height: 1.5;
+#afterPayment h2 {
+  font-size: 20px;
+}
+
+#uploadStatus {
+  overflow-wrap: anywhere;
 }
 
 @media (max-width: 850px) {
-  main { grid-template-columns: 1fr; }
-  h1 { font-size: 25px; }
+  main {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    font-size: 25px;
+  }
 }
 </style>
 </head>
@@ -190,6 +232,7 @@ small { color: #64748b; }
 <header>
   <h1>The <span>Million Dollar</span> Wall</h1>
   <p>1.000.000 di pixel · 1 pixel = 1 €</p>
+
   <div class="demo">
     VERSIONE DEMO — PAGAMENTI DISATTIVATI
   </div>
@@ -199,7 +242,10 @@ small { color: #64748b; }
 
 <section class="panel">
   <h2>Il muro da un milione di pixel</h2>
-  <p>Seleziona uno spazio trascinando il mouse o il dito.</p>
+
+  <p>
+    Seleziona uno spazio trascinando il mouse o il dito.
+  </p>
 
   <div class="controls">
     <button onclick="changeZoom(2)">+ Zoom</button>
@@ -230,15 +276,23 @@ small { color: #64748b; }
 </section>
 
 <aside class="panel">
+
   <h2>Il tuo spazio</h2>
 
   <div class="price" id="price">0 €</div>
   <small id="pixelCount">0 pixel × 1 €</small>
 
   <label for="color">Colore</label>
-  <input type="color" id="color" value="#16a36a">
+  <input
+    type="color"
+    id="color"
+    value="#16a36a"
+  >
 
-  <label for="image">Immagine o logo (facoltativo)</label>
+  <label for="image">
+    Immagine o logo per l'anteprima
+  </label>
+
   <input
     type="file"
     id="image"
@@ -246,12 +300,17 @@ small { color: #64748b; }
   >
 
   <p>
-    <small>PNG, JPG o WebP · massimo 5 MB</small>
+    <small>
+      PNG, JPG o WebP · massimo 5 MB
+    </small>
   </p>
 
   <p id="imageStatus"></p>
 
-  <label for="link">Link pubblicitario (facoltativo)</label>
+  <label for="link">
+    Link pubblicitario (facoltativo)
+  </label>
+
   <input
     type="url"
     id="link"
@@ -300,22 +359,75 @@ small { color: #64748b; }
 
   <p id="checkoutStatus" aria-live="polite"></p>
 
+  <section id="afterPayment">
+    <h2>Carica il tuo logo</h2>
+
+    <p>
+      Se sei tornato da Stripe, puoi preparare
+      il logo da associare all'acquisto.
+      Il pagamento deve essere verificato
+      dal server prima del caricamento.
+    </p>
+
+    <label for="finalImage">
+      Seleziona il logo definitivo
+    </label>
+
+    <input
+      type="file"
+      id="finalImage"
+      accept="image/png,image/jpeg,image/webp"
+    >
+
+    <p>
+      <small>
+        PNG, JPG o WebP · massimo 5 MB.
+        Il logo sarà sottoposto ad approvazione.
+      </small>
+    </p>
+
+    <div class="controls">
+      <button
+        id="uploadBtn"
+        onclick="uploadFinalImage()"
+        disabled
+      >
+        Invia logo per approvazione
+      </button>
+    </div>
+
+    <p id="uploadStatus" aria-live="polite"></p>
+  </section>
+
   <div class="note">
-    <strong>Anteprima gratuita.</strong>
-    Puoi scegliere un colore, un'immagine,
-    un link oppure combinarli.
-    I pagamenti sono ancora disattivati.
+    <strong>Versione in preparazione.</strong>
+    Puoi scegliere i pixel e vedere
+    un'anteprima gratuita.
+    Gli acquisti e i caricamenti sono
+    ancora disattivati.
     Le anteprime non vengono salvate online.
   </div>
-</aside>
 
+</aside>
 </main>
 
 <script>
 const SIZE = 1000;
 
+const SUPABASE_PUBLIC_URL =
+  "https://zaivqtihriaflcgzffqt.supabase.co";
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+const ALLOWED_IMAGE_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/webp"
+];
+
 const wall = document.getElementById("wall");
 const stage = document.getElementById("stage");
+
 const base = document.getElementById("base");
 const grid = document.getElementById("grid");
 const overlay = document.getElementById("overlay");
@@ -336,6 +448,9 @@ const imageStatus =
 const checkoutStatus =
   document.getElementById("checkoutStatus");
 
+const uploadStatus =
+  document.getElementById("uploadStatus");
+
 const checkBtn =
   document.getElementById("checkBtn");
 
@@ -345,19 +460,53 @@ const previewBtn =
 const buyBtn =
   document.getElementById("buyBtn");
 
+const uploadBtn =
+  document.getElementById("uploadBtn");
+
+const finalImageInput =
+  document.getElementById("finalImage");
+
 let zoom = 1;
 let selection = null;
 let start = null;
 let dragging = false;
+
 let uploadedImage = null;
 let imageLoading = false;
+let imageVersion = 0;
+
 let soldSpaces = [];
+
 let availabilityConfirmed = false;
 let checking = false;
 let checkVersion = 0;
-let imageVersion = 0;
+
 let previewData = null;
 let checkoutInProgress = false;
+let uploadInProgress = false;
+
+let completedSessionId = null;
+
+function validateImageFile(file) {
+  if (!file) {
+    throw new Error("Seleziona un'immagine.");
+  }
+
+  if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+    throw new Error(
+      "Formato non valido. Usa PNG, JPG o WebP."
+    );
+  }
+
+  if (
+    file.size < 1 ||
+    file.size > MAX_IMAGE_SIZE
+  ) {
+    throw new Error(
+      "L'immagine deve essere inferiore a 5 MB."
+    );
+  }
+}
 
 function setupCanvas(canvas, context, width, height) {
   const dpr = window.devicePixelRatio || 1;
@@ -373,6 +522,7 @@ function drawGrid() {
   const height = wall.clientHeight;
 
   setupCanvas(grid, gridCtx, width, height);
+
   gridCtx.clearRect(0, 0, width, height);
 
   const step = width / SIZE;
@@ -452,7 +602,9 @@ function invalidateAvailability() {
   checkVersion++;
   availabilityConfirmed = false;
   checking = false;
+
   availabilityStatus.textContent = "";
+
   updateInfo();
 }
 
@@ -461,11 +613,13 @@ function drawSelection() {
   const height = wall.clientHeight;
 
   setupCanvas(overlay, overlayCtx, width, height);
+
   overlayCtx.clearRect(0, 0, width, height);
 
   if (!selection) return;
 
   const scale = width / SIZE;
+
   const x = selection.x * scale;
   const y = selection.y * scale;
   const w = selection.w * scale;
@@ -494,8 +648,10 @@ function updateInfo() {
   if (!selection) {
     price.textContent = "0 €";
     count.textContent = "0 pixel × 1 €";
+
     checkBtn.disabled = true;
     previewBtn.disabled = true;
+
     updateBuyButton();
     return;
   }
@@ -508,7 +664,8 @@ function updateInfo() {
 
   count.textContent = overlaps
     ? "Attenzione: lo spazio include pixel già venduti"
-    : pixels.toLocaleString("it-IT") + " pixel × 1 €";
+    : pixels.toLocaleString("it-IT") +
+      " pixel × 1 €";
 
   checkBtn.disabled = checking || overlaps;
 
@@ -522,11 +679,15 @@ function updateInfo() {
 }
 
 wall.addEventListener("pointerdown", event => {
-  if (event.button !== undefined && event.button !== 0) {
+  if (
+    event.button !== undefined &&
+    event.button !== 0
+  ) {
     return;
   }
 
   event.preventDefault();
+
   invalidateAvailability();
 
   start = getPosition(event);
@@ -543,7 +704,11 @@ wall.addEventListener("pointermove", event => {
   if (!dragging) return;
 
   invalidateAvailability();
-  selection = makeRectangle(start, getPosition(event));
+
+  selection = makeRectangle(
+    start,
+    getPosition(event)
+  );
 
   drawSelection();
   updateInfo();
@@ -558,7 +723,11 @@ wall.addEventListener("pointercancel", () => {
 });
 
 function changeZoom(factor) {
-  zoom = Math.max(1, Math.min(32, zoom * factor));
+  zoom = Math.max(
+    1,
+    Math.min(32, zoom * factor)
+  );
+
   applyZoom();
 }
 
@@ -598,6 +767,7 @@ function applyZoom() {
 
 function clearSelection() {
   selection = null;
+
   invalidateAvailability();
   drawSelection();
   updateInfo();
@@ -619,27 +789,17 @@ document.getElementById("image").addEventListener(
       return;
     }
 
-    const allowed = [
-      "image/png",
-      "image/jpeg",
-      "image/webp"
-    ];
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert("L'immagine non può superare 5 MB.");
-      event.target.value = "";
-      updateInfo();
-      return;
-    }
-
-    if (!allowed.includes(file.type)) {
-      alert("Formato non supportato. Usa PNG, JPG o WebP.");
+    try {
+      validateImageFile(file);
+    } catch (error) {
+      imageStatus.textContent = error.message;
       event.target.value = "";
       updateInfo();
       return;
     }
 
     imageLoading = true;
+
     imageStatus.textContent =
       "Caricamento anteprima immagine...";
 
@@ -681,18 +841,24 @@ document.getElementById("image").addEventListener(
 );
 
 function validateLink() {
-  const raw = document.getElementById("link").value.trim();
+  const raw = document
+    .getElementById("link")
+    .value
+    .trim();
 
   if (!raw) return "";
 
   try {
     const url = new URL(raw);
 
-    if (!["https:", "http:"].includes(url.protocol)) {
+    if (
+      !["https:", "http:"].includes(url.protocol)
+    ) {
       throw new Error("Protocollo non valido");
     }
 
     return url.href;
+
   } catch {
     throw new Error(
       "Inserisci un link valido che inizi con https://"
@@ -719,25 +885,31 @@ async function checkAvailability() {
     "Controllo disponibilità...";
 
   availabilityStatus.style.color = "#64748b";
+
   updateInfo();
 
   try {
-    const response = await fetch("/api/check-space", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        x,
-        y,
-        width: w,
-        height: h
-      })
-    });
+    const response = await fetch(
+      "/api/check-space",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          x,
+          y,
+          width: w,
+          height: h
+        })
+      }
+    );
 
     const data = await response.json();
 
-    if (requestVersion !== checkVersion) return;
+    if (requestVersion !== checkVersion) {
+      return;
+    }
 
     if (!response.ok) {
       throw new Error(
@@ -745,22 +917,29 @@ async function checkAvailability() {
       );
     }
 
-    availabilityConfirmed = data.available === true;
+    availabilityConfirmed =
+      data.available === true;
 
-    availabilityStatus.textContent = availabilityConfirmed
-      ? "✓ Spazio disponibile! Puoi vedere l'anteprima."
-      : "✕ Spazio occupato. Scegli altri pixel.";
+    availabilityStatus.textContent =
+      availabilityConfirmed
+        ? "✓ Spazio disponibile! Puoi vedere l'anteprima."
+        : "✕ Spazio occupato. Scegli altri pixel.";
 
-    availabilityStatus.style.color = availabilityConfirmed
-      ? "#15803d"
-      : "#dc2626";
+    availabilityStatus.style.color =
+      availabilityConfirmed
+        ? "#15803d"
+        : "#dc2626";
 
   } catch (error) {
-    if (requestVersion !== checkVersion) return;
+    if (requestVersion !== checkVersion) {
+      return;
+    }
 
     availabilityConfirmed = false;
+
     availabilityStatus.textContent =
       "Errore: " + error.message;
+
     availabilityStatus.style.color = "#dc2626";
 
   } finally {
@@ -781,7 +960,9 @@ function preview() {
   }
 
   if (selectionOverlapsSold()) {
-    alert("Questo spazio contiene pixel già venduti.");
+    alert(
+      "Questo spazio contiene pixel già venduti."
+    );
     return;
   }
 
@@ -796,7 +977,8 @@ function preview() {
 
   previewData = {
     ...selection,
-    color: document.getElementById("color").value,
+    color:
+      document.getElementById("color").value,
     image: uploadedImage,
     link
   };
@@ -816,7 +998,11 @@ function removePreview() {
 
 function drawSpace(space) {
   const {
-    x, y, width, height, color
+    x,
+    y,
+    width,
+    height,
+    color
   } = space;
 
   ctx.fillStyle = color || "#ffffff";
@@ -840,7 +1026,13 @@ function redrawWall() {
     ctx.fillRect(p.x, p.y, p.w, p.h);
 
     if (p.image) {
-      ctx.drawImage(p.image, p.x, p.y, p.w, p.h);
+      ctx.drawImage(
+        p.image,
+        p.x,
+        p.y,
+        p.w,
+        p.h
+      );
     }
   }
 
@@ -864,12 +1056,17 @@ async function loadSoldSpaces() {
     "Caricamento degli spazi venduti...";
 
   try {
-    const response = await fetch("/api/spaces", {
-      cache: "no-store"
-    });
+    const response = await fetch(
+      "/api/spaces",
+      {
+        cache: "no-store"
+      }
+    );
 
     if (!response.ok) {
-      throw new Error("Errore API: " + response.status);
+      throw new Error(
+        "Errore API: " + response.status
+      );
     }
 
     const data = await response.json();
@@ -879,6 +1076,7 @@ async function loadSoldSpaces() {
     }
 
     soldSpaces = data.spaces;
+
     redrawWall();
 
     for (const space of soldSpaces) {
@@ -891,7 +1089,9 @@ async function loadSoldSpaces() {
         );
 
         if (
-          !["https:", "http:"].includes(url.protocol)
+          !["https:", "http:"].includes(
+            url.protocol
+          )
         ) {
           continue;
         }
@@ -904,13 +1104,17 @@ async function loadSoldSpaces() {
         };
 
         image.onerror = () => {
-          console.warn("Immagine non disponibile");
+          console.warn(
+            "Immagine non disponibile"
+          );
         };
 
         image.src = url.href;
 
       } catch {
-        console.warn("URL immagine non valido");
+        console.warn(
+          "URL immagine non valido"
+        );
       }
     }
 
@@ -947,19 +1151,23 @@ async function startCheckout() {
     "Preparazione del pagamento...";
 
   try {
-    const response = await fetch("/api/create-checkout", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        x: selection.x,
-        y: selection.y,
-        width: selection.w,
-        height: selection.h,
-        color: document.getElementById("color").value
-      })
-    });
+    const response = await fetch(
+      "/api/create-checkout",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          x: selection.x,
+          y: selection.y,
+          width: selection.w,
+          height: selection.h,
+          color:
+            document.getElementById("color").value
+        })
+      }
+    );
 
     const data = await response.json();
 
@@ -969,7 +1177,9 @@ async function startCheckout() {
       );
     }
 
-    const checkoutUrl = new URL(data.checkout_url);
+    const checkoutUrl = new URL(
+      data.checkout_url
+    );
 
     if (
       checkoutUrl.protocol !== "https:" ||
@@ -978,40 +1188,291 @@ async function startCheckout() {
         "pay.stripe.com"
       ].includes(checkoutUrl.hostname)
     ) {
-      throw new Error("Indirizzo di pagamento non valido");
+      throw new Error(
+        "Indirizzo di pagamento non valido"
+      );
     }
 
     window.location.assign(checkoutUrl.href);
 
   } catch (error) {
-    checkoutStatus.textContent = error.message;
+    checkoutStatus.textContent =
+      error.message;
+
     checkoutInProgress = false;
     updateBuyButton();
   }
 }
 
-const checkoutParams =
-  new URLSearchParams(window.location.search);
+// Recupera il riferimento restituito da Stripe.
+// Non considera il ritorno sul sito una prova
+// dell'avvenuto pagamento.
+function initializeCheckoutReturn() {
+  const params = new URLSearchParams(
+    window.location.search
+  );
 
-if (checkoutParams.get("checkout") === "success") {
-  checkoutStatus.textContent =
-    "Ritorno dal pagamento ricevuto. " +
-    "L'acquisto deve ancora essere verificato dal server.";
+  const checkout = params.get("checkout");
+  const sessionId = params.get("session_id");
 
-  // Rimuove il riferimento alla sessione dall'indirizzo
-  // per ridurre il rischio di condividerlo accidentalmente.
-  const cleanUrl = new URL(window.location.href);
-  cleanUrl.searchParams.delete("session_id");
-  window.history.replaceState({}, "", cleanUrl.href);
+  if (
+    checkout === "success" &&
+    typeof sessionId === "string" &&
+    /^cs_live_[A-Za-z0-9]+$/.test(sessionId)
+  ) {
+    completedSessionId = sessionId;
 
-} else if (
-  checkoutParams.get("checkout") === "cancel"
-) {
-  checkoutStatus.textContent = "Pagamento annullato.";
+    document.getElementById(
+      "afterPayment"
+    ).style.display = "block";
+
+    checkoutStatus.textContent =
+      "Ritorno da Stripe ricevuto. " +
+      "Il pagamento sarà verificato dal server " +
+      "prima di autorizzare il logo.";
+
+    uploadStatus.textContent =
+      "Seleziona nuovamente il logo definitivo. " +
+      "Il file scelto prima del pagamento " +
+      "non viene conservato dal browser.";
+
+  } else if (checkout === "success") {
+    checkoutStatus.textContent =
+      "Riferimento all'acquisto mancante. " +
+      "Non è possibile autorizzare il caricamento.";
+
+  } else if (checkout === "cancel") {
+    checkoutStatus.textContent =
+      "Pagamento annullato.";
+  }
+
+  // Non lasciare il riferimento Stripe
+  // nella barra degli indirizzi.
+  if (sessionId) {
+    const cleanUrl = new URL(
+      window.location.href
+    );
+
+    cleanUrl.searchParams.delete(
+      "session_id"
+    );
+
+    window.history.replaceState(
+      {},
+      "",
+      cleanUrl.href
+    );
+  }
 }
 
-window.addEventListener("resize", applyZoom);
+finalImageInput.addEventListener(
+  "change",
+  () => {
+    uploadStatus.textContent = "";
 
+    try {
+      validateImageFile(
+        finalImageInput.files[0]
+      );
+
+      uploadBtn.disabled =
+        !completedSessionId ||
+        uploadInProgress;
+
+      uploadStatus.textContent =
+        "Logo selezionato. " +
+        "Pronto per la verifica del pagamento.";
+
+    } catch (error) {
+      uploadBtn.disabled = true;
+
+      if (finalImageInput.files.length) {
+        uploadStatus.textContent =
+          error.message;
+      }
+    }
+  }
+);
+
+async function uploadFinalImage() {
+  if (
+    uploadInProgress ||
+    !completedSessionId
+  ) {
+    return;
+  }
+
+  const file = finalImageInput.files[0];
+
+  try {
+    validateImageFile(file);
+  } catch (error) {
+    uploadStatus.textContent = error.message;
+    return;
+  }
+
+  uploadInProgress = true;
+  uploadBtn.disabled = true;
+
+  uploadStatus.textContent =
+    "Verifica del pagamento in corso...";
+
+  try {
+    // 1. Il server verifica pagamento,
+    // importo e proprietà dello spazio.
+    const authorizationResponse = await fetch(
+      "/api/upload-image",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          sessionId: completedSessionId,
+          contentType: file.type,
+          fileSize: file.size
+        })
+      }
+    );
+
+    const authorization =
+      await authorizationResponse.json();
+
+    if (
+      !authorizationResponse.ok ||
+      authorization.success !== true
+    ) {
+      throw new Error(
+        authorization.error ||
+        "Caricamento non autorizzato"
+      );
+    }
+
+    if (
+      authorization.bucket !== "wall-images" ||
+      typeof authorization.path !== "string" ||
+      typeof authorization.token !== "string" ||
+      !authorization.token
+    ) {
+      throw new Error(
+        "Autorizzazione non valida"
+      );
+    }
+
+    uploadStatus.textContent =
+      "Pagamento verificato. " +
+      "Caricamento del logo...";
+
+    // 2. Usa il token temporaneo.
+    // Nessuna chiave segreta viene esposta.
+    const encodedPath = authorization.path
+      .split("/")
+      .map(encodeURIComponent)
+      .join("/");
+
+    const storageUrl = new URL(
+      SUPABASE_PUBLIC_URL +
+      "/storage/v1/object/upload/sign/" +
+      "wall-images/" +
+      encodedPath
+    );
+
+    storageUrl.searchParams.set(
+      "token",
+      authorization.token
+    );
+
+    const uploadResponse = await fetch(
+      storageUrl.href,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type,
+          "x-upsert": "false"
+        },
+        body: file
+      }
+    );
+
+    if (!uploadResponse.ok) {
+      throw new Error(
+        "Il logo non è stato caricato. " +
+        "Riprova più tardi."
+      );
+    }
+
+    uploadStatus.textContent =
+      "Logo trasferito. " +
+      "Registrazione per l'approvazione...";
+
+    // 3. Il server deve verificare il file
+    // realmente presente nello Storage
+    // e associarlo all'acquisto.
+    const confirmResponse = await fetch(
+      "/api/confirm-image",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          sessionId: completedSessionId,
+          imagePath: authorization.path
+        })
+      }
+    );
+
+    let confirmation = {};
+
+    try {
+      confirmation =
+        await confirmResponse.json();
+    } catch {
+      throw new Error(
+        "Il server di conferma non è ancora disponibile."
+      );
+    }
+
+    if (
+      !confirmResponse.ok ||
+      confirmation.success !== true
+    ) {
+      throw new Error(
+        confirmation.error ||
+        "Il logo è stato caricato, " +
+        "ma non è ancora stato registrato."
+      );
+    }
+
+    uploadStatus.textContent =
+      "Logo ricevuto! " +
+      "È in attesa dell'approvazione " +
+      "dell'amministratore.";
+
+    finalImageInput.disabled = true;
+    uploadBtn.disabled = true;
+
+    completedSessionId = null;
+
+  } catch (error) {
+    uploadStatus.textContent =
+      "Attenzione: " + error.message;
+
+    // Se il file è stato trasferito ma
+    // la conferma è fallita, non tentare
+    // automaticamente un nuovo upload:
+    // potrebbe già esistere nello Storage.
+  } finally {
+    uploadInProgress = false;
+  }
+}
+
+window.addEventListener(
+  "resize",
+  applyZoom
+);
+
+initializeCheckoutReturn();
 applyZoom();
 updateInfo();
 loadSoldSpaces();
