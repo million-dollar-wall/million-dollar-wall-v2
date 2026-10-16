@@ -1,12 +1,8 @@
 
-const Stripe = require("stripe");
 
-const stripe = new Stripe(
-  process.env.STRIPE_SECRET_KEY
-);
-
-module.exports = async function handler(req, res) {
+export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Content-Type-Options", "nosniff");
 
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
@@ -16,27 +12,60 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  try {
-    const sessionId = req.query.session_id;
+  const sessionId = req.query.session_id;
 
-    if (
-      typeof sessionId !== "string" ||
-      !/^cs_live_[A-Za-z0-9]+$/.test(sessionId)
-    ) {
-      return res.status(400).json({
-        error: "Sessione Stripe non valida"
+  if (
+    typeof sessionId !== "string" ||
+    !/^cs_live_[A-Za-z0-9]+$/.test(sessionId)
+  ) {
+    return res.status(400).json({
+      error: "Sessione Stripe non valida"
+    });
+  }
+
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+
+  if (!stripeKey) {
+    return res.status(503).json({
+      error: "Configurazione Stripe incompleta"
+    });
+  }
+
+  try {
+    const response = await fetch(
+      "https://api.stripe.com/v1/checkout/sessions/" +
+        encodeURIComponent(sessionId),
+      {
+        method: "GET",
+        headers: {
+          Authorization: "Bearer " + stripeKey
+        },
+        cache: "no-store"
+      }
+    );
+
+    if (!response.ok) {
+      console.error(
+        "Stripe checkout status:",
+        response.status
+      );
+
+      return res.status(502).json({
+        error: "Impossibile verificare il pagamento"
       });
     }
 
-    const session =
-      await stripe.checkout.sessions.retrieve(
-        sessionId
-      );
+    const session = await response.json();
 
-    if (
-      session.mode !== "payment" ||
-      session.payment_status !== "paid"
-    ) {
+    const paid =
+      session.id === sessionId &&
+      session.livemode === true &&
+      session.mode === "payment" &&
+      session.status === "complete" &&
+      session.payment_status === "paid" &&
+      session.currency?.toLowerCase() === "eur";
+
+    if (!paid) {
       return res.status(200).json({
         paid: false
       });
@@ -59,7 +88,7 @@ module.exports = async function handler(req, res) {
     );
 
     return res.status(500).json({
-      error: "Impossibile verificare il pagamento"
+      error: "Verifica pagamento non disponibile"
     });
   }
-};
+}
