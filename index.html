@@ -606,6 +606,7 @@ let checking = false;
 let checkVersion = 0;
 
 let checkoutInProgress = false;
+let imagePurchasesEnabled = false;
 
 let paidImageSessionId = null;
 let uploadInProgress = false;
@@ -834,6 +835,7 @@ function redrawWall() {
 
 function updateBuyButton() {
   const button = $("buyBtn");
+  const imageMode = contentType() === "image";
 
   const canBuy =
     !checkoutInProgress &&
@@ -841,13 +843,23 @@ function updateBuyButton() {
     !!selection &&
     availabilityConfirmed &&
     !selectionOverlapsSold() &&
-    contentType() === "color";
+    (
+      !imageMode ||
+      (
+        imagePurchasesEnabled &&
+        !!uploadedImage &&
+        !imageLoading
+      )
+    );
 
   button.disabled = !canBuy;
 
-  if (contentType() === "image") {
+  if (imageMode && !imagePurchasesEnabled) {
     button.textContent =
       "Acquisto immagini non ancora disponibile";
+  } else if (imageMode && !uploadedImage) {
+    button.textContent =
+      "Carica un'immagine per acquistare";
   } else if (selection) {
     const pixels = selection.w * selection.h;
 
@@ -1299,7 +1311,14 @@ async function startCheckout() {
     !selection ||
     !availabilityConfirmed ||
     selectionOverlapsSold() ||
-    contentType() !== "color"
+    (
+      contentType() === "image" &&
+      (
+        !imagePurchasesEnabled ||
+        !uploadedImage ||
+        imageLoading
+      )
+    )
   ) return;
 
   checkoutInProgress = true;
@@ -1322,7 +1341,7 @@ async function startCheckout() {
           width: selection.w,
           height: selection.h,
           color: $("color").value,
-          content_type: "color"
+          content_type: contentType()
         })
       }
     );
@@ -1626,12 +1645,46 @@ async function uploadPaidImage() {
   }
 }
 
+// CONTROLLO ATTIVAZIONE ACQUISTI IMMAGINI
+
+async function checkImageFeatureStatus() {
+  imagePurchasesEnabled = false;
+  updateBuyButton();
+
+  try {
+    const response = await fetch(
+      "/api/image-feature-status",
+      {
+        cache: "no-store"
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        "Servizio immagini non disponibile"
+      );
+    }
+
+    const data = await response.json();
+
+    imagePurchasesEnabled =
+      data.enabled === true;
+
+  } catch (error) {
+    imagePurchasesEnabled = false;
+    console.error(error);
+  }
+
+  updateBuyButton();
+}
+
 window.addEventListener(
   "resize",
   applyZoom
 );
 
 changeContentType();
+checkImageFeatureStatus();
 applyZoom();
 updateInfo();
 loadSoldSpaces();
