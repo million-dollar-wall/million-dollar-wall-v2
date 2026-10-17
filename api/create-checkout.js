@@ -1,5 +1,4 @@
 
-
 const SITE_URL = "https://million-dollar-wall-v2.vercel.app";
 
 const UUID_PATTERN =
@@ -47,9 +46,7 @@ async function callSupabaseRpc(url, key, functionName, data) {
   } catch {
     console.error(
       "Supabase RPC: risposta non JSON",
-      functionName,
-      "Content-Type:",
-      response.headers.get("content-type")
+      functionName
     );
 
     throw new Error(
@@ -175,7 +172,7 @@ export default async function handler(req, res) {
   let sessionAttached = false;
 
   try {
-    // 1. Prenota lo spazio su Supabase.
+    // 1. Prenota lo spazio.
     const reservationResult = await callSupabaseRpc(
       supabaseUrl,
       supabaseKey,
@@ -189,17 +186,24 @@ export default async function handler(req, res) {
       }
     );
 
-    // Diagnostica: registra soltanto il formato
-    // della risposta, senza dati sensibili.
+    // Diagnostica completa della risposta.
+    // Non stampa password o chiavi API.
+    console.log(
+      "Risposta prenotazione:",
+      JSON.stringify(reservationResult)
+    );
+
     console.log("Diagnostica prenotazione:", {
       tipo: reservationResult === null
         ? "null"
         : Array.isArray(reservationResult)
           ? "array"
           : typeof reservationResult,
+
       uuidValido:
         typeof reservationResult === "string" &&
         UUID_PATTERN.test(reservationResult),
+
       chiavi:
         reservationResult &&
         typeof reservationResult === "object" &&
@@ -213,13 +217,13 @@ export default async function handler(req, res) {
       !UUID_PATTERN.test(reservationResult)
     ) {
       throw new Error(
-        "Prenotazione non valida: controllare Diagnostica prenotazione"
+        "Prenotazione non valida: controllare Risposta prenotazione"
       );
     }
 
     spaceId = reservationResult;
 
-    // 2. Prepara il pagamento Stripe.
+    // 2. Crea la sessione di pagamento Stripe.
     const productName =
       contentType === "image"
         ? `Spazio pubblicitario ${width} x ${height}`
@@ -306,7 +310,7 @@ export default async function handler(req, res) {
 
     sessionId = session.id;
 
-    // 3. Collega la sessione Stripe allo spazio.
+    // 3. Collega Stripe alla prenotazione.
     sessionAttached = await callSupabaseRpc(
       supabaseUrl,
       supabaseKey,
@@ -323,7 +327,7 @@ export default async function handler(req, res) {
       );
     }
 
-    // 4. Restituisci il link di pagamento.
+    // 4. Restituisce il link di pagamento.
     return res.status(200).json({
       checkout_url: checkoutUrl.href
     });
