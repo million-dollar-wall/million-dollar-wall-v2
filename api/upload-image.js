@@ -8,6 +8,9 @@ const IMAGE_TYPES = {
   "image/webp": "webp"
 };
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 function validSessionId(value) {
   return (
     typeof value === "string" &&
@@ -18,7 +21,7 @@ function validSessionId(value) {
 function validUUID(value) {
   return (
     typeof value === "string" &&
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+    UUID_PATTERN.test(value)
   );
 }
 
@@ -38,8 +41,6 @@ export default async function handler(req, res) {
     return fail(res, 405, "Metodo non consentito");
   }
 
-  // Il caricamento resta disattivato finché
-  // non completiamo tutti i controlli.
   if (
     process.env.ENABLE_IMAGE_UPLOADS !== "true" ||
     process.env.ENABLE_WALL_PAYMENTS !== "true"
@@ -109,8 +110,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Verifica il pagamento direttamente
-    // con Stripe, senza fidarsi del browser.
     const stripeResponse = await fetch(
       "https://api.stripe.com/v1/checkout/sessions/" +
         encodeURIComponent(sessionId),
@@ -147,9 +146,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // CONTROLLO FONDAMENTALE:
-    // soltanto gli acquisti per immagini
-    // possono caricare un file.
     if (session.metadata?.content_type !== "image") {
       return fail(
         res,
@@ -158,7 +154,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // 2. Identifica lo spazio acquistato.
     const spaceId = session.metadata?.space_id;
 
     if (!validUUID(spaceId)) {
@@ -169,8 +164,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // 3. Verifica che lo spazio sia venduto
-    // e ancora in attesa di revisione.
     const query = new URLSearchParams({
       id: "eq." + spaceId,
       select:
@@ -223,7 +216,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // 4. Verifica l'importo realmente pagato.
     const pixels = space.width * space.height;
     const expectedAmount = pixels * 100;
 
@@ -243,7 +235,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // 5. Prepara il percorso nel bucket privato.
     const extension = IMAGE_TYPES[contentType];
 
     const imagePath =
@@ -254,8 +245,6 @@ export default async function handler(req, res) {
       .map(encodeURIComponent)
       .join("/");
 
-    // 6. Genera un'autorizzazione temporanea
-    // per caricare il file su Supabase Storage.
     const uploadResponse = await fetch(
       supabaseUrl +
         "/storage/v1/object/upload/sign/" +
@@ -291,7 +280,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // Nessuna chiave segreta viene inviata.
     return res.status(200).json({
       success: true,
       bucket: BUCKET,
