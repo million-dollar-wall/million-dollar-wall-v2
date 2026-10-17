@@ -14,6 +14,8 @@ const UUID =
 
 const SESSION = /^cs_live_[A-Za-z0-9]+$/;
 
+const ALLOWED_PRICES_CENTS = [50, 100];
+
 function fail(res, status, message) {
   return res.status(status).json({
     success: false,
@@ -47,8 +49,6 @@ export default async function handler(req, res) {
     );
   }
 
-  // Rimane disattivato fino al completamento
-  // e alla verifica dell'intero sistema.
   if (
     process.env.ENABLE_WALL_PAYMENTS !== "true" ||
     process.env.ENABLE_IMAGE_UPLOADS !== "true"
@@ -90,8 +90,6 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Verifica il pagamento direttamente
-    // con Stripe.
     const stripeResponse = await fetch(
       "https://api.stripe.com/v1/checkout/sessions/" +
         encodeURIComponent(sessionId),
@@ -128,9 +126,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // 2. Accetta soltanto gli acquisti
-    // effettuati per immagini o loghi.
-    // Gli acquisti "solo colore" sono esclusi.
     if (session.metadata?.content_type !== "image") {
       return fail(
         res,
@@ -139,7 +134,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // 3. Identifica lo spazio pagato.
     const spaceId = session.metadata?.space_id;
 
     if (
@@ -153,8 +147,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // Il percorso deve appartenere
-    // esclusivamente allo spazio acquistato.
     const allowedPath = new RegExp(
       "^" + spaceId +
         "/advertisement\\.(png|jpg|webp)$",
@@ -169,8 +161,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // 4. Controlla lo stato dello spazio
-    // nel database Supabase.
     const params = new URLSearchParams({
       id: "eq." + spaceId,
       select:
@@ -216,8 +206,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // Consente di ripetere la conferma
-    // senza registrare due volte il file.
     if (space.image_path === imagePath) {
       return res.status(200).json({
         success: true,
@@ -234,17 +222,17 @@ export default async function handler(req, res) {
       );
     }
 
-    // 5. Controlla l'importo realmente pagato.
     const pixels = space.width * space.height;
-    const expected = pixels * 100;
+    const paidAmount = session.amount_total;
+    const unitPrice = paidAmount / pixels;
 
     if (
-      !Number.isSafeInteger(expected) ||
-      expected < 100 ||
-      session.amount_total !== expected ||
-      session.amount_subtotal !== expected ||
+      !Number.isSafeInteger(pixels) ||
+      pixels < 1 ||
+      !ALLOWED_PRICES_CENTS.includes(unitPrice) ||
+      session.amount_subtotal !== paidAmount ||
       session.metadata?.expected_amount !==
-        String(expected) ||
+        String(paidAmount) ||
       session.metadata?.pixels !== String(pixels)
     ) {
       return fail(
@@ -254,8 +242,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // 6. Verifica che il file esista
-    // nello Storage privato di Supabase.
     const encodedPath = imagePath
       .split("/")
       .map(encodeURIComponent)
@@ -309,8 +295,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // 7. Registra il file soltanto se
-    // non ne esiste già uno associato.
     const updateParams = new URLSearchParams({
       id: "eq." + spaceId,
       status: "eq.sold",
@@ -349,9 +333,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // 8. Non pubblica automaticamente.
-    // L'immagine rimane in attesa
-    // dell'approvazione dell'amministratore.
     return res.status(200).json({
       success: true,
       status: "pending_review",
