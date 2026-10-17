@@ -1,5 +1,9 @@
 
+
 const SITE_URL = "https://million-dollar-wall-v2.vercel.app";
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function supabaseHeaders(key) {
   return {
@@ -14,17 +18,44 @@ async function callSupabaseRpc(url, key, functionName, data) {
     {
       method: "POST",
       headers: supabaseHeaders(key),
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
+      cache: "no-store"
     }
   );
 
+  const raw = await response.text();
+
   if (!response.ok) {
+    console.error(
+      "Supabase RPC fallita:",
+      functionName,
+      "HTTP",
+      response.status
+    );
+
     throw new Error(
       `Supabase ${functionName}: HTTP ${response.status}`
     );
   }
 
-  return response.json();
+  if (!raw.trim()) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    console.error(
+      "Supabase RPC: risposta non JSON",
+      functionName,
+      "Content-Type:",
+      response.headers.get("content-type")
+    );
+
+    throw new Error(
+      `Risposta Supabase non valida: ${functionName}`
+    );
+  }
 }
 
 async function expireStripeSession(stripeKey, sessionId) {
@@ -47,6 +78,7 @@ async function expireStripeSession(stripeKey, sessionId) {
 
 export default async function handler(req, res) {
   res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Content-Type-Options", "nosniff");
 
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
@@ -71,10 +103,8 @@ export default async function handler(req, res) {
     content_type
   } = req.body || {};
 
-  // Compatibilità con gli acquisti colore esistenti.
-  const contentType = content_type === undefined
-    ? "color"
-    : content_type;
+  const contentType =
+    content_type === undefined ? "color" : content_type;
 
   if (!["color", "image"].includes(contentType)) {
     return res.status(400).json({
@@ -82,8 +112,6 @@ export default async function handler(req, res) {
     });
   }
 
-  // Non permettere pagamenti per immagini
-  // finché il caricamento non sarà pronto.
   if (
     contentType === "image" &&
     process.env.ENABLE_IMAGE_UPLOADS !== "true"
@@ -107,9 +135,8 @@ export default async function handler(req, res) {
     });
   }
 
-  const selectedColor = contentType === "image"
-    ? "#ffffff"
-    : color;
+  const selectedColor =
+    contentType === "image" ? "#ffffff" : color;
 
   if (
     typeof selectedColor !== "string" ||
@@ -148,8 +175,8 @@ export default async function handler(req, res) {
   let sessionAttached = false;
 
   try {
-    // 1. Prenota lo spazio.
-    spaceId = await callSupabaseRpc(
+    // 1. Prenota lo spazio su Supabase.
+    const reservationResult = await callSupabaseRpc(
       supabaseUrl,
       supabaseKey,
       "reserve_wall_space",
@@ -162,17 +189,41 @@ export default async function handler(req, res) {
       }
     );
 
+    // Diagnostica: registra soltanto il formato
+    // della risposta, senza dati sensibili.
+    console.log("Diagnostica prenotazione:", {
+      tipo: reservationResult === null
+        ? "null"
+        : Array.isArray(reservationResult)
+          ? "array"
+          : typeof reservationResult,
+      uuidValido:
+        typeof reservationResult === "string" &&
+        UUID_PATTERN.test(reservationResult),
+      chiavi:
+        reservationResult &&
+        typeof reservationResult === "object" &&
+        !Array.isArray(reservationResult)
+          ? Object.keys(reservationResult).slice(0, 10)
+          : []
+    });
+
     if (
-      typeof spaceId !== "string" ||
-      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(spaceId)
+      typeof reservationResult !== "string" ||
+      !UUID_PATTERN.test(reservationResult)
     ) {
-      throw new Error("Prenotazione non valida");
+      throw new Error(
+        "Prenotazione non valida: controllare Diagnostica prenotazione"
+      );
     }
 
-    // 2. Crea il Checkout Stripe.
-    const productName = contentType === "image"
-      ? `Spazio pubblicitario ${width} x ${height}`
-      : `Pixel colorati ${width} x ${height}`;
+    spaceId = reservationResult;
+
+    // 2. Prepara il pagamento Stripe.
+    const productName =
+      contentType === "image"
+        ? `Spazio pubblicitario ${width} x ${height}`
+        : `Pixel colorati ${width} x ${height}`;
 
     const params = new URLSearchParams({
       mode: "payment",
@@ -204,8 +255,6 @@ export default async function handler(req, res) {
       "metadata[expected_amount]":
         String(amount),
 
-      // Il webhook usa questo valore per
-      // decidere se pubblicare automaticamente.
       "metadata[content_type]":
         contentType,
 
@@ -257,7 +306,7 @@ export default async function handler(req, res) {
 
     sessionId = session.id;
 
-    // 3. Collega Stripe alla prenotazione.
+    // 3. Collega la sessione Stripe allo spazio.
     sessionAttached = await callSupabaseRpc(
       supabaseUrl,
       supabaseKey,
@@ -274,7 +323,7 @@ export default async function handler(req, res) {
       );
     }
 
-    // 4. Restituisci l'URL di pagamento.
+    // 4. Restituisci il link di pagamento.
     return res.status(200).json({
       checkout_url: checkoutUrl.href
     });
@@ -322,4 +371,3 @@ export default async function handler(req, res) {
     });
   }
 }
-
