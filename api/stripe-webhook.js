@@ -1,9 +1,12 @@
 
+
 import crypto from "node:crypto";
 
 export const config = {
   api: { bodyParser: false }
 };
+
+const ALLOWED_PRICES_CENTS = [50, 100];
 
 function verifySignature(payload, header, secret) {
   if (typeof header !== "string" || !secret) return false;
@@ -177,16 +180,17 @@ async function confirmPayment(session) {
   const space = await getSpace(spaceId);
 
   const pixels = space.width * space.height;
-  const amount = pixels * 100;
+  const paidAmount = session.amount_total;
+  const unitPrice = paidAmount / pixels;
 
   if (
-    !Number.isSafeInteger(amount) ||
-    amount < 100 ||
-    session.amount_total !== amount ||
-    session.amount_subtotal !== amount ||
+    !Number.isSafeInteger(pixels) ||
+    pixels < 1 ||
+    !ALLOWED_PRICES_CENTS.includes(unitPrice) ||
+    session.amount_subtotal !== paidAmount ||
     space.stripe_session_id !== session.id ||
     session.metadata?.pixels !== String(pixels) ||
-    session.metadata?.expected_amount !== String(amount)
+    session.metadata?.expected_amount !== String(paidAmount)
   ) {
     throw new Error(
       "Pagamento o prenotazione non corrispondenti"
@@ -212,8 +216,6 @@ async function confirmPayment(session) {
 
   console.log("Pagamento confermato:", session.id);
 
-  // Pubblicazione automatica SOLO per acquisti
-  // esplicitamente identificati come colore.
   if (session.metadata?.content_type === "color") {
     await approveColorSpace(spaceId, session.id);
   }
