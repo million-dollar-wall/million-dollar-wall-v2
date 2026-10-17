@@ -2,7 +2,7 @@
 const SITE_URL = "https://million-dollar-wall-v2.vercel.app";
 
 const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function supabaseHeaders(key) {
   return {
@@ -172,7 +172,6 @@ export default async function handler(req, res) {
   let sessionAttached = false;
 
   try {
-    // 1. Prenota lo spazio.
     const reservationResult = await callSupabaseRpc(
       supabaseUrl,
       supabaseKey,
@@ -186,44 +185,20 @@ export default async function handler(req, res) {
       }
     );
 
-    // Diagnostica completa della risposta.
-    // Non stampa password o chiavi API.
-    console.log(
-      "Risposta prenotazione:",
-      JSON.stringify(reservationResult)
-    );
-
-    console.log("Diagnostica prenotazione:", {
-      tipo: reservationResult === null
-        ? "null"
-        : Array.isArray(reservationResult)
-          ? "array"
-          : typeof reservationResult,
-
-      uuidValido:
-        typeof reservationResult === "string" &&
-        UUID_PATTERN.test(reservationResult),
-
-      chiavi:
-        reservationResult &&
-        typeof reservationResult === "object" &&
-        !Array.isArray(reservationResult)
-          ? Object.keys(reservationResult).slice(0, 10)
-          : []
-    });
-
     if (
       typeof reservationResult !== "string" ||
       !UUID_PATTERN.test(reservationResult)
     ) {
-      throw new Error(
-        "Prenotazione non valida: controllare Risposta prenotazione"
+      console.error(
+        "Prenotazione non valida:",
+        typeof reservationResult
       );
+
+      throw new Error("Prenotazione non valida");
     }
 
     spaceId = reservationResult;
 
-    // 2. Crea la sessione di pagamento Stripe.
     const productName =
       contentType === "image"
         ? `Spazio pubblicitario ${width} x ${height}`
@@ -310,7 +285,6 @@ export default async function handler(req, res) {
 
     sessionId = session.id;
 
-    // 3. Collega Stripe alla prenotazione.
     sessionAttached = await callSupabaseRpc(
       supabaseUrl,
       supabaseKey,
@@ -327,7 +301,6 @@ export default async function handler(req, res) {
       );
     }
 
-    // 4. Restituisce il link di pagamento.
     return res.status(200).json({
       checkout_url: checkoutUrl.href
     });
