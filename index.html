@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -255,6 +254,41 @@ input[type="url"] {
   display: none !important;
 }
 
+#previewCard {
+  margin: 12px 0 18px;
+  border: 2px solid #159c64;
+  background: #f0fbf5;
+  padding: 14px;
+  border-radius: 12px;
+}
+
+#previewImageBox {
+  margin: 12px auto;
+  width: min(100%, 260px);
+  height: 200px;
+  border: 1px solid #a7cbb7;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#previewImageBox img {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+}
+
+#previewMarker {
+  position: absolute;
+  z-index: 5;
+  border: 3px solid #ef4444;
+  box-shadow: 0 0 0 3px white, 0 0 0 6px #ef4444;
+  pointer-events: none;
+}
+
 #afterPayment {
   display: none;
   background: #effaf3;
@@ -285,7 +319,7 @@ input[type="url"] {
 
 <header>
   <h1>The <span>Million Dollar</span> Wall</h1>
-  <p>1.000.000 di pixel · 1 pixel = 1 €</p>
+  <p>1.000.000 di pixel · 1 pixel = 0,50 €</p>
 </header>
 
 <main>
@@ -316,6 +350,7 @@ input[type="url"] {
       <canvas id="base" width="1000" height="1000"></canvas>
       <canvas id="grid"></canvas>
       <canvas id="overlay"></canvas>
+      <div id="previewMarker" class="hidden"></div>
     </div>
   </div>
 
@@ -341,7 +376,7 @@ input[type="url"] {
   <div class="priceBox">
     <small>PREZZO TOTALE</small>
     <strong id="price">0 €</strong>
-    <small id="pixelCount">0 pixel × 1 €</small>
+    <small id="pixelCount">0 pixel × 0,50 €</small>
   </div>
 
   <div class="step">
@@ -454,16 +489,15 @@ input[type="url"] {
         placeholder="https://tuosito.it">
 
       <p class="muted">
-        Il collegamento sarà disponibile quando
-        attiveremo gli acquisti con immagini.
+        Il collegamento non viene ancora salvato con l'acquisto.
       </p>
 
     </div>
 
     <div class="notice">
       Puoi vedere l'anteprima gratuitamente.
-      Gli acquisti con immagini e link
-      non sono ancora attivi.
+      Il caricamento del logo avviene dopo il pagamento.
+      Il link cliccabile non è ancora attivo.
     </div>
 
   </div>
@@ -494,6 +528,15 @@ input[type="url"] {
   <p id="previewStatus" class="muted">
     L'anteprima non viene salvata online.
   </p>
+
+  <div id="previewCard" class="hidden" aria-live="polite">
+    <strong>Anteprima ingrandita</strong>
+    <div id="previewImageBox"></div>
+    <p id="previewCoordinates" class="muted"></p>
+    <button type="button" class="secondary" onclick="focusPreview()">
+      Vai allo spazio sul muro
+    </button>
+  </div>
 
   <button
     id="buyBtn"
@@ -557,12 +600,12 @@ input[type="url"] {
 
     <p>
       I pagamenti dei pixel colorati sono reali.
-      Il prezzo è di 1 € per pixel.
+      Il prezzo è di 0,50 € per pixel.
     </p>
 
     <p>
-      Immagini e loghi saranno attivati soltanto
-      dopo il completamento dei test.
+      Le immagini acquistate vengono pubblicate solo
+      dopo la revisione dell'amministratore.
     </p>
 
   </div>
@@ -575,6 +618,15 @@ input[type="url"] {
 "use strict";
 
 const SIZE = 1000;
+const PRICE_PER_PIXEL_CENTS = 50;
+
+function euroPrice(pixels) {
+  return (pixels * PRICE_PER_PIXEL_CENTS / 100)
+    .toLocaleString("it-IT", {
+      style: "currency",
+      currency: "EUR"
+    });
+}
 
 const wall = document.getElementById("wall");
 const stage = document.getElementById("stage");
@@ -717,7 +769,6 @@ function drawGrid() {
   );
 
   const pixelSize = width / SIZE;
-
   const interval = pixelSize >= 3 ? 1 : 10;
 
   gridCtx.beginPath();
@@ -832,7 +883,6 @@ function redrawWall() {
     }
   }
 }
-
 function updateBuyButton() {
   const button = $("buyBtn");
   const imageMode = contentType() === "image";
@@ -864,9 +914,7 @@ function updateBuyButton() {
     const pixels = selection.w * selection.h;
 
     button.textContent =
-      "Acquista per " +
-      pixels.toLocaleString("it-IT") +
-      " €";
+      "Acquista per " + euroPrice(pixels);
   } else {
     button.textContent =
       "Seleziona i pixel per acquistare";
@@ -877,7 +925,7 @@ function updateInfo() {
   if (!selection) {
     $("price").textContent = "0 €";
     $("pixelCount").textContent =
-      "0 pixel × 1 €";
+      "0 pixel × 0,50 €";
 
     $("checkBtn").disabled = true;
     $("previewBtn").disabled = true;
@@ -889,16 +937,14 @@ function updateInfo() {
   const pixels = selection.w * selection.h;
   const overlaps = selectionOverlapsSold();
 
-  $("price").textContent =
-    pixels.toLocaleString("it-IT") + " €";
+  $("price").textContent = euroPrice(pixels);
 
   $("pixelCount").textContent = overlaps
     ? "Attenzione: lo spazio contiene pixel già venduti"
     : pixels.toLocaleString("it-IT") +
-      " pixel × 1 €";
+      " pixel × 0,50 €";
 
-  $("checkBtn").disabled =
-    checking || overlaps;
+  $("checkBtn").disabled = checking || overlaps;
 
   $("previewBtn").disabled =
     !availabilityConfirmed ||
@@ -1011,6 +1057,66 @@ function applyZoom() {
 
   drawGrid();
   drawSelection();
+  positionPreviewMarker();
+}
+
+function positionPreviewMarker() {
+  const marker = $("previewMarker");
+
+  if (!previewData) {
+    marker.classList.add("hidden");
+    return;
+  }
+
+  const scale = (wall.clientWidth - 6) / SIZE;
+
+  const cx =
+    3 + (previewData.x + previewData.w / 2) * scale;
+
+  const cy =
+    3 + (previewData.y + previewData.h / 2) * scale;
+
+  const w = Math.max(24, previewData.w * scale);
+  const h = Math.max(24, previewData.h * scale);
+
+  marker.style.left = (cx - w / 2) + "px";
+  marker.style.top = (cy - h / 2) + "px";
+  marker.style.width = w + "px";
+  marker.style.height = h + "px";
+
+  marker.classList.remove("hidden");
+}
+
+function focusPreview() {
+  if (!previewData) return;
+
+  zoom = Math.max(zoom, 4);
+  applyZoom();
+
+  const scale = (wall.clientWidth - 6) / SIZE;
+
+  const cx =
+    3 + (previewData.x + previewData.w / 2) * scale;
+
+  const cy =
+    3 + (previewData.y + previewData.h / 2) * scale;
+
+  stage.scrollLeft = Math.max(
+    0,
+    cx - stage.clientWidth / 2
+  );
+
+  stage.scrollTop = Math.max(
+    0,
+    cy - stage.clientHeight / 2
+  );
+
+  stage.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+
+  positionPreviewMarker();
 }
 
 function clearSelection() {
@@ -1111,7 +1217,6 @@ async function checkAvailability() {
   ) return;
 
   const version = ++checkVersion;
-
   const { x, y, w, h } = selection;
 
   checking = true;
@@ -1212,13 +1317,46 @@ function preview() {
 
   redrawWall();
 
+  const box = $("previewImageBox");
+  box.replaceChildren();
+
+  if (previewData.image) {
+    const img = document.createElement("img");
+    img.alt = "Anteprima dell'immagine selezionata";
+    img.src = previewData.image.src;
+    box.appendChild(img);
+  } else {
+    box.style.background = previewData.color;
+  }
+
+  if (previewData.image) {
+    box.style.background = "#ffffff";
+  }
+
+  $("previewCoordinates").textContent =
+    "Posizione: X " + previewData.x +
+    ", Y " + previewData.y +
+    " · Dimensione: " +
+    previewData.w + " × " +
+    previewData.h + " pixel";
+
+  $("previewCard").classList.remove("hidden");
+
   $("previewStatus").textContent =
-    "✓ Anteprima visualizzata sul muro. " +
-    "Non è un acquisto.";
+    "✓ Anteprima pronta. Il muro si sposta " +
+    "sullo spazio selezionato. Non è un acquisto.";
+
+  focusPreview();
 }
 
 function removePreview() {
   previewData = null;
+
+  $("previewCard").classList.add("hidden");
+  $("previewMarker").classList.add("hidden");
+
+  $("previewImageBox").replaceChildren();
+  $("previewImageBox").style.background = "#ffffff";
 
   redrawWall();
 
@@ -1516,9 +1654,6 @@ async function uploadPaidImage() {
     "Autorizzazione del caricamento...";
 
   try {
-    // 1. Chiede al server il permesso
-    // temporaneo di caricare l'immagine.
-
     const auth = await fetch(
       "/api/upload-image",
       {
@@ -1551,10 +1686,6 @@ async function uploadPaidImage() {
         "Risposta caricamento non valida"
       );
     }
-
-    // 2. Carica il file direttamente
-    // nello Storage privato di Supabase.
-    // Non utilizza chiavi segrete nel browser.
 
     const supabaseUrl =
       "https://zaivqtihriaflcgzffqt.supabase.co";
@@ -1595,9 +1726,6 @@ async function uploadPaidImage() {
       );
     }
 
-    // 3. Chiede al server di registrare
-    // l'immagine nello spazio acquistato.
-
     $("uploadStatus").textContent =
       "Registrazione dell'immagine...";
 
@@ -1622,9 +1750,6 @@ async function uploadPaidImage() {
         result.error || "Conferma non riuscita"
       );
     }
-
-    // 4. Il logo rimane in attesa
-    // dell'approvazione dell'amministratore.
 
     $("uploadStatus").textContent =
       "✓ Immagine ricevuta, " +
