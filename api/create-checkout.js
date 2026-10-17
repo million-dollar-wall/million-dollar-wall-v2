@@ -4,6 +4,8 @@ const SITE_URL = "https://million-dollar-wall-v2.vercel.app";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const PRICE_PER_PIXEL_CENTS = 50;
+
 function supabaseHeaders(key) {
   return {
     apikey: key,
@@ -145,11 +147,11 @@ export default async function handler(req, res) {
   }
 
   const pixels = width * height;
-  const amount = pixels * 100;
+  const amount = pixels * PRICE_PER_PIXEL_CENTS;
 
   if (
     !Number.isSafeInteger(amount) ||
-    amount < 100
+    amount < PRICE_PER_PIXEL_CENTS
   ) {
     return res.status(400).json({
       error: "Importo non valido"
