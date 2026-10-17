@@ -11,6 +11,8 @@ const IMAGE_TYPES = {
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+const ALLOWED_PRICES_CENTS = [50, 100];
+
 function validSessionId(value) {
   return (
     typeof value === "string" &&
@@ -217,15 +219,16 @@ export default async function handler(req, res) {
     }
 
     const pixels = space.width * space.height;
-    const expectedAmount = pixels * 100;
+    const paidAmount = session.amount_total;
+    const unitPrice = paidAmount / pixels;
 
     if (
-      !Number.isSafeInteger(expectedAmount) ||
-      expectedAmount < 100 ||
-      session.amount_total !== expectedAmount ||
-      session.amount_subtotal !== expectedAmount ||
+      !Number.isSafeInteger(pixels) ||
+      pixels < 1 ||
+      !ALLOWED_PRICES_CENTS.includes(unitPrice) ||
+      session.amount_subtotal !== paidAmount ||
       session.metadata?.expected_amount !==
-        String(expectedAmount) ||
+        String(paidAmount) ||
       session.metadata?.pixels !== String(pixels)
     ) {
       return fail(
