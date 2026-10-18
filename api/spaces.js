@@ -133,12 +133,38 @@ export default async function handler(req, res) {
             typeof signed.signedURL !== "string" ||
             !signed.signedURL.startsWith("/")
           ) {
+            console.error(
+              "Invalid signed URL for space:",
+              space.id
+            );
+            return result;
+          }
+
+          // CORREZIONE:
+          // Supabase può restituire /object/sign/...
+          // ma il percorso completo richiede
+          // /storage/v1/object/sign/...
+
+          let signedPath = signed.signedURL;
+
+          if (signedPath.startsWith("/object/")) {
+            signedPath = "/storage/v1" + signedPath;
+          }
+
+          // Evita di duplicare /storage/v1
+          // quando è già presente.
+
+          if (!signedPath.startsWith("/storage/v1/object/")) {
+            console.error(
+              "Unexpected signed URL path:",
+              space.id
+            );
             return result;
           }
 
           // URL temporaneo valido per un'ora.
           result.image_url = new URL(
-            signed.signedURL,
+            signedPath,
             url
           ).href;
 
