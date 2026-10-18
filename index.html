@@ -1,1821 +1,759 @@
 
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="referrer" content="no-referrer">
-
 <title>The Million Dollar Wall</title>
-
 <style>
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  background: #f3f6fa;
-  color: #202b3b;
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-header {
-  background: white;
-  border-bottom: 1px solid #e2e8f0;
-  text-align: center;
-  padding: 25px 15px;
-}
-
-h1 {
-  font-size: 32px;
-  margin: 0;
-}
-
-h1 span {
-  color: #159c64;
-}
-
-header p {
-  color: #64748b;
-  margin-bottom: 0;
-}
-
-main {
-  max-width: 1500px;
-  margin: auto;
-  padding: 20px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 365px;
-  gap: 20px;
-  align-items: start;
-}
-
-.panel {
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 20px;
-  min-width: 0;
-}
-
-h2 {
-  margin: 0 0 12px;
-}
-
-.muted {
-  color: #64748b;
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-button {
-  background: #24354d;
-  color: white;
-  border: none;
-  border-radius: 9px;
-  padding: 12px 14px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-button:hover:not(:disabled) {
-  filter: brightness(1.1);
-}
-
-button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.secondary {
-  background: #e8edf3;
-  color: #24354d;
-}
-
-.primary {
-  background: #159c64;
-  width: 100%;
-  font-size: 15px;
-  padding: 16px;
-}
-
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin: 15px 0;
-  align-items: center;
-}
-
-#stage {
-  width: 100%;
-  max-height: 75vh;
-  overflow: auto;
-  background: #edf2f7;
-  padding: 12px;
-  border-radius: 10px;
-}
-
-#wall {
-  position: relative;
-  width: 600px;
-  height: 600px;
-  background: white;
-  border: 3px solid #dc5757;
-  cursor: crosshair;
-  touch-action: none;
-  overflow: hidden;
-}
-
-#wall canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-#base {
-  image-rendering: pixelated;
-}
-
-#grid,
-#overlay {
-  pointer-events: none;
-}
-
-.priceBox {
-  background: #eefaf3;
-  padding: 18px;
-  border-radius: 12px;
-  margin: 18px 0;
-}
-
-.priceBox strong {
-  display: block;
-  font-size: 36px;
-  color: #159c64;
-  margin: 7px 0;
-}
-
-.step {
-  margin-top: 24px;
-  margin-bottom: 13px;
-  font-size: 15px;
-  font-weight: bold;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.stepNumber {
-  background: #dff5e8;
-  color: #128452;
-  border-radius: 50%;
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.option {
-  display: block;
-  border: 2px solid #e2e8f0;
-  border-radius: 11px;
-  padding: 13px;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.option:has(input:checked) {
-  border-color: #159c64;
-  background: #f0fbf5;
-}
-
-.option small {
-  display: block;
-  color: #64748b;
-  margin-top: 7px;
-  line-height: 1.5;
-}
-
-.field {
-  margin-top: 17px;
-}
-
-.field label {
-  display: block;
-  font-size: 13px;
-  font-weight: bold;
-  margin-bottom: 8px;
-}
-
-input[type="color"] {
-  width: 70px;
-  height: 44px;
-  cursor: pointer;
-}
-
-input[type="file"],
-input[type="url"] {
-  width: 100%;
-}
-
-input[type="url"] {
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 12px;
-}
-
-.status {
-  font-size: 13px;
-  line-height: 1.6;
-  overflow-wrap: anywhere;
-}
-
-.notice {
-  background: #fff5df;
-  border-radius: 9px;
-  padding: 13px;
-  font-size: 13px;
-  line-height: 1.6;
-  margin-top: 17px;
-}
-
-.hidden {
-  display: none !important;
-}
-
-#previewCard {
-  margin: 12px 0 18px;
-  border: 2px solid #159c64;
-  background: #f0fbf5;
-  padding: 14px;
-  border-radius: 12px;
-}
-
-#previewImageBox {
-  margin: 12px auto;
-  width: min(100%, 260px);
-  height: 200px;
-  border: 1px solid #a7cbb7;
-  border-radius: 8px;
-  overflow: hidden;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-#previewImageBox img {
-  width: 100%;
-  height: 100%;
-  object-fit: fill;
-}
-
-#previewMarker {
-  position: absolute;
-  z-index: 5;
-  border: 3px solid #ef4444;
-  box-shadow: 0 0 0 3px white, 0 0 0 6px #ef4444;
-  pointer-events: none;
-}
-
-#afterPayment {
-  display: none;
-  background: #effaf3;
-  border: 1px solid #c8ead6;
-  padding: 16px;
-  border-radius: 11px;
-  margin-top: 18px;
-}
-
-@media (max-width: 900px) {
-  main {
-    grid-template-columns: 1fr;
-    padding: 12px;
-  }
-
-  .panel {
-    padding: 15px;
-  }
-
-  h1 {
-    font-size: 26px;
-  }
-}
+*{box-sizing:border-box}
+body{margin:0;background:#f3f6fa;color:#202b3b;font-family:Arial,Helvetica,sans-serif}
+header{background:white;border-bottom:1px solid #e2e8f0;text-align:center;padding:25px 15px}
+h1{font-size:32px;margin:0}
+h1 span{color:#159c64}
+header p,.muted{color:#64748b}
+main{max-width:1500px;margin:auto;padding:20px;display:grid;grid-template-columns:minmax(0,1fr) 365px;gap:20px;align-items:start}
+.panel{background:white;border:1px solid #e2e8f0;border-radius:14px;padding:20px;min-width:0}
+h2{margin:0 0 12px}
+.muted,.status{font-size:13px;line-height:1.6}
+.status{overflow-wrap:anywhere}
+button{background:#24354d;color:white;border:0;border-radius:9px;padding:12px 14px;font-weight:bold;cursor:pointer}
+button:hover:not(:disabled){filter:brightness(1.1)}
+button:disabled{opacity:.45;cursor:not-allowed}
+.secondary{background:#e8edf3;color:#24354d}
+.primary{background:#159c64;width:100%;font-size:15px;padding:16px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin:15px 0;align-items:center}
+#stage{width:100%;max-height:75vh;overflow:auto;background:#edf2f7;padding:12px;border-radius:10px}
+#wall{position:relative;width:600px;height:600px;background:white;border:3px solid #dc5757;cursor:crosshair;touch-action:none;overflow:hidden}
+#wall canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#base{image-rendering:pixelated}
+#grid,#overlay{pointer-events:none}
+.priceBox{background:#eefaf3;padding:18px;border-radius:12px;margin:18px 0}
+.priceBox strong{display:block;font-size:36px;color:#159c64;margin:7px 0}
+.step{margin:24px 0 13px;font-size:15px;font-weight:bold;display:flex;gap:10px;align-items:center}
+.stepNumber{background:#dff5e8;color:#128452;border-radius:50%;width:28px;height:28px;display:inline-flex;justify-content:center;align-items:center}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.option{display:block;border:2px solid #e2e8f0;border-radius:11px;padding:13px;cursor:pointer;font-size:14px}
+.option:has(input:checked){border-color:#159c64;background:#f0fbf5}
+.option small{display:block;color:#64748b;margin-top:7px;line-height:1.5}
+.field{margin-top:17px}
+.field label{display:block;font-size:13px;font-weight:bold;margin-bottom:8px}
+input[type=color]{width:70px;height:44px;cursor:pointer}
+input[type=file],input[type=url]{width:100%}
+input[type=url]{border:1px solid #cbd5e1;border-radius:8px;padding:12px}
+.notice{background:#fff5df;border-radius:9px;padding:13px;font-size:13px;line-height:1.6;margin-top:17px}
+.hidden{display:none!important}
+#previewCard{margin:12px 0 18px;border:2px solid #159c64;background:#f0fbf5;padding:14px;border-radius:12px}
+#previewImageBox{margin:12px auto;width:min(100%,260px);height:200px;border:1px solid #a7cbb7;border-radius:8px;overflow:hidden;background:white;display:flex;align-items:center;justify-content:center}
+#previewImageBox canvas{width:100%;height:100%;display:block}
+#previewMarker{position:absolute;z-index:5;border:3px solid #ef4444;box-shadow:0 0 0 3px white,0 0 0 6px #ef4444;pointer-events:none;animation:pulse 1.3s ease-in-out infinite alternate}
+@keyframes pulse{from{box-shadow:0 0 0 3px white,0 0 0 6px #ef4444}to{box-shadow:0 0 0 5px white,0 0 0 12px rgba(239,68,68,.35)}}
+.finder{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.finder input{width:85px;padding:10px;border:1px solid #cbd5e1;border-radius:8px}
+.finder label{font-size:13px;font-weight:bold}
+#afterPayment{display:none;background:#effaf3;border:1px solid #c8ead6;padding:16px;border-radius:11px;margin-top:18px}
+#purchaseLocator{margin-top:12px;padding:12px;border:1px solid #b6dfc5;border-radius:9px;background:#f0fbf5}
+@media(max-width:900px){main{grid-template-columns:1fr;padding:12px}.panel{padding:15px}h1{font-size:26px}}
 </style>
 </head>
-
 <body>
-
 <header>
-  <h1>The <span>Million Dollar</span> Wall</h1>
-  <p>1.000.000 di pixel · 1 pixel = 0,50 €</p>
+<h1>The <span>Million Dollar</span> Wall</h1>
+<p>1.000.000 di pixel · 1 pixel = 0,50 €</p>
 </header>
-
 <main>
-
 <section class="panel">
-
-  <h2>Il muro da un milione di pixel</h2>
-
-  <p class="muted">
-    Clicca per scegliere un pixel oppure trascina
-    per selezionare un rettangolo.
-  </p>
-
-  <div class="controls">
-    <button onclick="changeZoom(2)">+ Zoom</button>
-
-    <button onclick="changeZoom(0.5)">− Zoom</button>
-
-    <button class="secondary" onclick="resetZoom()">
-      Ripristina
-    </button>
-
-    <strong id="zoomText">100%</strong>
-  </div>
-
-  <div id="stage">
-    <div id="wall">
-      <canvas id="base" width="1000" height="1000"></canvas>
-      <canvas id="grid"></canvas>
-      <canvas id="overlay"></canvas>
-      <div id="previewMarker" class="hidden"></div>
-    </div>
-  </div>
-
-  <p id="connectionStatus" class="status">
-    Caricamento degli spazi venduti...
-  </p>
-
-  <p class="muted">
-    La griglia mostra blocchi di 10 × 10 pixel.
-    Aumenta lo zoom per vedere i singoli pixel.
-  </p>
-
+<h2>Il muro da un milione di pixel</h2>
+<p class="muted">Clicca per scegliere un pixel oppure trascina per selezionare un rettangolo.</p>
+<div class="controls">
+<button onclick="changeZoom(2)">+ Zoom</button>
+<button onclick="changeZoom(.5)">− Zoom</button>
+<button class="secondary" onclick="resetZoom()">Ripristina</button>
+<strong id="zoomText">100%</strong>
+</div>
+<div class="finder">
+<strong>Trova subito un pixel:</strong>
+<label for="findX">X</label>
+<input id="findX" type="number" min="0" max="999" placeholder="105">
+<label for="findY">Y</label>
+<input id="findY" type="number" min="0" max="999" placeholder="440">
+<button onclick="findPixel()">Vai al pixel</button>
+</div>
+<p id="findStatus" class="status"></p>
+<div id="stage">
+<div id="wall">
+<canvas id="base" width="1000" height="1000"></canvas>
+<canvas id="grid"></canvas>
+<canvas id="overlay"></canvas>
+<div id="previewMarker" class="hidden"></div>
+</div>
+</div>
+<p id="connectionStatus" class="status">Caricamento degli spazi venduti...</p>
+<p class="muted">La griglia mostra blocchi di 10 × 10 pixel. Aumenta lo zoom per vedere i singoli pixel.</p>
 </section>
 
 <aside class="panel">
-
-  <h2>Acquista il tuo spazio</h2>
-
-  <p class="muted">
-    Scegli i pixel, personalizzali e procedi al pagamento.
-  </p>
-
-  <div class="priceBox">
-    <small>PREZZO TOTALE</small>
-    <strong id="price">0 €</strong>
-    <small id="pixelCount">0 pixel × 0,50 €</small>
-  </div>
-
-  <div class="step">
-    <span class="stepNumber">1</span>
-    Seleziona il tuo spazio
-  </div>
-
-  <p class="muted">
-    Seleziona uno o più pixel direttamente sul muro.
-  </p>
-
-  <div class="controls">
-
-    <button
-      id="checkBtn"
-      onclick="checkAvailability()"
-      disabled>
-      Verifica disponibilità
-    </button>
-
-    <button
-      class="secondary"
-      onclick="clearSelection()">
-      Cancella selezione
-    </button>
-
-  </div>
-
-  <p id="availabilityStatus" class="status"></p>
-
-  <div class="step">
-    <span class="stepNumber">2</span>
-    Personalizza lo spazio
-  </div>
-
-  <div class="options">
-
-    <label class="option">
-      <input
-        type="radio"
-        name="contentType"
-        value="color"
-        checked
-        onchange="changeContentType()">
-
-      <strong>Solo colore</strong>
-
-      <small>
-        Colora un pixel o un intero rettangolo.
-      </small>
-    </label>
-
-    <label class="option">
-      <input
-        type="radio"
-        name="contentType"
-        value="image"
-        onchange="changeContentType()">
-
-      <strong>Immagine / logo</strong>
-
-      <small>
-        Foto, disegno o pubblicità con link.
-      </small>
-    </label>
-
-  </div>
-
-  <div id="colorFields" class="field">
-
-    <label for="color">Scegli il colore</label>
-
-    <input
-      type="color"
-      id="color"
-      value="#16a36a">
-
-  </div>
-
-  <div id="imageFields" class="hidden">
-
-    <div class="field">
-
-      <label for="image">
-        Carica la tua immagine per l'anteprima
-      </label>
-
-      <input
-        type="file"
-        id="image"
-        accept="image/png,image/jpeg,image/webp">
-
-      <p class="muted">
-        PNG, JPG o WebP · massimo 5 MB.
-      </p>
-
-    </div>
-
-    <p id="imageStatus" class="status"></p>
-
-    <div class="field">
-
-      <label for="link">
-        Link cliccabile (facoltativo)
-      </label>
-
-      <input
-        type="url"
-        id="link"
-        placeholder="https://tuosito.it">
-
-      <p class="muted">
-        Il collegamento non viene ancora salvato con l'acquisto.
-      </p>
-
-    </div>
-
-    <div class="notice">
-      Puoi vedere l'anteprima gratuitamente.
-      Il caricamento del logo avviene dopo il pagamento.
-      Il link cliccabile non è ancora attivo.
-    </div>
-
-  </div>
-
-  <div class="step">
-    <span class="stepNumber">3</span>
-    Anteprima e pagamento
-  </div>
-
-  <div class="controls">
-
-    <button
-      id="previewBtn"
-      class="secondary"
-      onclick="preview()"
-      disabled>
-      Mostra anteprima
-    </button>
-
-    <button
-      class="secondary"
-      onclick="removePreview()">
-      Rimuovi anteprima
-    </button>
-
-  </div>
-
-  <p id="previewStatus" class="muted">
-    L'anteprima non viene salvata online.
-  </p>
-
-  <div id="previewCard" class="hidden" aria-live="polite">
-    <strong>Anteprima ingrandita</strong>
-    <div id="previewImageBox"></div>
-    <p id="previewCoordinates" class="muted"></p>
-    <button type="button" class="secondary" onclick="focusPreview()">
-      Vai allo spazio sul muro
-    </button>
-  </div>
-
-  <button
-    id="buyBtn"
-    class="primary"
-    onclick="startCheckout()"
-    disabled>
-    Seleziona i pixel per acquistare
-  </button>
-
-  <p id="checkoutStatus" class="status"></p>
-
-  <!-- SEZIONE DOPO IL PAGAMENTO -->
-
-  <section id="afterPayment">
-
-    <h3>Ritorno dal pagamento</h3>
-
-    <p id="returnStatus" class="muted">
-      Verifica del pagamento in corso.
-    </p>
-
-    <div id="postPaymentUpload" class="hidden">
-
-      <div class="field">
-
-        <label for="postPaymentFile">
-          Carica il logo acquistato
-        </label>
-
-        <input
-          id="postPaymentFile"
-          type="file"
-          accept="image/png,image/jpeg,image/webp">
-
-        <p class="muted">
-          PNG, JPG o WebP · massimo 5 MB.
-        </p>
-
-      </div>
-
-      <button
-        id="uploadBtn"
-        class="primary"
-        onclick="uploadPaidImage()">
-        Carica il logo
-      </button>
-
-      <p
-        id="uploadStatus"
-        class="status"
-        role="status">
-      </p>
-
-    </div>
-
-  </section>
-
-  <div class="notice">
-
-    <strong>Informazioni importanti</strong>
-
-    <p>
-      I pagamenti dei pixel colorati sono reali.
-      Il prezzo è di 0,50 € per pixel.
-    </p>
-
-    <p>
-      Le immagini acquistate vengono pubblicate solo
-      dopo la revisione dell'amministratore.
-    </p>
-
-  </div>
-
+<h2>Acquista il tuo spazio</h2>
+<p class="muted">Scegli i pixel, personalizzali e procedi al pagamento.</p>
+<div class="priceBox">
+<small>PREZZO TOTALE</small>
+<strong id="price">0 €</strong>
+<small id="pixelCount">0 pixel × 0,50 €</small>
+</div>
+
+<div class="step"><span class="stepNumber">1</span>Seleziona il tuo spazio</div>
+<p class="muted">Seleziona uno o più pixel direttamente sul muro.</p>
+<div class="controls">
+<button id="checkBtn" onclick="checkAvailability()" disabled>Verifica disponibilità</button>
+<button class="secondary" onclick="clearSelection()">Cancella selezione</button>
+</div>
+<p id="availabilityStatus" class="status"></p>
+
+<div class="step"><span class="stepNumber">2</span>Personalizza lo spazio</div>
+<div class="options">
+<label class="option">
+<input type="radio" name="contentType" value="color" checked onchange="changeContentType()">
+<strong>Solo colore</strong>
+<small>Colora un pixel o un intero rettangolo.</small>
+</label>
+<label class="option">
+<input type="radio" name="contentType" value="image" onchange="changeContentType()">
+<strong>Immagine / logo</strong>
+<small>Foto, disegno o pubblicità con link.</small>
+</label>
+</div>
+<div id="colorFields" class="field">
+<label for="color">Scegli il colore</label>
+<input type="color" id="color" value="#16a36a">
+</div>
+<div id="imageFields" class="hidden">
+<div class="field">
+<label for="image">Carica la tua immagine per l'anteprima</label>
+<input type="file" id="image" accept="image/png,image/jpeg,image/webp">
+<p class="muted">PNG, JPG o WebP · massimo 5 MB.</p>
+</div>
+<p id="imageStatus" class="status"></p>
+<div class="field">
+<label for="link">Link cliccabile (facoltativo)</label>
+<input type="url" id="link" placeholder="https://tuosito.it">
+<p class="muted">Il collegamento non viene ancora salvato con l'acquisto.</p>
+</div>
+<div class="notice">Puoi vedere l'anteprima gratuitamente. Il caricamento del logo avviene dopo il pagamento. Il link cliccabile non è ancora attivo.</div>
+</div>
+
+<div class="step"><span class="stepNumber">3</span>Anteprima e pagamento</div>
+<div class="controls">
+<button id="previewBtn" class="secondary" onclick="preview()" disabled>Mostra anteprima</button>
+<button class="secondary" onclick="removePreview()">Rimuovi anteprima</button>
+</div>
+<p id="previewStatus" class="muted">L'anteprima non viene salvata online.</p>
+<div id="previewCard" class="hidden" aria-live="polite">
+<strong>Anteprima ingrandita</strong>
+<div id="previewImageBox"></div>
+<p id="previewCoordinates" class="muted"></p>
+<button class="secondary" onclick="focusPreview()">Vai allo spazio sul muro</button>
+</div>
+
+<button id="buyBtn" class="primary" onclick="startCheckout()" disabled>Seleziona i pixel per acquistare</button>
+<p id="checkoutStatus" class="status"></p>
+
+<section id="afterPayment">
+<h3>Ritorno dal pagamento</h3>
+<p id="returnStatus" class="muted">Verifica del pagamento in corso.</p>
+<div id="purchaseLocator" class="hidden">
+<strong>Il tuo spazio acquistato</strong>
+<p id="purchaseCoordinates" class="muted"></p>
+<button class="primary" onclick="focusPurchasedSpace()">VEDI IL MIO PIXEL SUL MURO</button>
+</div>
+<div id="postPaymentUpload" class="hidden">
+<div class="field">
+<label for="postPaymentFile">Carica il logo acquistato</label>
+<input id="postPaymentFile" type="file" accept="image/png,image/jpeg,image/webp">
+<p class="muted">PNG, JPG o WebP · massimo 5 MB.</p>
+</div>
+<button id="uploadBtn" class="primary" onclick="uploadPaidImage()">Carica il logo</button>
+<p id="uploadStatus" class="status" role="status"></p>
+</div>
+</section>
+
+<div class="notice">
+<strong>Informazioni importanti</strong>
+<p>I pagamenti dei pixel colorati sono reali. Il prezzo è di 0,50 € per pixel.</p>
+<p>Le immagini acquistate vengono pubblicate solo dopo la revisione dell'amministratore.</p>
+</div>
 </aside>
-
 </main>
 
 <script>
 "use strict";
 
-const SIZE = 1000;
-const PRICE_PER_PIXEL_CENTS = 50;
+const SIZE=1000;
+const PRICE_PER_PIXEL_CENTS=50;
+const $=id=>document.getElementById(id);
+const wall=$("wall"),stage=$("stage");
+const base=$("base"),grid=$("grid"),overlay=$("overlay");
+const ctx=base.getContext("2d");
+const gridCtx=grid.getContext("2d");
+const overlayCtx=overlay.getContext("2d");
 
-function euroPrice(pixels) {
-  return (pixels * PRICE_PER_PIXEL_CENTS / 100)
-    .toLocaleString("it-IT", {
-      style: "currency",
-      currency: "EUR"
-    });
+let zoom=1,selection=null,start=null,dragging=false;
+let soldSpaces=[],previewData=null,locatedSpace=null;
+let uploadedImage=null,imageLoading=false,imageVersion=0;
+let availabilityConfirmed=false,checking=false,checkVersion=0;
+let checkoutInProgress=false,imagePurchasesEnabled=false;
+let paidImageSessionId=null,uploadInProgress=false;
+let purchasedSpace=null;
+
+function euroPrice(pixels){
+ return (pixels*PRICE_PER_PIXEL_CENTS/100).toLocaleString("it-IT",{style:"currency",currency:"EUR"});
 }
-
-const wall = document.getElementById("wall");
-const stage = document.getElementById("stage");
-
-const base = document.getElementById("base");
-const grid = document.getElementById("grid");
-const overlay = document.getElementById("overlay");
-
-const ctx = base.getContext("2d");
-const gridCtx = grid.getContext("2d");
-const overlayCtx = overlay.getContext("2d");
-
-const $ = id => document.getElementById(id);
-
-let zoom = 1;
-let selection = null;
-let start = null;
-let dragging = false;
-
-let soldSpaces = [];
-let previewData = null;
-
-let uploadedImage = null;
-let imageLoading = false;
-let imageVersion = 0;
-
-let availabilityConfirmed = false;
-let checking = false;
-let checkVersion = 0;
-
-let checkoutInProgress = false;
-let imagePurchasesEnabled = false;
-
-let paidImageSessionId = null;
-let uploadInProgress = false;
-
-function contentType() {
-  return document.querySelector(
-    'input[name="contentType"]:checked'
-  ).value;
+function contentType(){
+ return document.querySelector('input[name="contentType"]:checked').value;
 }
-
-function changeContentType() {
-  const imageMode = contentType() === "image";
-
-  $("colorFields").classList.toggle(
-    "hidden",
-    imageMode
-  );
-
-  $("imageFields").classList.toggle(
-    "hidden",
-    !imageMode
-  );
-
-  removePreview();
-  updateInfo();
+function changeContentType(){
+ const imageMode=contentType()==="image";
+ $("colorFields").classList.toggle("hidden",imageMode);
+ $("imageFields").classList.toggle("hidden",!imageMode);
+ removePreview();
+ updateInfo();
 }
-
-function setupCanvas(canvas, context, width, height) {
-  const dpr = window.devicePixelRatio || 1;
-
-  canvas.width = Math.round(width * dpr);
-  canvas.height = Math.round(height * dpr);
-
-  context.setTransform(
-    dpr,
-    0,
-    0,
-    dpr,
-    0,
-    0
-  );
+function setupCanvas(canvas,context,width,height){
+ const dpr=window.devicePixelRatio||1;
+ canvas.width=Math.round(width*dpr);
+ canvas.height=Math.round(height*dpr);
+ context.setTransform(dpr,0,0,dpr,0,0);
 }
-
-function getPosition(event) {
-  const rect = wall.getBoundingClientRect();
-
-  const border = 3;
-
-  const width = rect.width - border * 2;
-  const height = rect.height - border * 2;
-
-  const x = Math.floor(
-    ((event.clientX - rect.left - border) / width) * SIZE
-  );
-
-  const y = Math.floor(
-    ((event.clientY - rect.top - border) / height) * SIZE
-  );
-
-  return {
-    x: Math.max(0, Math.min(999, x)),
-    y: Math.max(0, Math.min(999, y))
-  };
+function getPosition(event){
+ const rect=wall.getBoundingClientRect();
+ const border=3;
+ const width=rect.width-border*2;
+ const height=rect.height-border*2;
+ const x=Math.floor((event.clientX-rect.left-border)/width*SIZE);
+ const y=Math.floor((event.clientY-rect.top-border)/height*SIZE);
+ return{x:Math.max(0,Math.min(999,x)),y:Math.max(0,Math.min(999,y))};
 }
-
-function makeRectangle(a, b) {
-  return {
-    x: Math.min(a.x, b.x),
-    y: Math.min(a.y, b.y),
-    w: Math.abs(a.x - b.x) + 1,
-    h: Math.abs(a.y - b.y) + 1
-  };
+function makeRectangle(a,b){
+ return{x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),w:Math.abs(a.x-b.x)+1,h:Math.abs(a.y-b.y)+1};
 }
-
-function rectanglesOverlap(a, b) {
-  return (
-    a.x < b.x + b.width &&
-    a.x + a.w > b.x &&
-    a.y < b.y + b.height &&
-    a.y + a.h > b.y
-  );
+function rectanglesOverlap(a,b){
+ return a.x<b.x+b.width&&a.x+a.w>b.x&&a.y<b.y+b.height&&a.y+a.h>b.y;
 }
-
-function selectionOverlapsSold() {
-  return !!selection && soldSpaces.some(
-    space => rectanglesOverlap(selection, space)
-  );
+function selectionOverlapsSold(){
+ return !!selection&&soldSpaces.some(space=>rectanglesOverlap(selection,space));
 }
-
-// GRIGLIA SEMPRE VISIBILE
-
-function drawGrid() {
-  const width = wall.clientWidth;
-  const height = wall.clientHeight;
-
-  setupCanvas(
-    grid,
-    gridCtx,
-    width,
-    height
-  );
-
-  gridCtx.clearRect(
-    0,
-    0,
-    width,
-    height
-  );
-
-  const pixelSize = width / SIZE;
-  const interval = pixelSize >= 3 ? 1 : 10;
-
-  gridCtx.beginPath();
-  gridCtx.strokeStyle = "#cbd5e1";
-  gridCtx.lineWidth = 0.7;
-
-  for (
-    let i = interval;
-    i < SIZE;
-    i += interval
-  ) {
-    const p = i * pixelSize;
-
-    gridCtx.moveTo(p, 0);
-    gridCtx.lineTo(p, height);
-
-    gridCtx.moveTo(0, p);
-    gridCtx.lineTo(width, p);
-  }
-
-  gridCtx.stroke();
+function drawGrid(){
+ const width=wall.clientWidth,height=wall.clientHeight;
+ setupCanvas(grid,gridCtx,width,height);
+ gridCtx.clearRect(0,0,width,height);
+ const pixelSize=width/SIZE;
+ const interval=pixelSize>=3?1:10;
+ gridCtx.beginPath();
+ gridCtx.strokeStyle="#cbd5e1";
+ gridCtx.lineWidth=.7;
+ for(let i=interval;i<SIZE;i+=interval){
+  const p=i*pixelSize;
+  gridCtx.moveTo(p,0);gridCtx.lineTo(p,height);
+  gridCtx.moveTo(0,p);gridCtx.lineTo(width,p);
+ }
+ gridCtx.stroke();
 }
-
-function drawSelection() {
-  const width = wall.clientWidth;
-  const height = wall.clientHeight;
-
-  setupCanvas(
-    overlay,
-    overlayCtx,
-    width,
-    height
-  );
-
-  overlayCtx.clearRect(
-    0,
-    0,
-    width,
-    height
-  );
-
-  if (!selection) return;
-
-  const scale = width / SIZE;
-
-  const x = selection.x * scale;
-  const y = selection.y * scale;
-  const w = selection.w * scale;
-  const h = selection.h * scale;
-
-  const overlaps = selectionOverlapsSold();
-
-  overlayCtx.fillStyle = overlaps
-    ? "rgba(220,38,38,0.3)"
-    : "rgba(25,105,230,0.3)";
-
-  overlayCtx.fillRect(x, y, w, h);
-
-  overlayCtx.strokeStyle = overlaps
-    ? "#dc2626"
-    : "#1558d6";
-
-  overlayCtx.lineWidth = 1.5;
-  overlayCtx.strokeRect(x, y, w, h);
+function drawSelection(){
+ const width=wall.clientWidth,height=wall.clientHeight;
+ setupCanvas(overlay,overlayCtx,width,height);
+ overlayCtx.clearRect(0,0,width,height);
+ if(!selection)return;
+ const scale=width/SIZE;
+ const{x,y,w,h}=selection;
+ const overlaps=selectionOverlapsSold();
+ overlayCtx.fillStyle=overlaps?"rgba(220,38,38,.3)":"rgba(25,105,230,.3)";
+ overlayCtx.fillRect(x*scale,y*scale,w*scale,h*scale);
+ overlayCtx.strokeStyle=overlaps?"#dc2626":"#1558d6";
+ overlayCtx.lineWidth=1.5;
+ overlayCtx.strokeRect(x*scale,y*scale,w*scale,h*scale);
 }
-
-function drawSpace(space) {
-  ctx.fillStyle = space.color || "#ffffff";
-
-  ctx.fillRect(
-    space.x,
-    space.y,
-    space.width,
-    space.height
-  );
-
-  if (space._image) {
-    ctx.drawImage(
-      space._image,
-      space.x,
-      space.y,
-      space.width,
-      space.height
-    );
-  }
+function drawSpace(space){
+ ctx.fillStyle=space.color||"#ffffff";
+ ctx.fillRect(space.x,space.y,space.width,space.height);
+ if(space._image){
+  ctx.drawImage(space._image,space.x,space.y,space.width,space.height);
+ }
 }
-
-function redrawWall() {
-  ctx.clearRect(0, 0, SIZE, SIZE);
-
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, SIZE, SIZE);
-
-  for (const space of soldSpaces) {
-    drawSpace(space);
-  }
-
-  if (previewData) {
-    const p = previewData;
-
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x, p.y, p.w, p.h);
-
-    if (p.image) {
-      ctx.drawImage(
-        p.image,
-        p.x,
-        p.y,
-        p.w,
-        p.h
-      );
-    }
-  }
+function redrawWall(){
+ ctx.clearRect(0,0,SIZE,SIZE);
+ ctx.fillStyle="#ffffff";
+ ctx.fillRect(0,0,SIZE,SIZE);
+ for(const space of soldSpaces)drawSpace(space);
+ if(previewData){
+  const p=previewData;
+  ctx.fillStyle=p.color;
+  ctx.fillRect(p.x,p.y,p.w,p.h);
+  if(p.image)ctx.drawImage(p.image,p.x,p.y,p.w,p.h);
+ }
 }
-function updateBuyButton() {
-  const button = $("buyBtn");
-  const imageMode = contentType() === "image";
-
-  const canBuy =
-    !checkoutInProgress &&
-    !checking &&
-    !!selection &&
-    availabilityConfirmed &&
-    !selectionOverlapsSold() &&
-    (
-      !imageMode ||
-      (
-        imagePurchasesEnabled &&
-        !!uploadedImage &&
-        !imageLoading
-      )
-    );
-
-  button.disabled = !canBuy;
-
-  if (imageMode && !imagePurchasesEnabled) {
-    button.textContent =
-      "Acquisto immagini non ancora disponibile";
-  } else if (imageMode && !uploadedImage) {
-    button.textContent =
-      "Carica un'immagine per acquistare";
-  } else if (selection) {
-    const pixels = selection.w * selection.h;
-
-    button.textContent =
-      "Acquista per " + euroPrice(pixels);
-  } else {
-    button.textContent =
-      "Seleziona i pixel per acquistare";
-  }
+function updateBuyButton(){
+ const button=$("buyBtn"),imageMode=contentType()==="image";
+ const canBuy=!checkoutInProgress&&!checking&&!!selection&&availabilityConfirmed&&!selectionOverlapsSold()&&(!imageMode||(imagePurchasesEnabled&&!!uploadedImage&&!imageLoading));
+ button.disabled=!canBuy;
+ if(imageMode&&!imagePurchasesEnabled)button.textContent="Acquisto immagini non ancora disponibile";
+ else if(imageMode&&!uploadedImage)button.textContent="Carica un'immagine per acquistare";
+ else if(selection)button.textContent="Acquista per "+euroPrice(selection.w*selection.h);
+ else button.textContent="Seleziona i pixel per acquistare";
 }
-
-function updateInfo() {
-  if (!selection) {
-    $("price").textContent = "0 €";
-    $("pixelCount").textContent =
-      "0 pixel × 0,50 €";
-
-    $("checkBtn").disabled = true;
-    $("previewBtn").disabled = true;
-
-    updateBuyButton();
-    return;
-  }
-
-  const pixels = selection.w * selection.h;
-  const overlaps = selectionOverlapsSold();
-
-  $("price").textContent = euroPrice(pixels);
-
-  $("pixelCount").textContent = overlaps
-    ? "Attenzione: lo spazio contiene pixel già venduti"
-    : pixels.toLocaleString("it-IT") +
-      " pixel × 0,50 €";
-
-  $("checkBtn").disabled = checking || overlaps;
-
-  $("previewBtn").disabled =
-    !availabilityConfirmed ||
-    checking ||
-    overlaps ||
-    imageLoading;
-
+function updateInfo(){
+ if(!selection){
+  $("price").textContent="0 €";
+  $("pixelCount").textContent="0 pixel × 0,50 €";
+  $("checkBtn").disabled=true;
+  $("previewBtn").disabled=true;
   updateBuyButton();
+  return;
+ }
+ const pixels=selection.w*selection.h,overlaps=selectionOverlapsSold();
+ $("price").textContent=euroPrice(pixels);
+ $("pixelCount").textContent=overlaps?"Attenzione: lo spazio contiene pixel già venduti":pixels.toLocaleString("it-IT")+" pixel × 0,50 €";
+ $("checkBtn").disabled=checking||overlaps;
+ $("previewBtn").disabled=!availabilityConfirmed||checking||overlaps||imageLoading;
+ updateBuyButton();
 }
+function invalidateAvailability(){
+ checkVersion++;
+ availabilityConfirmed=false;
+ checking=false;
+ $("availabilityStatus").textContent="";
+ updateInfo();
+}
+wall.addEventListener("pointerdown",event=>{
+ if(event.button!==undefined&&event.button!==0)return;
+ event.preventDefault();
+ invalidateAvailability();
+ removePreview();
+ locatedSpace=null;
+ start=getPosition(event);
+ selection=makeRectangle(start,start);
+ dragging=true;
+ wall.setPointerCapture(event.pointerId);
+ drawSelection();
+ updateInfo();
+});
+wall.addEventListener("pointermove",event=>{
+ if(!dragging)return;
+ invalidateAvailability();
+ selection=makeRectangle(start,getPosition(event));
+ drawSelection();
+ updateInfo();
+});
+wall.addEventListener("pointerup",()=>dragging=false);
+wall.addEventListener("pointercancel",()=>dragging=false);
 
-function invalidateAvailability() {
-  checkVersion++;
-
-  availabilityConfirmed = false;
-  checking = false;
-
-  $("availabilityStatus").textContent = "";
-
+function changeZoom(factor){
+ zoom=Math.max(1,Math.min(32,zoom*factor));
+ applyZoom();
+}
+function resetZoom(){
+ zoom=1;
+ applyZoom();
+}
+function applyZoom(){
+ const availableWidth=Math.max(100,stage.clientWidth-24);
+ const availableHeight=Math.max(100,window.innerHeight*.7);
+ const baseSize=Math.min(availableWidth,availableHeight,850);
+ const size=Math.round(baseSize*zoom);
+ wall.style.width=size+"px";
+ wall.style.height=size+"px";
+ $("zoomText").textContent=Math.round(zoom*100)+"%";
+ drawGrid();
+ drawSelection();
+ positionPreviewMarker();
+}
+function positionPreviewMarker(){
+ const marker=$("previewMarker");
+ const target=locatedSpace||previewData;
+ if(!target){
+  marker.classList.add("hidden");
+  return;
+ }
+ const scale=(wall.clientWidth-6)/SIZE;
+ const cx=3+(target.x+target.w/2)*scale;
+ const cy=3+(target.y+target.h/2)*scale;
+ const w=Math.max(36,target.w*scale);
+ const h=Math.max(36,target.h*scale);
+ marker.style.left=(cx-w/2)+"px";
+ marker.style.top=(cy-h/2)+"px";
+ marker.style.width=w+"px";
+ marker.style.height=h+"px";
+ marker.classList.remove("hidden");
+}
+function focusOnSpace(target){
+ if(!target)return;
+ locatedSpace={x:target.x,y:target.y,w:target.w||target.width||1,h:target.h||target.height||1};
+ zoom=Math.max(zoom,8);
+ applyZoom();
+ const scale=(wall.clientWidth-6)/SIZE;
+ const cx=3+(locatedSpace.x+locatedSpace.w/2)*scale;
+ const cy=3+(locatedSpace.y+locatedSpace.h/2)*scale;
+ stage.scrollLeft=Math.max(0,cx-stage.clientWidth/2);
+ stage.scrollTop=Math.max(0,cy-stage.clientHeight/2);
+ stage.scrollIntoView({behavior:"smooth",block:"center"});
+ positionPreviewMarker();
+}
+function focusPreview(){
+ if(previewData)focusOnSpace(previewData);
+}
+function findPixel(){
+ const xs=$("findX").value.trim(),ys=$("findY").value.trim();
+ const x=Number(xs),y=Number(ys);
+ if(xs===""||ys===""||!Number.isInteger(x)||!Number.isInteger(y)||x<0||x>=SIZE||y<0||y>=SIZE){
+  $("findStatus").textContent="Inserisci coordinate X e Y da 0 a 999.";
+  return;
+ }
+ $("findStatus").textContent="Pixel trovato: X "+x+", Y "+y;
+ focusOnSpace({x,y,w:1,h:1});
+}
+function showPurchasedSpace(space){
+ if(!space)return;
+ purchasedSpace=space;
+ $("purchaseCoordinates").textContent="Posizione: X "+space.x+", Y "+space.y+" · Dimensioni: "+space.w+" × "+space.h;
+ $("purchaseLocator").classList.remove("hidden");
+}
+function focusPurchasedSpace(){
+ if(purchasedSpace)focusOnSpace(purchasedSpace);
+}
+function clearSelection(){
+ selection=null;
+ invalidateAvailability();
+ removePreview();
+ drawSelection();
+ updateInfo();
+}
+$("color").addEventListener("input",removePreview);
+$("image").addEventListener("change",event=>{
+ const version=++imageVersion;
+ uploadedImage=null;
+ imageLoading=false;
+ $("imageStatus").textContent="";
+ removePreview();
+ const file=event.target.files[0];
+ if(!file){updateInfo();return;}
+ if(!["image/png","image/jpeg","image/webp"].includes(file.type)||file.size<1||file.size>5*1024*1024){
+  $("imageStatus").textContent="Usa PNG, JPG o WebP, massimo 5 MB.";
+  event.target.value="";
   updateInfo();
-}
-
-wall.addEventListener(
-  "pointerdown",
-  event => {
-    if (
-      event.button !== undefined &&
-      event.button !== 0
-    ) return;
-
-    event.preventDefault();
-
-    invalidateAvailability();
-    removePreview();
-
-    start = getPosition(event);
-    selection = makeRectangle(start, start);
-
-    dragging = true;
-
-    wall.setPointerCapture(event.pointerId);
-
-    drawSelection();
-    updateInfo();
-  }
-);
-
-wall.addEventListener(
-  "pointermove",
-  event => {
-    if (!dragging) return;
-
-    invalidateAvailability();
-
-    selection = makeRectangle(
-      start,
-      getPosition(event)
-    );
-
-    drawSelection();
-    updateInfo();
-  }
-);
-
-wall.addEventListener("pointerup", () => {
-  dragging = false;
+  return;
+ }
+ imageLoading=true;
+ $("imageStatus").textContent="Preparazione anteprima...";
+ updateInfo();
+ const url=URL.createObjectURL(file);
+ const image=new Image();
+ image.onload=()=>{
+  URL.revokeObjectURL(url);
+  if(version!==imageVersion)return;
+  uploadedImage=image;
+  imageLoading=false;
+  $("imageStatus").textContent="✓ Immagine pronta per l'anteprima.";
+  updateInfo();
+ };
+ image.onerror=()=>{
+  URL.revokeObjectURL(url);
+  if(version!==imageVersion)return;
+  imageLoading=false;
+  uploadedImage=null;
+  $("imageStatus").textContent="Impossibile leggere l'immagine.";
+  updateInfo();
+ };
+ image.src=url;
 });
 
-wall.addEventListener("pointercancel", () => {
-  dragging = false;
-});
-
-function changeZoom(factor) {
-  zoom = Math.max(
-    1,
-    Math.min(32, zoom * factor)
-  );
-
-  applyZoom();
-}
-
-function resetZoom() {
-  zoom = 1;
-  applyZoom();
-}
-
-function applyZoom() {
-  const availableWidth = Math.max(
-    100,
-    stage.clientWidth - 24
-  );
-
-  const availableHeight = Math.max(
-    100,
-    window.innerHeight * 0.7
-  );
-
-  const baseSize = Math.min(
-    availableWidth,
-    availableHeight,
-    850
-  );
-
-  const size = Math.round(baseSize * zoom);
-
-  wall.style.width = size + "px";
-  wall.style.height = size + "px";
-
-  $("zoomText").textContent =
-    Math.round(zoom * 100) + "%";
-
-  drawGrid();
-  drawSelection();
-  positionPreviewMarker();
-}
-
-function positionPreviewMarker() {
-  const marker = $("previewMarker");
-
-  if (!previewData) {
-    marker.classList.add("hidden");
-    return;
-  }
-
-  const scale = (wall.clientWidth - 6) / SIZE;
-
-  const cx =
-    3 + (previewData.x + previewData.w / 2) * scale;
-
-  const cy =
-    3 + (previewData.y + previewData.h / 2) * scale;
-
-  const w = Math.max(24, previewData.w * scale);
-  const h = Math.max(24, previewData.h * scale);
-
-  marker.style.left = (cx - w / 2) + "px";
-  marker.style.top = (cy - h / 2) + "px";
-  marker.style.width = w + "px";
-  marker.style.height = h + "px";
-
-  marker.classList.remove("hidden");
-}
-
-function focusPreview() {
-  if (!previewData) return;
-
-  zoom = Math.max(zoom, 4);
-  applyZoom();
-
-  const scale = (wall.clientWidth - 6) / SIZE;
-
-  const cx =
-    3 + (previewData.x + previewData.w / 2) * scale;
-
-  const cy =
-    3 + (previewData.y + previewData.h / 2) * scale;
-
-  stage.scrollLeft = Math.max(
-    0,
-    cx - stage.clientWidth / 2
-  );
-
-  stage.scrollTop = Math.max(
-    0,
-    cy - stage.clientHeight / 2
-  );
-
-  stage.scrollIntoView({
-    behavior: "smooth",
-    block: "center"
+async function checkAvailability(){
+ if(!selection||checking||selectionOverlapsSold())return;
+ const version=++checkVersion;
+ const{x,y,w,h}=selection;
+ checking=true;
+ availabilityConfirmed=false;
+ $("availabilityStatus").textContent="Controllo disponibilità...";
+ $("availabilityStatus").style.color="#64748b";
+ updateInfo();
+ try{
+  const response=await fetch("/api/check-space",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({x,y,width:w,height:h})
   });
-
-  positionPreviewMarker();
+  const data=await response.json();
+  if(version!==checkVersion)return;
+  if(!response.ok)throw new Error(data.error||"Errore nel controllo");
+  availabilityConfirmed=data.available===true;
+  $("availabilityStatus").textContent=availabilityConfirmed?"✓ Spazio disponibile!":"✕ Spazio occupato. Scegli altri pixel.";
+  $("availabilityStatus").style.color=availabilityConfirmed?"#15803d":"#dc2626";
+ }catch(error){
+  if(version!==checkVersion)return;
+  availabilityConfirmed=false;
+  $("availabilityStatus").textContent="Errore: "+error.message;
+  $("availabilityStatus").style.color="#dc2626";
+ }finally{
+  if(version===checkVersion){checking=false;updateInfo();}
+ }
 }
 
-function clearSelection() {
-  selection = null;
+function preview(){
+ if(!selection||!availabilityConfirmed||selectionOverlapsSold()||imageLoading)return;
+ if(contentType()==="image"&&!uploadedImage){
+  $("imageStatus").textContent="Seleziona prima un'immagine.";
+  return;
+ }
+ previewData={
+  ...selection,
+  color:$("color").value,
+  image:contentType()==="image"?uploadedImage:null
+ };
+ redrawWall();
+ const box=$("previewImageBox");
+ box.replaceChildren();
+ const canvas=document.createElement("canvas");
+ canvas.width=400;
+ canvas.height=300;
+ const c=canvas.getContext("2d");
+ c.fillStyle=previewData.color;
+ c.fillRect(0,0,400,300);
+ if(previewData.image)c.drawImage(previewData.image,0,0,400,300);
+ box.appendChild(canvas);
+ $("previewCoordinates").textContent="Posizione: X "+previewData.x+", Y "+previewData.y+" · Dimensione: "+previewData.w+" × "+previewData.h+" pixel";
+ $("previewCard").classList.remove("hidden");
+ $("previewStatus").textContent="✓ Anteprima pronta. Non è un acquisto.";
+ focusPreview();
+}
+function removePreview(){
+ previewData=null;
+ locatedSpace=null;
+ $("previewCard").classList.add("hidden");
+ $("previewMarker").classList.add("hidden");
+ $("previewImageBox").replaceChildren();
+ redrawWall();
+ $("previewStatus").textContent="L'anteprima non viene salvata online.";
+}
 
-  invalidateAvailability();
-  removePreview();
-
+async function loadSoldSpaces(){
+ $("connectionStatus").textContent="Caricamento degli spazi venduti...";
+ try{
+  const response=await fetch("/api/spaces",{cache:"no-store"});
+  if(!response.ok)throw new Error("Errore API: "+response.status);
+  const data=await response.json();
+  if(!Array.isArray(data.spaces))throw new Error("Risposta API non valida");
+  soldSpaces=data.spaces;
+  redrawWall();
+  for(const space of soldSpaces){
+   if(!space.image_url)continue;
+   try{
+    const url=new URL(space.image_url,window.location.href);
+    if(!["https:","http:"].includes(url.protocol))continue;
+    const image=new Image();
+    image.onload=()=>{space._image=image;redrawWall();};
+    image.onerror=()=>console.warn("Immagine non disponibile");
+    image.src=url.href;
+   }catch{console.warn("URL immagine non valido");}
+  }
+  $("connectionStatus").textContent="Database collegato · "+soldSpaces.length+" spazi venduti caricati";
   drawSelection();
   updateInfo();
+ }catch(error){
+  console.error(error);
+  $("connectionStatus").textContent="Errore nel caricamento degli spazi venduti";
+ }
 }
 
-$("color").addEventListener("input", () => {
-  removePreview();
-});
-
-$("image").addEventListener(
-  "change",
-  event => {
-    const version = ++imageVersion;
-
-    uploadedImage = null;
-    imageLoading = false;
-
-    $("imageStatus").textContent = "";
-
-    const file = event.target.files[0];
-
-    if (!file) {
-      updateInfo();
-      return;
-    }
-
-    if (
-      ![
-        "image/png",
-        "image/jpeg",
-        "image/webp"
-      ].includes(file.type) ||
-      file.size < 1 ||
-      file.size > 5 * 1024 * 1024
-    ) {
-      $("imageStatus").textContent =
-        "Usa PNG, JPG o WebP, massimo 5 MB.";
-
-      event.target.value = "";
-      updateInfo();
-      return;
-    }
-
-    imageLoading = true;
-
-    $("imageStatus").textContent =
-      "Preparazione anteprima...";
-
-    updateInfo();
-
-    const url = URL.createObjectURL(file);
-    const image = new Image();
-
-    image.onload = () => {
-      URL.revokeObjectURL(url);
-
-      if (version !== imageVersion) return;
-
-      uploadedImage = image;
-      imageLoading = false;
-
-      $("imageStatus").textContent =
-        "✓ Immagine pronta per l'anteprima.";
-
-      updateInfo();
-    };
-
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-
-      if (version !== imageVersion) return;
-
-      imageLoading = false;
-      uploadedImage = null;
-
-      $("imageStatus").textContent =
-        "Impossibile leggere l'immagine.";
-
-      updateInfo();
-    };
-
-    image.src = url;
+async function startCheckout(){
+ if(checkoutInProgress||!selection||!availabilityConfirmed||selectionOverlapsSold()||(contentType()==="image"&&(!imagePurchasesEnabled||!uploadedImage||imageLoading)))return;
+ checkoutInProgress=true;
+ updateBuyButton();
+ $("checkoutStatus").textContent="Preparazione del pagamento...";
+ try{
+  const response=await fetch("/api/create-checkout",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({
+    x:selection.x,y:selection.y,
+    width:selection.w,height:selection.h,
+    color:$("color").value,
+    content_type:contentType()
+   })
+  });
+  const data=await response.json();
+  if(!response.ok)throw new Error(data.error||"Pagamento non disponibile");
+  const checkoutUrl=new URL(data.checkout_url);
+  if(checkoutUrl.protocol!=="https:"||!["checkout.stripe.com","pay.stripe.com"].includes(checkoutUrl.hostname)){
+   throw new Error("Indirizzo di pagamento non valido");
   }
-);
-
-async function checkAvailability() {
-  if (
-    !selection ||
-    checking ||
-    selectionOverlapsSold()
-  ) return;
-
-  const version = ++checkVersion;
-  const { x, y, w, h } = selection;
-
-  checking = true;
-  availabilityConfirmed = false;
-
-  $("availabilityStatus").textContent =
-    "Controllo disponibilità...";
-
-  $("availabilityStatus").style.color =
-    "#64748b";
-
-  updateInfo();
-
-  try {
-    const response = await fetch(
-      "/api/check-space",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          x,
-          y,
-          width: w,
-          height: h
-        })
-      }
-    );
-
-    const data = await response.json();
-
-    if (version !== checkVersion) return;
-
-    if (!response.ok) {
-      throw new Error(
-        data.error || "Errore nel controllo"
-      );
-    }
-
-    availabilityConfirmed =
-      data.available === true;
-
-    $("availabilityStatus").textContent =
-      availabilityConfirmed
-        ? "✓ Spazio disponibile!"
-        : "✕ Spazio occupato. Scegli altri pixel.";
-
-    $("availabilityStatus").style.color =
-      availabilityConfirmed
-        ? "#15803d"
-        : "#dc2626";
-
-  } catch (error) {
-    if (version !== checkVersion) return;
-
-    availabilityConfirmed = false;
-
-    $("availabilityStatus").textContent =
-      "Errore: " + error.message;
-
-    $("availabilityStatus").style.color =
-      "#dc2626";
-
-  } finally {
-    if (version === checkVersion) {
-      checking = false;
-      updateInfo();
-    }
-  }
-}
-
-function preview() {
-  if (
-    !selection ||
-    !availabilityConfirmed ||
-    selectionOverlapsSold() ||
-    imageLoading
-  ) return;
-
-  if (
-    contentType() === "image" &&
-    !uploadedImage
-  ) {
-    $("imageStatus").textContent =
-      "Seleziona prima un'immagine.";
-
-    return;
-  }
-
-  previewData = {
-    ...selection,
-    color: $("color").value,
-    image: contentType() === "image"
-      ? uploadedImage
-      : null
-  };
-
-  redrawWall();
-
-  const box = $("previewImageBox");
-  box.replaceChildren();
-
-  if (previewData.image) {
-    const img = document.createElement("img");
-    img.alt = "Anteprima dell'immagine selezionata";
-    img.src = previewData.image.src;
-    box.appendChild(img);
-  } else {
-    box.style.background = previewData.color;
-  }
-
-  if (previewData.image) {
-    box.style.background = "#ffffff";
-  }
-
-  $("previewCoordinates").textContent =
-    "Posizione: X " + previewData.x +
-    ", Y " + previewData.y +
-    " · Dimensione: " +
-    previewData.w + " × " +
-    previewData.h + " pixel";
-
-  $("previewCard").classList.remove("hidden");
-
-  $("previewStatus").textContent =
-    "✓ Anteprima pronta. Il muro si sposta " +
-    "sullo spazio selezionato. Non è un acquisto.";
-
-  focusPreview();
-}
-
-function removePreview() {
-  previewData = null;
-
-  $("previewCard").classList.add("hidden");
-  $("previewMarker").classList.add("hidden");
-
-  $("previewImageBox").replaceChildren();
-  $("previewImageBox").style.background = "#ffffff";
-
-  redrawWall();
-
-  $("previewStatus").textContent =
-    "L'anteprima non viene salvata online.";
-}
-
-async function loadSoldSpaces() {
-  $("connectionStatus").textContent =
-    "Caricamento degli spazi venduti...";
-
-  try {
-    const response = await fetch(
-      "/api/spaces",
-      {
-        cache: "no-store"
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        "Errore API: " + response.status
-      );
-    }
-
-    const data = await response.json();
-
-    if (!Array.isArray(data.spaces)) {
-      throw new Error("Risposta API non valida");
-    }
-
-    soldSpaces = data.spaces;
-
-    redrawWall();
-
-    for (const space of soldSpaces) {
-      if (!space.image_url) continue;
-
-      try {
-        const url = new URL(
-          space.image_url,
-          window.location.href
-        );
-
-        if (
-          !["https:", "http:"].includes(
-            url.protocol
-          )
-        ) continue;
-
-        const image = new Image();
-
-        image.onload = () => {
-          space._image = image;
-          redrawWall();
-        };
-
-        image.onerror = () => {
-          console.warn(
-            "Immagine non disponibile"
-          );
-        };
-
-        image.src = url.href;
-
-      } catch {
-        console.warn("URL immagine non valido");
-      }
-    }
-
-    $("connectionStatus").textContent =
-      "Database collegato · " +
-      soldSpaces.length +
-      " spazi venduti caricati";
-
-    drawSelection();
-    updateInfo();
-
-  } catch (error) {
-    console.error(error);
-
-    $("connectionStatus").textContent =
-      "Errore nel caricamento degli spazi venduti";
-  }
-}
-
-async function startCheckout() {
-  if (
-    checkoutInProgress ||
-    !selection ||
-    !availabilityConfirmed ||
-    selectionOverlapsSold() ||
-    (
-      contentType() === "image" &&
-      (
-        !imagePurchasesEnabled ||
-        !uploadedImage ||
-        imageLoading
-      )
-    )
-  ) return;
-
-  checkoutInProgress = true;
+  try{
+   sessionStorage.setItem("wall_v2_pending_checkout",JSON.stringify({
+    x:selection.x,y:selection.y,w:selection.w,h:selection.h,savedAt:Date.now()
+   }));
+  }catch(error){console.warn(error);}
+  window.location.assign(checkoutUrl.href);
+ }catch(error){
+  $("checkoutStatus").textContent="Errore: "+error.message;
+  checkoutInProgress=false;
   updateBuyButton();
-
-  $("checkoutStatus").textContent =
-    "Preparazione del pagamento...";
-
-  try {
-    const response = await fetch(
-      "/api/create-checkout",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          x: selection.x,
-          y: selection.y,
-          width: selection.w,
-          height: selection.h,
-          color: $("color").value,
-          content_type: contentType()
-        })
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.error ||
-        "Pagamento non disponibile"
-      );
-    }
-
-    const checkoutUrl = new URL(
-      data.checkout_url
-    );
-
-    if (
-      checkoutUrl.protocol !== "https:" ||
-      ![
-        "checkout.stripe.com",
-        "pay.stripe.com"
-      ].includes(checkoutUrl.hostname)
-    ) {
-      throw new Error(
-        "Indirizzo di pagamento non valido"
-      );
-    }
-
-    window.location.assign(
-      checkoutUrl.href
-    );
-
-  } catch (error) {
-    $("checkoutStatus").textContent =
-      "Errore: " + error.message;
-
-    checkoutInProgress = false;
-    updateBuyButton();
-  }
+ }
 }
 
-// CONTROLLO DEL RITORNO DA STRIPE
+function validSessionId(id){
+ return typeof id==="string"&&/^cs_live_[A-Za-z0-9]+$/.test(id);
+}
+async function initializeCheckoutReturn(){
+ const params=new URLSearchParams(window.location.search);
+ const checkout=params.get("checkout");
+ const sessionId=params.get("session_id");
+ if(checkout==="cancel"){
+  $("checkoutStatus").textContent="Pagamento annullato.";
+  return;
+ }
+ if(checkout!=="success")return;
+ $("afterPayment").style.display="block";
+ if(!validSessionId(sessionId)){
+  $("returnStatus").textContent="Riferimento al pagamento mancante o non valido.";
+  return;
+ }
+ $("returnStatus").textContent="Verifica del pagamento in corso...";
+ try{
+  const response=await fetch("/api/checkout-status?session_id="+encodeURIComponent(sessionId),{cache:"no-store"});
+  if(response.status===404){
+   $("returnStatus").textContent="Pagamento inviato a Stripe. Attendi la conferma e aggiorna il muro.";
+   return;
+  }
+  if(!response.ok)throw new Error("Verifica non disponibile");
+  const data=await response.json();
+  if(data.paid!==true){
+   $("returnStatus").textContent="Pagamento non ancora confermato.";
+   return;
+  }
 
-function validSessionId(id) {
-  return (
-    typeof id === "string" &&
-    /^cs_live_[A-Za-z0-9]+$/.test(id)
-  );
+  let purchased=null;
+  const s=data.space||data;
+  const x=Number(s.x),y=Number(s.y);
+  const w=Number(s.width??s.w??1),h=Number(s.height??s.h??1);
+  if(s.x!=null&&s.y!=null&&[x,y,w,h].every(Number.isInteger)&&x>=0&&y>=0&&w>0&&h>0&&x+w<=SIZE&&y+h<=SIZE){
+   purchased={x,y,w,h};
+  }else{
+   try{
+    const saved=JSON.parse(sessionStorage.getItem("wall_v2_pending_checkout")||"null");
+    if(saved&&Date.now()-saved.savedAt<24*60*60*1000&&
+       [saved.x,saved.y,saved.w,saved.h].every(Number.isInteger)&&
+       saved.x>=0&&saved.y>=0&&saved.w>0&&saved.h>0&&
+       saved.x+saved.w<=SIZE&&saved.y+saved.h<=SIZE){
+     purchased={x:saved.x,y:saved.y,w:saved.w,h:saved.h};
+    }
+   }catch(error){console.warn(error);}
+  }
+  if(purchased)showPurchasedSpace(purchased);
+
+  if(data.content_type==="image"){
+   $("returnStatus").textContent="Pagamento immagine confermato. Ora puoi caricare il logo.";
+   paidImageSessionId=sessionId;
+   $("postPaymentUpload").classList.remove("hidden");
+  }else{
+   $("returnStatus").textContent="Pagamento confermato. I pixel colorati saranno visibili dopo l'elaborazione del server.";
+   loadSoldSpaces();
+  }
+ }catch(error){
+  $("returnStatus").textContent="Impossibile verificare ora il pagamento. Non effettuare un secondo pagamento.";
+ }
 }
 
-async function initializeCheckoutReturn() {
-  const params = new URLSearchParams(
-    window.location.search
-  );
-
-  const checkout = params.get("checkout");
-  const sessionId = params.get("session_id");
-
-  if (checkout === "cancel") {
-    $("checkoutStatus").textContent =
-      "Pagamento annullato.";
-
-    return;
+async function uploadPaidImage(){
+ if(uploadInProgress||!validSessionId(paidImageSessionId))return;
+ const file=$("postPaymentFile").files[0];
+ if(!file||!["image/png","image/jpeg","image/webp"].includes(file.type)||file.size<1||file.size>5*1024*1024){
+  $("uploadStatus").textContent="Scegli un PNG, JPG o WebP di massimo 5 MB.";
+  return;
+ }
+ uploadInProgress=true;
+ $("uploadBtn").disabled=true;
+ $("uploadStatus").textContent="Autorizzazione del caricamento...";
+ try{
+  const auth=await fetch("/api/upload-image",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({
+    sessionId:paidImageSessionId,
+    contentType:file.type,
+    fileSize:file.size
+   })
+  });
+  const data=await auth.json();
+  if(!auth.ok||!data.success)throw new Error(data.error||"Autorizzazione negata");
+  if(data.bucket!=="wall-images"||typeof data.path!=="string"||typeof data.token!=="string"){
+   throw new Error("Risposta caricamento non valida");
   }
-
-  if (checkout !== "success") return;
-
-  $("afterPayment").style.display = "block";
-
-  if (!validSessionId(sessionId)) {
-    $("returnStatus").textContent =
-      "Riferimento al pagamento mancante o non valido.";
-
-    return;
-  }
-
-  $("returnStatus").textContent =
-    "Verifica del pagamento in corso...";
-
-  try {
-    const response = await fetch(
-      "/api/checkout-status?session_id=" +
-        encodeURIComponent(sessionId),
-      {
-        cache: "no-store"
-      }
-    );
-
-    if (response.status === 404) {
-      $("returnStatus").textContent =
-        "Pagamento inviato a Stripe. " +
-        "Attendi la conferma e aggiorna il muro. " +
-        "La verifica per le immagini sarà disponibile " +
-        "quando attiveremo il servizio.";
-
-      return;
-    }
-
-    if (!response.ok) {
-      throw new Error(
-        "Verifica non disponibile"
-      );
-    }
-
-    const data = await response.json();
-
-    if (data.paid !== true) {
-      $("returnStatus").textContent =
-        "Pagamento non ancora confermato.";
-
-      return;
-    }
-
-    if (data.content_type === "image") {
-      $("returnStatus").textContent =
-        "Pagamento immagine confermato. " +
-        "Ora puoi caricare il logo.";
-
-      paidImageSessionId = sessionId;
-
-      $("postPaymentUpload").classList.remove(
-        "hidden"
-      );
-
-    } else {
-      $("returnStatus").textContent =
-        "Pagamento confermato. " +
-        "I pixel colorati saranno visibili " +
-        "dopo l'elaborazione del server.";
-
-      loadSoldSpaces();
-    }
-
-  } catch {
-    $("returnStatus").textContent =
-      "Impossibile verificare ora il pagamento. " +
-      "Non effettuare un secondo pagamento.";
-  }
+  const supabaseUrl="https://zaivqtihriaflcgzffqt.supabase.co";
+  const encodedPath=data.path.split("/").map(encodeURIComponent).join("/");
+  const uploadUrl=supabaseUrl+"/storage/v1/object/upload/sign/"+
+   encodeURIComponent(data.bucket)+"/"+encodedPath+"?token="+encodeURIComponent(data.token);
+  $("uploadStatus").textContent="Invio dell'immagine...";
+  const sent=await fetch(uploadUrl,{
+   method:"PUT",
+   headers:{"Content-Type":file.type,"x-upsert":"false"},
+   body:file
+  });
+  if(!sent.ok)throw new Error("Invio a Supabase non riuscito (HTTP "+sent.status+")");
+  $("uploadStatus").textContent="Registrazione dell'immagine...";
+  const confirm=await fetch("/api/confirm-image",{
+   method:"POST",
+   headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({
+    sessionId:paidImageSessionId,
+    imagePath:data.path
+   })
+  });
+  const result=await confirm.json();
+  if(!confirm.ok||!result.success)throw new Error(result.error||"Conferma non riuscita");
+  $("uploadStatus").textContent="✓ Immagine ricevuta, in attesa di approvazione.";
+  $("postPaymentFile").disabled=true;
+  $("uploadBtn").classList.add("hidden");
+ }catch(error){
+  $("uploadStatus").textContent="Errore: "+error.message+". Non ripetere il pagamento.";
+ }finally{
+  uploadInProgress=false;
+  $("uploadBtn").disabled=false;
+ }
 }
 
-// CARICAMENTO LOGO DOPO PAGAMENTO VERIFICATO
-
-async function uploadPaidImage() {
-  if (
-    uploadInProgress ||
-    !validSessionId(paidImageSessionId)
-  ) return;
-
-  const file = $("postPaymentFile").files[0];
-
-  if (
-    !file ||
-    ![
-      "image/png",
-      "image/jpeg",
-      "image/webp"
-    ].includes(file.type) ||
-    file.size < 1 ||
-    file.size > 5 * 1024 * 1024
-  ) {
-    $("uploadStatus").textContent =
-      "Scegli un PNG, JPG o WebP di massimo 5 MB.";
-
-    return;
-  }
-
-  uploadInProgress = true;
-  $("uploadBtn").disabled = true;
-
-  $("uploadStatus").textContent =
-    "Autorizzazione del caricamento...";
-
-  try {
-    const auth = await fetch(
-      "/api/upload-image",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          sessionId: paidImageSessionId,
-          contentType: file.type,
-          fileSize: file.size
-        })
-      }
-    );
-
-    const data = await auth.json();
-
-    if (!auth.ok || !data.success) {
-      throw new Error(
-        data.error || "Autorizzazione negata"
-      );
-    }
-
-    if (
-      data.bucket !== "wall-images" ||
-      typeof data.path !== "string" ||
-      typeof data.token !== "string"
-    ) {
-      throw new Error(
-        "Risposta caricamento non valida"
-      );
-    }
-
-    const supabaseUrl =
-      "https://zaivqtihriaflcgzffqt.supabase.co";
-
-    const encodedPath = data.path
-      .split("/")
-      .map(encodeURIComponent)
-      .join("/");
-
-    $("uploadStatus").textContent =
-      "Invio dell'immagine...";
-
-    const uploadUrl =
-      supabaseUrl +
-      "/storage/v1/object/upload/sign/" +
-      encodeURIComponent(data.bucket) +
-      "/" +
-      encodedPath +
-      "?token=" +
-      encodeURIComponent(data.token);
-
-    const sent = await fetch(
-      uploadUrl,
-      {
-        method: "PUT",
-        headers: {
-          "Content-Type": file.type,
-          "x-upsert": "false"
-        },
-        body: file
-      }
-    );
-
-    if (!sent.ok) {
-      throw new Error(
-        "Invio a Supabase non riuscito " +
-        "(HTTP " + sent.status + ")"
-      );
-    }
-
-    $("uploadStatus").textContent =
-      "Registrazione dell'immagine...";
-
-    const confirm = await fetch(
-      "/api/confirm-image",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          sessionId: paidImageSessionId,
-          imagePath: data.path
-        })
-      }
-    );
-
-    const result = await confirm.json();
-
-    if (!confirm.ok || !result.success) {
-      throw new Error(
-        result.error || "Conferma non riuscita"
-      );
-    }
-
-    $("uploadStatus").textContent =
-      "✓ Immagine ricevuta, " +
-      "in attesa di approvazione.";
-
-    $("postPaymentFile").disabled = true;
-    $("uploadBtn").classList.add("hidden");
-
-  } catch (error) {
-    $("uploadStatus").textContent =
-      "Errore: " +
-      error.message +
-      ". Non ripetere il pagamento.";
-
-  } finally {
-    uploadInProgress = false;
-    $("uploadBtn").disabled = false;
-  }
+async function checkImageFeatureStatus(){
+ imagePurchasesEnabled=false;
+ updateBuyButton();
+ try{
+  const response=await fetch("/api/image-feature-status",{cache:"no-store"});
+  if(!response.ok)throw new Error("Servizio immagini non disponibile");
+  const data=await response.json();
+  imagePurchasesEnabled=data.enabled===true;
+ }catch(error){
+  imagePurchasesEnabled=false;
+  console.error(error);
+ }
+ updateBuyButton();
 }
 
-// CONTROLLO ATTIVAZIONE ACQUISTI IMMAGINI
-
-async function checkImageFeatureStatus() {
-  imagePurchasesEnabled = false;
-  updateBuyButton();
-
-  try {
-    const response = await fetch(
-      "/api/image-feature-status",
-      {
-        cache: "no-store"
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(
-        "Servizio immagini non disponibile"
-      );
-    }
-
-    const data = await response.json();
-
-    imagePurchasesEnabled =
-      data.enabled === true;
-
-  } catch (error) {
-    imagePurchasesEnabled = false;
-    console.error(error);
-  }
-
-  updateBuyButton();
+function initializeDirectPixelLink(){
+ const params=new URLSearchParams(window.location.search);
+ const xs=params.get("pixel_x"),ys=params.get("pixel_y");
+ if(xs===null||ys===null)return;
+ if(!/^\d{1,3}$/.test(xs)||!/^\d{1,3}$/.test(ys))return;
+ const x=Number(xs),y=Number(ys);
+ if(x>=SIZE||y>=SIZE)return;
+ $("findX").value=x;
+ $("findY").value=y;
+ requestAnimationFrame(()=>findPixel());
 }
 
-window.addEventListener(
-  "resize",
-  applyZoom
-);
-
+window.addEventListener("resize",applyZoom);
 changeContentType();
 checkImageFeatureStatus();
 applyZoom();
 updateInfo();
 loadSoldSpaces();
 initializeCheckoutReturn();
-
+initializeDirectPixelLink();
 </script>
-
 </body>
 </html>
