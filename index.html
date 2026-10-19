@@ -1,502 +1,828 @@
 
 
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>COLOR MY DREAM — Rolex d'Oro</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>COLOR MY DREAM — Challenge #1</title>
 <style>
+:root{
+  font-family:system-ui,-apple-system,Segoe UI,sans-serif;
+  color:#f8f6ec;
+  background:#111a15;
+}
 *{box-sizing:border-box}
-body{margin:0;background:#10140f;color:#f8f5e9;font-family:Arial,sans-serif}
-header{text-align:center;padding:27px 15px;background:#17251c;border-bottom:1px solid #456347}
-.logo{font-size:30px;font-weight:900;letter-spacing:2px;color:#e9c66c}
-header p{color:#d5dfd3;margin-bottom:0}
-main{max-width:1450px;margin:auto;padding:20px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px}
-.panel{background:#1b271e;border:1px solid #3d5140;border-radius:16px;padding:18px;min-width:0}
-h2{margin:0 0 12px}
-p{line-height:1.55}
-.muted{color:#b6c4b8;font-size:14px}
-.gold{color:#e9c66c}
-.stats{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:15px 0}
-.stat{background:#28382b;border-radius:10px;padding:12px;flex:1;min-width:125px}
-.stat strong{display:block;font-size:21px;color:#e9c66c;margin-top:5px}
-.progress{height:12px;background:#3d4d40;border-radius:20px;overflow:hidden}
-.progress div{height:100%;background:linear-gradient(90deg,#b8892b,#ffe69b);width:0%}
-button{border:0;border-radius:9px;padding:12px 15px;font-weight:bold;cursor:pointer;background:#d8b55f;color:#172016}
+body{margin:0}
+header{
+  text-align:center;
+  padding:24px 12px;
+  background:#1b2b20;
+  border-bottom:1px solid #425747;
+}
+header h1{
+  color:#e8c978;
+  letter-spacing:2px;
+  margin:0;
+  font-size:clamp(23px,4vw,36px);
+}
+header p{margin:8px 0 0;color:#c3d0c3}
+main{
+  max-width:1440px;
+  margin:auto;
+  padding:16px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 330px;
+  gap:16px;
+}
+.panel{
+  min-width:0;
+  background:#1b2920;
+  border:1px solid #435847;
+  border-radius:16px;
+  padding:18px;
+}
+h2{margin:0 0 8px}
+p{line-height:1.5}
+.muted{color:#bacabb;font-size:14px}
+.stats{display:flex;gap:8px;margin:16px 0}
+.stat{
+  flex:1;
+  min-width:0;
+  padding:12px;
+  background:#2b3b2e;
+  border-radius:9px;
+  font-size:12px;
+}
+.stat strong{
+  display:block;
+  color:#e8c978;
+  font-size:clamp(16px,2.3vw,24px);
+  margin-top:4px;
+}
+.bar{
+  height:9px;
+  background:#425445;
+  border-radius:20px;
+  overflow:hidden;
+}
+.bar div{
+  height:100%;
+  width:0;
+  background:#e8c978;
+}
+.controls{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+  margin:16px 0;
+}
+button{
+  background:#e2bd66;
+  color:#142018;
+  border:0;
+  border-radius:9px;
+  padding:11px 14px;
+  font-weight:750;
+  cursor:pointer;
+}
 button:disabled{opacity:.4;cursor:not-allowed}
-.secondary{background:#344a39;color:white}
-.controls{display:flex;gap:8px;flex-wrap:wrap;margin:15px 0;align-items:center}
-#stage{width:100%;height:min(68vh,690px);min-height:340px;overflow:auto;background:#101810;border-radius:12px;border:1px solid #52644f;touch-action:pan-x pan-y}
-#wall{position:relative;width:100%;aspect-ratio:250/140;cursor:crosshair;touch-action:none;user-select:none}
-#wall canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-#drawing{image-rendering:pixelated}
-#selection{pointer-events:none}
-.price{background:#2d3c2c;border:1px solid #a7873d;border-radius:13px;padding:18px;margin:15px 0}
-.price strong{display:block;font-size:36px;color:#f0ce73;margin:8px 0}
-label{display:block;font-weight:bold;font-size:14px;margin:17px 0 7px}
-input{width:100%;padding:13px;border-radius:9px;border:1px solid #607361;background:#101810;color:white;font-size:16px}
-.primary{width:100%;padding:16px;margin-top:16px;font-size:16px}
-.notice{background:#3a3322;border:1px solid #8e7135;padding:12px;border-radius:10px;font-size:13px;line-height:1.6;margin-top:18px}
-#message,#pixelInfo{font-size:14px;line-height:1.6;overflow-wrap:anywhere}
-#pixelInfo{background:#29392c;padding:12px;border-radius:9px;min-height:48px}
-.legend{display:flex;gap:15px;flex-wrap:wrap;font-size:13px;color:#c5d0c4;margin-top:12px}
-.dot{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px}
-footer{text-align:center;padding:25px;color:#9eafa0;font-size:12px}
-@media(max-width:900px){
- main{grid-template-columns:1fr;padding:10px}
- .panel{padding:13px}
- .logo{font-size:24px}
- #stage{height:55vh}
+.secondary{background:#3b5341;color:white}
+#viewport{
+  width:100%;
+  height:min(65vh,660px);
+  min-height:320px;
+  overflow:auto;
+  background:#101610;
+  border:1px solid #556c5a;
+  border-radius:12px;
+  overscroll-behavior:contain;
+}
+#board{
+  position:relative;
+  width:100%;
+  aspect-ratio:25/14;
+  touch-action:none;
+  user-select:none;
+}
+#board canvas{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  pointer-events:none;
+}
+#base{image-rendering:auto}
+#overlay{image-rendering:pixelated}
+#selection{image-rendering:pixelated}
+.legend{
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  margin:12px 0;
+  font-size:13px;
+  color:#cbd8cc;
+}
+.swatch{
+  display:inline-block;
+  width:12px;
+  height:12px;
+  border-radius:2px;
+  margin-right:5px;
+  vertical-align:middle;
+}
+.info{
+  background:#2a3c2e;
+  border-radius:9px;
+  padding:12px;
+  min-height:48px;
+  overflow-wrap:anywhere;
+  font-size:14px;
+}
+.price{
+  background:#2e3b2d;
+  border:1px solid #947b3f;
+  padding:16px;
+  border-radius:12px;
+  margin:16px 0;
+}
+.price strong{
+  display:block;
+  color:#e8c978;
+  font-size:34px;
+  margin:6px 0;
+}
+label{
+  display:block;
+  margin:18px 0 7px;
+  font-weight:700;
+}
+input{
+  width:100%;
+  padding:13px;
+  background:#101710;
+  color:white;
+  border:1px solid #6a806d;
+  border-radius:8px;
+  font-size:16px;
+}
+.full{width:100%;margin-top:12px}
+.notice{
+  border:1px solid #8d7541;
+  background:#3c3422;
+  padding:13px;
+  border-radius:10px;
+  margin-top:20px;
+  font-size:13px;
+  line-height:1.6;
+}
+#message{
+  min-height:20px;
+  font-size:14px;
+  overflow-wrap:anywhere;
+}
+footer{
+  text-align:center;
+  padding:24px;
+  color:#9fb2a1;
+  font-size:12px;
+}
+@media(max-width:850px){
+  main{grid-template-columns:1fr;padding:9px}
+  .panel{padding:12px}
+  #viewport{height:52vh}
+  .stat{padding:8px}
 }
 </style>
 </head>
 <body>
 
 <header>
-<div class="logo">COLOR MY DREAM</div>
-<p>CHALLENGE #1 — IL ROLEX D'ORO</p>
+  <h1>COLOR MY DREAM</h1>
+  <p>CHALLENGE #1 — IL ROLEX D'ORO</p>
 </header>
 
 <main>
 <section class="panel">
-<h2>Coloriamo insieme un sogno</h2>
-<p class="muted">
-Ogni tassello costa 1 €. Scegli dove lasciare il tuo nome
-e contribuisci a rivelare i colori del Rolex.
-</p>
+  <h2>Un sogno, 35.000 tasselli</h2>
+  <p class="muted">
+    Ogni tassello vale 1 €.
+    Scopri il colore originale del Rolex,
+    un pixel alla volta.
+  </p>
 
-<div class="stats">
-<div class="stat">Tasselli colorati<strong id="soldCount">0</strong></div>
-<div class="stat">Tasselli disponibili<strong id="remaining">35.000</strong></div>
-<div class="stat">Completamento<strong id="percentage">0%</strong></div>
-</div>
-<div class="progress"><div id="progressBar"></div></div>
+  <div class="stats">
+    <div class="stat">
+      Colorati
+      <strong id="sold">0</strong>
+    </div>
+    <div class="stat">
+      Disponibili
+      <strong id="available">35.000</strong>
+    </div>
+    <div class="stat">
+      Completamento
+      <strong id="percent">0%</strong>
+    </div>
+  </div>
 
-<div class="controls">
-<button onclick="changeZoom(2)">+ Zoom</button>
-<button onclick="changeZoom(.5)">− Zoom</button>
-<button class="secondary" onclick="resetZoom()">Ripristina</button>
-<strong id="zoomLabel">100%</strong>
-</div>
+  <div class="bar">
+    <div id="progress"></div>
+  </div>
 
-<div id="stage">
-<div id="wall">
-<canvas id="drawing" width="250" height="140"></canvas>
-<canvas id="selection" width="250" height="140"></canvas>
-</div>
-</div>
+  <div class="controls">
+    <button id="plus">+ Zoom</button>
+    <button id="minus">− Zoom</button>
+    <button id="reset" class="secondary">
+      Ripristina
+    </button>
+    <span id="zoomText">100%</span>
+  </div>
 
-<div class="legend">
-<span><span class="dot" style="background:#a4a4a4"></span>Da colorare</span>
-<span><span class="dot" style="background:#d8b55f"></span>Colorato</span>
-<span><span class="dot" style="background:#438cff"></span>Selezionato</span>
-</div>
+  <div id="viewport">
+    <div id="board">
+      <canvas id="base"></canvas>
+      <canvas id="overlay"
+        width="250" height="140"></canvas>
+      <canvas id="selection"
+        width="250" height="140"></canvas>
+    </div>
+  </div>
 
-<p class="muted">
-Tocca un tassello oppure trascina per selezionare
-un gruppo di tasselli. Usa lo zoom per scegliere
-con precisione anche un solo pixel.
-</p>
+  <div class="legend">
+    <span>
+      <i class="swatch"
+        style="background:#999"></i>
+      Da colorare
+    </span>
+    <span>
+      <i class="swatch"
+        style="background:#d8b45f"></i>
+      Acquistato
+    </span>
+    <span>
+      <i class="swatch"
+        style="background:#3c8cff"></i>
+      Selezionato
+    </span>
+  </div>
 
-<h3>Informazioni sul tassello</h3>
-<div id="pixelInfo">Tocca un tassello per vedere i dettagli.</div>
+  <p class="muted">
+    Clicca per scegliere un tassello o trascina
+    per selezionarne più di uno. Ingrandisci
+    per vedere i quadratini del puzzle.
+    Il nickname di un tassello acquistato
+    appare al tocco.
+  </p>
+
+  <div class="info" id="pixelInfo">
+    Tocca un tassello per visualizzare
+    le informazioni.
+  </div>
 </section>
 
 <aside class="panel">
-<h2>Lascia il tuo segno</h2>
-<p class="muted">
-Puoi partecipare con qualsiasi importo a partire da 1 €.
-Ogni euro corrisponde a un tassello.
-</p>
+  <h2>Lascia il tuo segno</h2>
+  <p class="muted">
+    Puoi scegliere anche un solo tassello: 1 €.
+  </p>
 
-<div class="price">
-<small>LA TUA SELEZIONE</small>
-<strong id="totalPrice">0 €</strong>
-<span id="selectedCount">0 tasselli selezionati</span>
-</div>
+  <div class="price">
+    LA TUA SELEZIONE
+    <strong id="price">0 €</strong>
+    <span id="count">
+      0 tasselli selezionati
+    </span>
+  </div>
 
-<button class="secondary" style="width:100%" onclick="clearSelection()">
-Cancella selezione
-</button>
+  <button id="clear" class="secondary full">
+    Cancella selezione
+  </button>
 
-<label for="nickname">Il tuo nome sul puzzle</label>
-<input id="nickname" maxlength="40"
-placeholder="Scrivi il tuo nome o nickname">
+  <label for="nickname">
+    Il tuo nickname pubblico
+  </label>
 
-<p class="muted">
-Il nickname sarà pubblico e visibile a chiunque
-tocchi uno dei tuoi tasselli.
-Non inserire dati personali che non vuoi rendere pubblici.
-</p>
+  <input
+    id="nickname"
+    maxlength="40"
+    placeholder="Scrivi un nome da mostrare"
+  >
 
-<button id="buyButton" class="primary" onclick="simulatePurchase()" disabled>
-Seleziona almeno un tassello
-</button>
+  <p class="muted">
+    Il nickname sarà visibile pubblicamente.
+    Non inserire informazioni private.
+  </p>
 
-<p id="message" aria-live="polite"></p>
+  <button id="buy" class="full" disabled>
+    Seleziona un tassello
+  </button>
 
-<div class="notice">
-<strong>VERSIONE DIMOSTRATIVA</strong>
-<p>
-Nessun pagamento reale verrà effettuato.
-Il pulsante simula un acquisto e salva i tasselli
-soltanto in questo browser.
-</p>
-<p>
-Prima del lancio pubblico collegheremo Supabase,
-la verifica dei pagamenti e la gestione dei nickname.
-</p>
-</div>
+  <p id="message" aria-live="polite"></p>
 
-<div class="notice">
-<strong>Il nostro obiettivo</strong>
-<p>
-35.000 tasselli × 1 € = 35.000 € lordi.
-Il ricavato netto dipenderà da commissioni,
-tasse e altri costi.
-</p>
-</div>
+  <div class="notice">
+    <strong>
+      DEMO — NESSUN PAGAMENTO REALE
+    </strong>
+    <p>
+      Gli acquisti sono simulati.
+      I tasselli colorati vengono salvati
+      soltanto su questo browser.
+      Non sono sincronizzati con Supabase
+      e non rappresentano acquisti veri.
+    </p>
+  </div>
 </aside>
 </main>
 
 <footer>
-COLOR MY DREAM · Challenge #1 · Demo senza pagamenti
+  COLOR MY DREAM · Challenge #1 ·
+  Versione dimostrativa
 </footer>
 
 <script>
-"use strict";
+'use strict';
 
-const W=250;
-const H=140;
-const TOTAL=W*H;
-const STORAGE_KEY="color_my_dream_rolex_demo_v1";
+const W = 250;
+const H = 140;
+const TOTAL = W * H;
+const KEY = 'color_my_dream_rolex_demo_v2';
 
-const $=id=>document.getElementById(id);
-const stage=$("stage");
-const wall=$("wall");
-const drawing=$("drawing");
-const selectionCanvas=$("selection");
+const el = id => document.getElementById(id);
 
-const ctx=drawing.getContext("2d");
-const sc=selectionCanvas.getContext("2d");
+const viewport = el('viewport');
+const board = el('board');
+const base = el('base');
+const overlay = el('overlay');
+const selection = el('selection');
 
-const colorCanvas=document.createElement("canvas");
-colorCanvas.width=W;
-colorCanvas.height=H;
-const colorCtx=colorCanvas.getContext("2d");
+const bctx = base.getContext('2d');
+const octx = overlay.getContext('2d');
+const sctx = selection.getContext('2d');
 
-const grayCanvas=document.createElement("canvas");
-grayCanvas.width=W;
-grayCanvas.height=H;
-const grayCtx=grayCanvas.getContext("2d");
+const source = document.createElement('canvas');
+source.width = W;
+source.height = H;
 
-let zoom=1;
-let imageReady=false;
-let dragging=false;
-let startPoint=null;
-let selected=new Set();
-let purchased={};
+const sourceCtx = source.getContext('2d');
 
-try{
- const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||"{}");
- if(saved && typeof saved==="object" && !Array.isArray(saved)){
-  purchased=saved;
- }
-}catch{
- purchased={};
-}
+const colorPixels = document.createElement('canvas');
+colorPixels.width = W;
+colorPixels.height = H;
 
-function key(x,y){
- return y*W+x;
-}
+const cpctx = colorPixels.getContext('2d');
 
-function validPoint(x,y){
- return x>=0 && x<W && y>=0 && y<H;
-}
+let zoom = 1;
+let ready = false;
+let dragging = false;
+let start = null;
+let chosen = new Set();
+let owners = Object.create(null);
 
-function euro(amount){
- return amount.toLocaleString("it-IT",{
-  style:"currency",
-  currency:"EUR",
-  maximumFractionDigits:0
- });
-}
-
-function getPoint(event){
- const rect=wall.getBoundingClientRect();
- const x=Math.floor((event.clientX-rect.left)/rect.width*W);
- const y=Math.floor((event.clientY-rect.top)/rect.height*H);
- return {
-  x:Math.max(0,Math.min(W-1,x)),
-  y:Math.max(0,Math.min(H-1,y))
- };
-}
-
-function showMessage(text){
- $("message").textContent=text;
-}
-
-function showPixel(point){
- const id=key(point.x,point.y);
- const owner=purchased[id];
-
- if(typeof owner==="string"){
-  $("pixelInfo").textContent=
-   "Tassello X "+point.x+" · Y "+point.y+
-   " — Colorato da: "+owner;
- }else{
-  $("pixelInfo").textContent=
-   "Tassello X "+point.x+" · Y "+point.y+
-   " — Disponibile per 1 €";
- }
-}
-
-function drawImage(){
- if(!imageReady)return;
-
- ctx.clearRect(0,0,W,H);
- ctx.drawImage(grayCanvas,0,0);
-
- for(const id of Object.keys(purchased)){
-  const n=Number(id);
-  if(!Number.isInteger(n)||n<0||n>=TOTAL)continue;
-
-  const x=n%W;
-  const y=Math.floor(n/W);
-
-  ctx.drawImage(
-   colorCanvas,x,y,1,1,
-   x,y,1,1
+try {
+  const stored = JSON.parse(
+    localStorage.getItem(KEY) || '{}'
   );
- }
 
- drawSelection();
+  if (
+    stored &&
+    typeof stored === 'object' &&
+    !Array.isArray(stored)
+  ) {
+    for (const [k, v] of Object.entries(stored)) {
+      const n = Number(k);
+
+      if (
+        Number.isInteger(n) &&
+        n >= 0 &&
+        n < TOTAL &&
+        typeof v === 'string' &&
+        v.length <= 40
+      ) {
+        owners[n] = v;
+      }
+    }
+  }
+} catch (error) {
+  owners = Object.create(null);
 }
 
-function drawSelection(){
- sc.clearRect(0,0,W,H);
+const idOf = (x, y) => y * W + x;
 
- if(zoom>=4){
-  sc.beginPath();
-  sc.strokeStyle="rgba(255,255,255,.32)";
-  sc.lineWidth=.07;
+const fmt = n => n.toLocaleString('it-IT');
 
-  for(let x=1;x<W;x++){
-   sc.moveTo(x,0);
-   sc.lineTo(x,H);
+function info(text) {
+  el('message').textContent = text;
+}
+
+function update() {
+  const sold = Object.keys(owners).length;
+  const number = chosen.size;
+  const p = sold / TOTAL * 100;
+
+  el('sold').textContent = fmt(sold);
+  el('available').textContent = fmt(TOTAL - sold);
+  el('percent').textContent = p.toFixed(2) + '%';
+  el('progress').style.width = p + '%';
+
+  el('price').textContent = fmt(number) + ' €';
+
+  el('count').textContent =
+    fmt(number) + ' tassell' +
+    (number === 1
+      ? 'o selezionato'
+      : 'i selezionati');
+
+  el('buy').disabled = !ready || !number;
+
+  el('buy').textContent = number
+    ? 'SIMULA ACQUISTO — ' + fmt(number) + ' €'
+    : 'Seleziona un tassello';
+}
+
+function drawPurchased() {
+  octx.clearRect(0, 0, W, H);
+
+  for (const k of Object.keys(owners)) {
+    const id = Number(k);
+    const x = id % W;
+    const y = Math.floor(id / W);
+
+    octx.drawImage(
+      colorPixels,
+      x, y, 1, 1,
+      x, y, 1, 1
+    );
   }
 
-  for(let y=1;y<H;y++){
-   sc.moveTo(0,y);
-   sc.lineTo(W,y);
+  drawSelection();
+}
+
+function drawSelection() {
+  sctx.clearRect(0, 0, W, H);
+
+  if (zoom >= 3) {
+    sctx.beginPath();
+    sctx.lineWidth = 0.065;
+    sctx.strokeStyle = 'rgba(20,25,20,.48)';
+
+    for (let x = 0; x <= W; x++) {
+      sctx.moveTo(x, 0);
+      sctx.lineTo(x, H);
+    }
+
+    for (let y = 0; y <= H; y++) {
+      sctx.moveTo(0, y);
+      sctx.lineTo(W, y);
+    }
+
+    sctx.stroke();
   }
-  sc.stroke();
- }
 
- sc.fillStyle="rgba(45,130,255,.55)";
- sc.strokeStyle="#79b8ff";
- sc.lineWidth=.2;
+  sctx.fillStyle = 'rgba(30,117,255,.45)';
+  sctx.strokeStyle = '#4d91ff';
+  sctx.lineWidth = 0.14;
 
- for(const id of selected){
-  const x=id%W;
-  const y=Math.floor(id/W);
-  sc.fillRect(x,y,1,1);
-  sc.strokeRect(x+.05,y+.05,.9,.9);
- }
-}
+  for (const id of chosen) {
+    const x = id % W;
+    const y = Math.floor(id / W);
 
-function updateInfo(){
- const count=selected.size;
- const sold=Object.keys(purchased).filter(id=>{
-  const n=Number(id);
-  return Number.isInteger(n)&&n>=0&&n<TOTAL;
- }).length;
-
- $("soldCount").textContent=sold.toLocaleString("it-IT");
- $("remaining").textContent=(TOTAL-sold).toLocaleString("it-IT");
-
- const percent=sold/TOTAL*100;
- $("percentage").textContent=percent.toFixed(2)+"%";
- $("progressBar").style.width=percent+"%";
-
- $("totalPrice").textContent=euro(count);
- $("selectedCount").textContent=
-  count+" tassell"+(count===1?"o selezionato":"i selezionati");
-
- $("buyButton").disabled=count===0||!imageReady;
- $("buyButton").textContent=count
-  ?"SIMULA ACQUISTO — "+euro(count)
-  :"Seleziona almeno un tassello";
-}
-
-function clearSelection(){
- selected.clear();
- drawSelection();
- updateInfo();
- showMessage("");
-}
-
-function selectRectangle(a,b){
- const minX=Math.min(a.x,b.x);
- const maxX=Math.max(a.x,b.x);
- const minY=Math.min(a.y,b.y);
- const maxY=Math.max(a.y,b.y);
-
- selected.clear();
-
- for(let y=minY;y<=maxY;y++){
-  for(let x=minX;x<=maxX;x++){
-   const id=key(x,y);
-   if(typeof purchased[id]!=="string"){
-    selected.add(id);
-   }
+    sctx.fillRect(x, y, 1, 1);
+    sctx.strokeRect(
+      x + 0.06,
+      y + 0.06,
+      0.88,
+      0.88
+    );
   }
- }
-
- drawSelection();
- updateInfo();
 }
 
-wall.addEventListener("pointerdown",event=>{
- if(event.button!==0 && event.pointerType==="mouse")return;
- if(!imageReady)return;
+function position(e) {
+  const r = board.getBoundingClientRect();
 
- event.preventDefault();
- startPoint=getPoint(event);
- dragging=true;
+  return {
+    x: Math.max(
+      0,
+      Math.min(
+        W - 1,
+        Math.floor(
+          (e.clientX - r.left) / r.width * W
+        )
+      )
+    ),
 
- wall.setPointerCapture(event.pointerId);
- selectRectangle(startPoint,startPoint);
- showPixel(startPoint);
-});
-
-wall.addEventListener("pointermove",event=>{
- if(!dragging)return;
- selectRectangle(startPoint,getPoint(event));
-});
-
-wall.addEventListener("pointerup",event=>{
- if(!dragging)return;
- dragging=false;
- const point=getPoint(event);
- selectRectangle(startPoint,point);
- showPixel(point);
-});
-
-wall.addEventListener("pointercancel",()=>{
- dragging=false;
-});
-
-function applyZoom(){
- const available=Math.max(300,stage.clientWidth-2);
- const width=Math.round(available*zoom);
-
- wall.style.width=width+"px";
- wall.style.height=Math.round(width*H/W)+"px";
-
- $("zoomLabel").textContent=Math.round(zoom*100)+"%";
- drawSelection();
+    y: Math.max(
+      0,
+      Math.min(
+        H - 1,
+        Math.floor(
+          (e.clientY - r.top) / r.height * H
+        )
+      )
+    )
+  };
 }
 
-function changeZoom(factor){
- zoom=Math.max(1,Math.min(32,zoom*factor));
- applyZoom();
+function showPixel(p) {
+  const id = idOf(p.x, p.y);
+  const name = owners[id];
+
+  el('pixelInfo').textContent =
+    'Tassello (' + p.x + ', ' + p.y + ') — ' +
+    (
+      typeof name === 'string'
+        ? 'Colorato da ' + name
+        : 'Disponibile · 1 €'
+    );
 }
 
-function resetZoom(){
- zoom=1;
- applyZoom();
- stage.scrollLeft=0;
- stage.scrollTop=0;
-}
+function choose(a, b) {
+  chosen.clear();
 
-function simulatePurchase(){
- if(!imageReady||selected.size===0)return;
+  for (
+    let y = Math.min(a.y, b.y);
+    y <= Math.max(a.y, b.y);
+    y++
+  ) {
+    for (
+      let x = Math.min(a.x, b.x);
+      x <= Math.max(a.x, b.x);
+      x++
+    ) {
+      const id = idOf(x, y);
 
- const nickname=$("nickname").value.trim();
-
- if(nickname.length<1||nickname.length>40){
-  showMessage("Inserisci un nickname da 1 a 40 caratteri.");
-  return;
- }
-
- const count=selected.size;
-
- for(const id of selected){
-  if(typeof purchased[id]!=="string"){
-   purchased[id]=nickname;
+      if (owners[id] === undefined) {
+        chosen.add(id);
+      }
+    }
   }
- }
 
- try{
-  localStorage.setItem(STORAGE_KEY,JSON.stringify(purchased));
- }catch{
-  showMessage("Memoria del browser piena: acquisto demo non salvato.");
-  return;
- }
-
- selected.clear();
- drawImage();
- updateInfo();
-
- showMessage(
-  "✓ Simulazione completata! "+
-  count+" tasselli colorati a nome di "+nickname+
-  ". Tocca uno dei tasselli per vedere il nome."
- );
+  drawSelection();
+  update();
 }
 
-function prepareImage(image){
- // Mantiene le proporzioni originali senza deformare il Rolex.
- // Ritaglia soltanto i margini necessari per riempire il puzzle.
- const scale=Math.max(W/image.width,H/image.height);
- const sourceW=W/scale;
- const sourceH=H/scale;
- const sourceX=(image.width-sourceW)/2;
- const sourceY=(image.height-sourceH)/2;
+board.addEventListener('pointerdown', e => {
+  if (
+    !ready ||
+    (e.pointerType === 'mouse' && e.button !== 0)
+  ) {
+    return;
+  }
 
- colorCtx.clearRect(0,0,W,H);
- colorCtx.drawImage(
-  image,sourceX,sourceY,sourceW,sourceH,
-  0,0,W,H
- );
+  e.preventDefault();
 
- grayCtx.clearRect(0,0,W,H);
- grayCtx.filter="grayscale(100%)";
- grayCtx.drawImage(colorCanvas,0,0);
- grayCtx.filter="none";
+  dragging = true;
+  start = position(e);
 
- imageReady=true;
- drawImage();
- updateInfo();
+  board.setPointerCapture(e.pointerId);
+
+  choose(start, start);
+  showPixel(start);
+});
+
+board.addEventListener('pointermove', e => {
+  if (dragging) {
+    choose(start, position(e));
+  }
+});
+
+board.addEventListener('pointerup', e => {
+  if (!dragging) return;
+
+  dragging = false;
+
+  const p = position(e);
+
+  choose(start, p);
+  showPixel(p);
+});
+
+board.addEventListener('pointercancel', () => {
+  dragging = false;
+});
+
+function fit() {
+  const width =
+    Math.max(200, viewport.clientWidth - 2) * zoom;
+
+  board.style.width = width + 'px';
+  board.style.height = width * H / W + 'px';
+
+  el('zoomText').textContent =
+    Math.round(zoom * 100) + '%';
+
+  drawSelection();
 }
 
-function loadRolex(){
- const image=new Image();
-
- image.onload=()=>{
-  prepareImage(image);
-  showMessage(
-   "Puzzle pronto! Seleziona uno o più tasselli."
+function setZoom(factor) {
+  zoom = Math.max(
+    1,
+    Math.min(32, zoom * factor)
   );
- };
 
- image.onerror=()=>{
-  showMessage(
-   "Immagine non trovata. Carica rolex.png "+
-   "nella stessa cartella di index.html su GitHub."
-  );
- };
-
- image.src="./rolex.png";
+  fit();
 }
 
-window.addEventListener("resize",applyZoom);
+el('plus').onclick = () => {
+  setZoom(2);
+};
 
-applyZoom();
-updateInfo();
-loadRolex();
+el('minus').onclick = () => {
+  setZoom(0.5);
+};
+
+el('reset').onclick = () => {
+  zoom = 1;
+  fit();
+
+  viewport.scrollTop = 0;
+  viewport.scrollLeft = 0;
+};
+
+el('clear').onclick = () => {
+  chosen.clear();
+  drawSelection();
+  update();
+  info('');
+};
+
+el('buy').onclick = () => {
+  if (!ready || !chosen.size) return;
+
+  const nickname =
+    el('nickname').value.trim();
+
+  if (!nickname || nickname.length > 40) {
+    info(
+      'Inserisci un nickname da 1 a 40 caratteri.'
+    );
+    return;
+  }
+
+  const count = chosen.size;
+  const next = { ...owners };
+
+  for (const id of chosen) {
+    next[id] = nickname;
+  }
+
+  try {
+    localStorage.setItem(
+      KEY,
+      JSON.stringify(next)
+    );
+  } catch (error) {
+    info(
+      'Impossibile salvare la simulazione sul browser.'
+    );
+    return;
+  }
+
+  owners = Object.assign(
+    Object.create(null),
+    next
+  );
+
+  chosen.clear();
+
+  drawPurchased();
+  update();
+
+  info(
+    'Simulazione completata: ' +
+    fmt(count) +
+    ' tasselli colorati a nome di ' +
+    nickname + '.'
+  );
+};
+
+function load() {
+  const image = new Image();
+
+  image.onload = () => {
+    const iw = image.naturalWidth;
+    const ih = image.naturalHeight;
+
+    if (!iw || !ih) {
+      info('Immagine non valida.');
+      return;
+    }
+
+    // Mantiene la risoluzione originale.
+    // Il Rolex non viene ingrandito
+    // a partire da una miniatura 250x140.
+
+    const aspect = W / H;
+
+    const highW = Math.max(
+      iw,
+      Math.round(ih * aspect)
+    );
+
+    const highH = Math.round(
+      highW / aspect
+    );
+
+    base.width = highW;
+    base.height = highH;
+
+    // Sfondo bianco per i margini.
+    bctx.fillStyle = '#ffffff';
+    bctx.fillRect(
+      0, 0,
+      highW, highH
+    );
+
+    // Mostra l'immagine intera
+    // senza ritagliarla.
+    const highScale = Math.min(
+      highW / iw,
+      highH / ih
+    );
+
+    const drawW = iw * highScale;
+    const drawH = ih * highScale;
+
+    const drawX =
+      (highW - drawW) / 2;
+
+    const drawY =
+      (highH - drawH) / 2;
+
+    bctx.drawImage(
+      image,
+      drawX,
+      drawY,
+      drawW,
+      drawH
+    );
+
+    // Salva i colori originali
+    // in una griglia di 250x140 tasselli.
+    sourceCtx.fillStyle = '#ffffff';
+    sourceCtx.fillRect(0, 0, W, H);
+
+    sourceCtx.drawImage(
+      image,
+      drawX / highW * W,
+      drawY / highH * H,
+      drawW / highW * W,
+      drawH / highH * H
+    );
+
+    cpctx.clearRect(0, 0, W, H);
+    cpctx.drawImage(source, 0, 0);
+
+    // Converte la base in bianco e nero.
+    const pixels = bctx.getImageData(
+      0, 0,
+      highW, highH
+    );
+
+    const data = pixels.data;
+
+    for (let i = 0; i < data.length; i += 4) {
+      const gray = Math.round(
+        0.2126 * data[i] +
+        0.7152 * data[i + 1] +
+        0.0722 * data[i + 2]
+      );
+
+      data[i] = gray;
+      data[i + 1] = gray;
+      data[i + 2] = gray;
+    }
+
+    bctx.putImageData(pixels, 0, 0);
+
+    ready = true;
+
+    drawPurchased();
+    update();
+
+    info(
+      'Puzzle pronto: scegli uno o più tasselli.'
+    );
+  };
+
+  image.onerror = () => {
+    info(
+      'Non trovo rolex.png. ' +
+      'Controlla che sia accanto a ' +
+      'index.html su GitHub.'
+    );
+  };
+
+  image.src = './rolex.png';
+}
+
+window.addEventListener('resize', fit);
+
+fit();
+update();
+load();
 </script>
 </body>
 </html>
