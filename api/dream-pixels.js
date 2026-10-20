@@ -4,6 +4,7 @@ export default async function handler(req, res) {
 
   if (req.method !== "GET") {
     res.setHeader("Allow", "GET");
+
     return res.status(405).json({
       error: "Metodo non consentito"
     });
@@ -34,6 +35,7 @@ export default async function handler(req, res) {
       method: "POST",
       headers: {
         apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
