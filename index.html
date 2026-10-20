@@ -215,11 +215,11 @@ footer{
 
   <div class="stats">
     <div class="stat">
-      Colorati
+      Venduti realmente
       <strong id="sold">0</strong>
     </div>
     <div class="stat">
-      Disponibili
+      Non venduti
       <strong id="available">35.000</strong>
     </div>
     <div class="stat">
@@ -260,7 +260,7 @@ footer{
     <span>
       <i class="swatch"
         style="background:#d8b45f"></i>
-      Acquistato
+      Colorato (reale o demo)
     </span>
     <span>
       <i class="swatch"
@@ -328,10 +328,10 @@ footer{
     </strong>
     <p>
       Gli acquisti sono simulati.
-      I tasselli colorati vengono salvati
-      soltanto su questo browser.
-      Non sono sincronizzati con Supabase
-      e non rappresentano acquisti veri.
+      Le simulazioni vengono salvate soltanto
+      su questo browser e non sono acquisti veri.
+      I pixel realmente venduti vengono invece
+      letti da Supabase e sono visibili a tutti.
     </p>
   </div>
 </aside>
@@ -380,6 +380,8 @@ let dragging = false;
 let start = null;
 let chosen = new Set();
 let owners = Object.create(null);
+let demoOwners = Object.create(null);
+let databaseConnected = false;
 
 try {
   const stored = JSON.parse(
@@ -401,12 +403,12 @@ try {
         typeof v === 'string' &&
         v.length <= 40
       ) {
-        owners[n] = v;
+        demoOwners[n] = v;
       }
     }
   }
 } catch (error) {
-  owners = Object.create(null);
+  demoOwners = Object.create(null);
 }
 
 const idOf = (x, y) => y * W + x;
@@ -445,7 +447,12 @@ function update() {
 function drawPurchased() {
   octx.clearRect(0, 0, W, H);
 
-  for (const k of Object.keys(owners)) {
+  const colored = new Set([
+    ...Object.keys(owners),
+    ...Object.keys(demoOwners)
+  ]);
+
+  for (const k of colored) {
     const id = Number(k);
     const x = id % W;
     const y = Math.floor(id / W);
@@ -527,13 +534,18 @@ function position(e) {
 
 function showPixel(p) {
   const id = idOf(p.x, p.y);
-  const name = owners[id];
+  const name = owners[id] ?? demoOwners[id];
+  const isReal = owners[id] !== undefined;
 
   el('pixelInfo').textContent =
     'Tassello (' + p.x + ', ' + p.y + ') — ' +
     (
       typeof name === 'string'
-        ? 'Colorato da ' + name
+        ? (
+            isReal
+              ? 'Acquistato da '
+              : 'Simulazione locale di '
+          ) + name
         : 'Disponibile · 1 €'
     );
 }
@@ -553,7 +565,10 @@ function choose(a, b) {
     ) {
       const id = idOf(x, y);
 
-      if (owners[id] === undefined) {
+      if (
+        owners[id] === undefined &&
+        demoOwners[id] === undefined
+      ) {
         chosen.add(id);
       }
     }
@@ -662,7 +677,7 @@ el('buy').onclick = () => {
   }
 
   const count = chosen.size;
-  const next = { ...owners };
+  const next = { ...demoOwners };
 
   for (const id of chosen) {
     next[id] = nickname;
@@ -680,7 +695,7 @@ el('buy').onclick = () => {
     return;
   }
 
-  owners = Object.assign(
+  demoOwners = Object.assign(
     Object.create(null),
     next
   );
@@ -691,12 +706,82 @@ el('buy').onclick = () => {
   update();
 
   info(
-    'Simulazione completata: ' +
+    'Simulazione SOLO su questo browser: ' +
     fmt(count) +
     ' tasselli colorati a nome di ' +
     nickname + '.'
   );
 };
+
+async function refreshSoldPixels() {
+  try {
+    const response = await fetch('/api/dream-pixels', {
+      cache: 'no-store'
+    });
+
+    if (!response.ok) {
+      throw new Error('HTTP ' + response.status);
+    }
+
+    const data = await response.json();
+
+    if (!data || !Array.isArray(data.pixels)) {
+      throw new Error('Formato risposta non valido');
+    }
+
+    const updated = Object.create(null);
+
+    for (const pixel of data.pixels) {
+      if (
+        !Number.isInteger(pixel.x) ||
+        !Number.isInteger(pixel.y) ||
+        pixel.x < 0 ||
+        pixel.x >= W ||
+        pixel.y < 0 ||
+        pixel.y >= H ||
+        typeof pixel.nickname !== 'string'
+      ) {
+        continue;
+      }
+
+      updated[idOf(pixel.x, pixel.y)] =
+        pixel.nickname;
+    }
+
+    owners = updated;
+    databaseConnected = true;
+
+    for (const id of chosen) {
+      if (owners[id] !== undefined) {
+        chosen.delete(id);
+      }
+    }
+
+    if (ready) {
+      drawPurchased();
+    }
+
+    update();
+
+    info(
+      'Pixel reali sincronizzati con Supabase. ' +
+      'La simulazione resta privata su questo browser.'
+    );
+
+  } catch (error) {
+    databaseConnected = false;
+
+    console.error(
+      'Impossibile aggiornare i pixel reali:',
+      error
+    );
+
+    info(
+      'Impossibile aggiornare i pixel reali. ' +
+      'La simulazione locale rimane disponibile.'
+    );
+  }
+}
 
 function load() {
   const image = new Image();
@@ -709,10 +794,6 @@ function load() {
       info('Immagine non valida.');
       return;
     }
-
-    // Mantiene la risoluzione originale.
-    // Il Rolex non viene ingrandito
-    // a partire da una miniatura 250x140.
 
     const aspect = W / H;
 
@@ -728,15 +809,12 @@ function load() {
     base.width = highW;
     base.height = highH;
 
-    // Sfondo bianco per i margini.
     bctx.fillStyle = '#ffffff';
     bctx.fillRect(
       0, 0,
       highW, highH
     );
 
-    // Mostra l'immagine intera
-    // senza ritagliarla.
     const highScale = Math.min(
       highW / iw,
       highH / ih
@@ -759,8 +837,6 @@ function load() {
       drawH
     );
 
-    // Salva i colori originali
-    // in una griglia di 250x140 tasselli.
     sourceCtx.fillStyle = '#ffffff';
     sourceCtx.fillRect(0, 0, W, H);
 
@@ -775,7 +851,6 @@ function load() {
     cpctx.clearRect(0, 0, W, H);
     cpctx.drawImage(source, 0, 0);
 
-    // Converte la base in bianco e nero.
     const pixels = bctx.getImageData(
       0, 0,
       highW, highH
@@ -803,8 +878,10 @@ function load() {
     update();
 
     info(
-      'Puzzle pronto: scegli uno o più tasselli.'
+      'Puzzle pronto. Caricamento acquisti reali...'
     );
+
+    refreshSoldPixels();
   };
 
   image.onerror = () => {
@@ -819,6 +896,8 @@ function load() {
 }
 
 window.addEventListener('resize', fit);
+
+setInterval(refreshSoldPixels, 30000);
 
 fit();
 update();
