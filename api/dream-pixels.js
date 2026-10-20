@@ -11,15 +11,14 @@ export default async function handler(req, res) {
 
   const supabaseUrl = (
     process.env.SUPABASE_URL || ""
-  ).replace(/\/$/, "");
+  ).trim().replace(/\/$/, "");
 
-  const serviceKey =
-    process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+  const serviceKey = (
+    process.env.SUPABASE_SERVICE_ROLE_KEY || ""
+  ).trim();
 
   if (!supabaseUrl || !serviceKey) {
-    console.error(
-      "Configurazione Supabase mancante"
-    );
+    console.error("Configurazione Supabase mancante");
 
     return res.status(503).json({
       error: "Servizio temporaneamente non disponibile"
@@ -35,7 +34,6 @@ export default async function handler(req, res) {
       method: "POST",
       headers: {
         apikey: serviceKey,
-        Authorization: `Bearer ${serviceKey}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
@@ -45,9 +43,12 @@ export default async function handler(req, res) {
     });
 
     if (!response.ok) {
+      const details = await response.text();
+
       console.error(
         "Errore Supabase:",
-        response.status
+        response.status,
+        details.slice(0, 500)
       );
 
       return res.status(502).json({
