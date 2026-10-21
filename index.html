@@ -13,6 +13,7 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; }
+
 header {
   text-align: center;
   padding: 22px 12px;
@@ -26,6 +27,7 @@ header h1 {
   font-size: clamp(24px, 4vw, 38px);
 }
 header p { color: #c3d0c3; margin: 8px 0 0; }
+
 main {
   max-width: 1440px;
   margin: auto;
@@ -44,7 +46,12 @@ main {
 h2 { margin: 0 0 8px; }
 p { line-height: 1.5; }
 .muted { color: #bacabb; font-size: 14px; }
-.stats { display: flex; gap: 8px; margin: 16px 0; }
+
+.stats {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0;
+}
 .stat {
   flex: 1;
   min-width: 0;
@@ -86,10 +93,12 @@ button {
   font-weight: 750;
   cursor: pointer;
 }
-button:disabled { opacity: .5; cursor: not-allowed; }
+button:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
 .secondary { background: #3b5341; color: white; }
 
-/* Il riquadro si adatta alla foto intera. */
 #viewport {
   position: relative;
   width: 100%;
@@ -99,17 +108,13 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   border-radius: 12px;
   overscroll-behavior: contain;
 }
-
-/* Lo scorrimento è disponibile solo dopo lo zoom. */
 #viewport.zoomed { overflow: auto; }
-
 #board {
   position: relative;
   aspect-ratio: 25 / 14;
   touch-action: none;
   user-select: none;
 }
-
 #board canvas {
   position: absolute;
   inset: 0;
@@ -118,9 +123,9 @@ button:disabled { opacity: .5; cursor: not-allowed; }
   display: block;
   pointer-events: none;
 }
-
-#overlay, #selection { image-rendering: pixelated; }
-
+#overlay, #selection {
+  image-rendering: pixelated;
+}
 .legend {
   display: flex;
   flex-wrap: wrap;
@@ -253,9 +258,18 @@ footer {
   </div>
 
   <div class="legend">
-    <span><i class="swatch" style="background:#999"></i>Da colorare</span>
-    <span><i class="swatch" style="background:#d8b45f"></i>Acquistato</span>
-    <span><i class="swatch" style="background:#3c8cff"></i>Selezionato</span>
+    <span>
+      <i class="swatch" style="background:#999"></i>
+      Da colorare
+    </span>
+    <span>
+      <i class="swatch" style="background:#d8b45f"></i>
+      Acquistato
+    </span>
+    <span>
+      <i class="swatch" style="background:#3c8cff"></i>
+      Selezionato
+    </span>
   </div>
 
   <p class="muted">
@@ -304,14 +318,37 @@ footer {
   <p id="message" aria-live="polite"></p>
 
   <div class="notice">
-    <strong>PAGAMENTI NON ANCORA ATTIVI</strong>
+    <strong>COME FUNZIONA COLOR MY DREAM</strong>
+
     <p>
-      Il collegamento Stripe è in fase di verifica.
-      Al momento non è possibile effettuare acquisti reali.
+      Un sogno, 35.000 tasselli.
+      Scegli un pixel del Rolex e lascia
+      il tuo segno nella nostra prima challenge.
     </p>
+
     <p>
-      I tasselli realmente acquistati vengono letti
-      da Supabase e sono visibili a tutti.
+      Ogni tassello costa <strong>1 €</strong>.
+      Dopo la conferma del pagamento,
+      il pixel acquistato rivela il suo colore
+      originale e il tuo nickname viene
+      associato al tassello.
+    </p>
+
+    <p>
+      I pixel acquistati vengono salvati
+      e rimangono visibili a tutti.
+    </p>
+
+    <p>
+      <strong>Obiettivo della challenge:</strong>
+      35.000 € per realizzare il sogno
+      di acquistare un Rolex Day-Date.
+    </p>
+
+    <p>
+      <strong id="paymentStatus">
+        Pagamenti non ancora attivi.
+      </strong>
     </p>
   </div>
 </aside>
@@ -325,9 +362,9 @@ footer {
 'use strict';
 
 /*
-  Pagamenti disattivati fino alla verifica finale.
-  Anche il server deve mantenere disattivato
-  ENABLE_DREAM_PAYMENTS.
+  Il checkout è collegato al server.
+  Il server mantiene il blocco finché
+  ENABLE_DREAM_PAYMENTS non viene attivato.
 */
 const PAYMENTS_ENABLED = true;
 
@@ -358,10 +395,6 @@ let purchasing = false;
 let chosen = null;
 let owners = Object.create(null);
 
-/*
-  Dimensioni dell'immagine intera al 100%.
-  Non vengono mai aumentate automaticamente.
-*/
 let fittedWidth = 1;
 let fittedHeight = 1;
 
@@ -381,12 +414,16 @@ function update() {
   el('percent').textContent = percent.toFixed(2) + '%';
   el('progress').style.width = percent + '%';
 
-  el('price').textContent = chosen === null ? '0 €' : '1 €';
-  el('count').textContent = chosen === null
-    ? '0 tasselli selezionati'
-    : '1 tassello selezionato';
+  el('price').textContent =
+    chosen === null ? '0 €' : '1 €';
+
+  el('count').textContent =
+    chosen === null
+      ? '0 tasselli selezionati'
+      : '1 tassello selezionato';
 
   const buy = el('buy');
+
   buy.disabled =
     !PAYMENTS_ENABLED ||
     !ready ||
@@ -399,7 +436,7 @@ function update() {
   } else if (chosen === null) {
     buy.textContent = 'Seleziona un tassello';
   } else if (!PAYMENTS_ENABLED) {
-    buy.textContent = 'ACQUISTO NON ANCORA ATTIVO — 1 €';
+    buy.textContent = 'ACQUISTO NON ATTIVO — 1 €';
   } else {
     buy.textContent = 'ACQUISTA PIXEL — 1 €';
   }
@@ -470,14 +507,18 @@ function position(e) {
       0,
       Math.min(
         W - 1,
-        Math.floor((e.clientX - r.left) / r.width * W)
+        Math.floor(
+          (e.clientX - r.left) / r.width * W
+        )
       )
     ),
     y: Math.max(
       0,
       Math.min(
         H - 1,
-        Math.floor((e.clientY - r.top) / r.height * H)
+        Math.floor(
+          (e.clientY - r.top) / r.height * H
+        )
       )
     )
   };
@@ -515,9 +556,7 @@ board.addEventListener('pointerdown', e => {
   } else {
     chosen = id;
     info(
-      PAYMENTS_ENABLED
-        ? 'Tassello selezionato. Inserisci il nickname.'
-        : 'Tassello selezionato. Acquisti non ancora attivi.'
+      'Tassello selezionato. Inserisci il nickname.'
     );
   }
 
@@ -526,15 +565,8 @@ board.addEventListener('pointerdown', e => {
 });
 
 /*
-  CORREZIONE PRINCIPALE DEL ROLEX
-
-  Calcola una dimensione che rispetta:
-  1. La larghezza disponibile
-  2. L'altezza dello schermo
-  3. Il rapporto originale 250:140
-
-  Al 100% il Rolex entra interamente
-  nel riquadro senza scorrimento.
+  Adattamento del Rolex:
+  foto intera al 100%, senza scorrimento.
 */
 function fit() {
   const availableWidth = Math.max(
@@ -612,9 +644,8 @@ el('clear').onclick = () => {
 };
 
 /*
-  Checkout Stripe:
-  un solo pixel alla volta,
-  compatibile con dream-checkout.
+  Stripe Checkout:
+  un solo pixel alla volta.
 */
 el('buy').onclick = async () => {
   if (
@@ -668,24 +699,31 @@ el('buy').onclick = async () => {
       );
     }
 
+    if (typeof data.checkout_url !== 'string') {
+      throw new Error('Indirizzo checkout non valido.');
+    }
+
+    const checkoutUrl = new URL(data.checkout_url);
+
     if (
-      typeof data.checkout_url !== 'string' ||
-      !data.checkout_url.startsWith(
-        'https://checkout.stripe.com/'
-      )
+      checkoutUrl.protocol !== 'https:' ||
+      ![
+        'checkout.stripe.com',
+        'pay.stripe.com'
+      ].includes(checkoutUrl.hostname)
     ) {
       throw new Error('Indirizzo checkout non valido.');
     }
 
-    window.location.assign(data.checkout_url);
+    window.location.assign(checkoutUrl.href);
 
   } catch (error) {
+    await refreshSoldPixels();
+
     info(
       error.message ||
       'Impossibile avviare il pagamento.'
     );
-
-    await refreshSoldPixels();
 
   } finally {
     purchasing = false;
@@ -765,26 +803,31 @@ async function refreshSoldPixels() {
 }
 
 /*
-  Il ritorno da Stripe non conferma
-  automaticamente alcun acquisto.
-  La conferma deve arrivare dal webhook.
+  Ritorno da Stripe:
+  il pagamento è confermato solo
+  dal webhook, non dal browser.
 */
 async function handleReturn() {
   const params = new URLSearchParams(
     window.location.search
   );
 
+  const checkoutState = params.get('dream_checkout');
+
   const returned =
     params.has('session_id') ||
     params.has('success') ||
     params.has('canceled') ||
-    params.has('cancelled');
+    params.has('cancelled') ||
+    checkoutState === 'success' ||
+    checkoutState === 'cancel';
 
   if (!returned) return;
 
   if (
     params.has('canceled') ||
-    params.has('cancelled')
+    params.has('cancelled') ||
+    checkoutState === 'cancel'
   ) {
     info('Checkout annullato.');
   } else {
@@ -797,7 +840,8 @@ async function handleReturn() {
 
     info(
       'Il pagamento viene confermato dal webhook. ' +
-      'I pixel acquistati appariranno dopo la sincronizzazione.'
+      'I pixel acquistati appariranno ' +
+      'dopo la sincronizzazione.'
     );
   }
 
@@ -810,8 +854,8 @@ async function handleReturn() {
 
 /*
   Caricamento del Rolex:
-  l'immagine viene mantenuta intera
-  e adattata al rapporto del puzzle.
+  mantiene l'immagine intera
+  e il rapporto originale del puzzle.
 */
 function load() {
   const image = new Image();
