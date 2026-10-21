@@ -5,37 +5,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>COLOR MY DREAM — Rolex</title>
-
 <style>
 :root {
   font-family: system-ui, -apple-system, Arial, sans-serif;
   color: #f7f5ed;
   background: #111a15;
 }
-
 * { box-sizing: border-box; }
-
 body { margin: 0; }
-
 header {
   text-align: center;
-  padding: 25px 12px;
+  padding: 22px 12px;
   background: #1b2b20;
   border-bottom: 1px solid #425747;
 }
-
 header h1 {
   color: #e8c978;
   letter-spacing: 2px;
   margin: 0;
   font-size: clamp(24px, 4vw, 38px);
 }
-
-header p {
-  color: #c3d0c3;
-  margin: 8px 0 0;
-}
-
+header p { color: #c3d0c3; margin: 8px 0 0; }
 main {
   max-width: 1440px;
   margin: auto;
@@ -44,7 +34,6 @@ main {
   grid-template-columns: minmax(0, 1fr) 330px;
   gap: 16px;
 }
-
 .panel {
   min-width: 0;
   background: #1b2920;
@@ -52,22 +41,10 @@ main {
   border-radius: 16px;
   padding: 18px;
 }
-
 h2 { margin: 0 0 8px; }
-
 p { line-height: 1.5; }
-
-.muted {
-  color: #bacabb;
-  font-size: 14px;
-}
-
-.stats {
-  display: flex;
-  gap: 8px;
-  margin: 16px 0;
-}
-
+.muted { color: #bacabb; font-size: 14px; }
+.stats { display: flex; gap: 8px; margin: 16px 0; }
 .stat {
   flex: 1;
   min-width: 0;
@@ -76,27 +53,23 @@ p { line-height: 1.5; }
   border-radius: 9px;
   font-size: 12px;
 }
-
 .stat strong {
   display: block;
   color: #e8c978;
   font-size: clamp(16px, 2.3vw, 24px);
   margin-top: 4px;
 }
-
 .bar {
   height: 9px;
   background: #425445;
   border-radius: 20px;
   overflow: hidden;
 }
-
 .bar div {
   height: 100%;
   width: 0;
   background: #e8c978;
 }
-
 .controls {
   display: flex;
   flex-wrap: wrap;
@@ -104,7 +77,6 @@ p { line-height: 1.5; }
   gap: 8px;
   margin: 16px 0;
 }
-
 button {
   background: #e2bd66;
   color: #142018;
@@ -114,27 +86,10 @@ button {
   font-weight: 750;
   cursor: pointer;
 }
+button:disabled { opacity: .5; cursor: not-allowed; }
+.secondary { background: #3b5341; color: white; }
 
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.secondary {
-  background: #3b5341;
-  color: white;
-}
-
-/*
-  FOTO ROLEX:
-  al 100% il riquadro ha esattamente
-  l'altezza dell'immagine.
-
-  Niente scorrimento verticale.
-  Quando si ingrandisce, lo scorrimento
-  viene abilitato per esplorare i pixel.
-*/
-
+/* Il riquadro si adatta alla foto intera. */
 #viewport {
   position: relative;
   width: 100%;
@@ -145,13 +100,11 @@ button:disabled {
   overscroll-behavior: contain;
 }
 
-#viewport.zoomed {
-  overflow: auto;
-}
+/* Lo scorrimento è disponibile solo dopo lo zoom. */
+#viewport.zoomed { overflow: auto; }
 
 #board {
   position: relative;
-  width: 100%;
   aspect-ratio: 25 / 14;
   touch-action: none;
   user-select: none;
@@ -160,16 +113,13 @@ button:disabled {
 #board canvas {
   position: absolute;
   inset: 0;
-  display: block;
   width: 100%;
   height: 100%;
+  display: block;
   pointer-events: none;
 }
 
-#overlay,
-#selection {
-  image-rendering: pixelated;
-}
+#overlay, #selection { image-rendering: pixelated; }
 
 .legend {
   display: flex;
@@ -179,7 +129,6 @@ button:disabled {
   font-size: 13px;
   color: #cbd8cc;
 }
-
 .swatch {
   display: inline-block;
   width: 12px;
@@ -188,7 +137,6 @@ button:disabled {
   margin-right: 5px;
   vertical-align: middle;
 }
-
 .info {
   background: #2a3c2e;
   border-radius: 9px;
@@ -197,7 +145,6 @@ button:disabled {
   overflow-wrap: anywhere;
   font-size: 14px;
 }
-
 .price {
   background: #2e3b2d;
   border: 1px solid #947b3f;
@@ -205,20 +152,17 @@ button:disabled {
   border-radius: 12px;
   margin: 16px 0;
 }
-
 .price strong {
   display: block;
   color: #e8c978;
   font-size: 34px;
   margin: 6px 0;
 }
-
 label {
   display: block;
   margin: 18px 0 7px;
   font-weight: 700;
 }
-
 input {
   width: 100%;
   padding: 13px;
@@ -228,12 +172,7 @@ input {
   border-radius: 8px;
   font-size: 16px;
 }
-
-.full {
-  width: 100%;
-  margin-top: 12px;
-}
-
+.full { width: 100%; margin-top: 12px; }
 .notice {
   border: 1px solid #8d7541;
   background: #3c3422;
@@ -243,34 +182,28 @@ input {
   font-size: 13px;
   line-height: 1.6;
 }
-
 #message {
   min-height: 22px;
   font-size: 14px;
   overflow-wrap: anywhere;
   color: #e8c978;
 }
-
 footer {
   text-align: center;
   padding: 24px;
   color: #9fb2a1;
   font-size: 12px;
 }
-
-@media (max-width: 850px) {
+@media(max-width:850px) {
   main {
     grid-template-columns: 1fr;
     padding: 9px;
   }
-
   .panel { padding: 12px; }
-
   .stat { padding: 8px; }
 }
 </style>
 </head>
-
 <body>
 
 <header>
@@ -279,11 +212,8 @@ footer {
 </header>
 
 <main>
-
 <section class="panel">
-
   <h2>Un sogno, 35.000 tasselli</h2>
-
   <p class="muted">
     Ogni tassello vale 1 €.
     Scopri il colore originale del Rolex,
@@ -295,110 +225,67 @@ footer {
       Venduti realmente
       <strong id="sold">0</strong>
     </div>
-
     <div class="stat">
       Non venduti
       <strong id="available">35.000</strong>
     </div>
-
     <div class="stat">
       Completamento
       <strong id="percent">0%</strong>
     </div>
   </div>
 
-  <div class="bar">
-    <div id="progress"></div>
-  </div>
+  <div class="bar"><div id="progress"></div></div>
 
   <div class="controls">
     <button id="plus">+ Zoom</button>
     <button id="minus">− Zoom</button>
-    <button id="reset" class="secondary">
-      Ripristina
-    </button>
+    <button id="reset" class="secondary">Ripristina</button>
     <span id="zoomText">100%</span>
   </div>
 
   <div id="viewport">
     <div id="board">
       <canvas id="base"></canvas>
-
-      <canvas
-        id="overlay"
-        width="250"
-        height="140"
-      ></canvas>
-
-      <canvas
-        id="selection"
-        width="250"
-        height="140"
-      ></canvas>
+      <canvas id="overlay" width="250" height="140"></canvas>
+      <canvas id="selection" width="250" height="140"></canvas>
     </div>
   </div>
 
   <div class="legend">
-    <span>
-      <i class="swatch"
-         style="background:#999"></i>
-      Da colorare
-    </span>
-
-    <span>
-      <i class="swatch"
-         style="background:#d8b45f"></i>
-      Acquistato
-    </span>
-
-    <span>
-      <i class="swatch"
-         style="background:#3c8cff"></i>
-      Selezionato
-    </span>
+    <span><i class="swatch" style="background:#999"></i>Da colorare</span>
+    <span><i class="swatch" style="background:#d8b45f"></i>Acquistato</span>
+    <span><i class="swatch" style="background:#3c8cff"></i>Selezionato</span>
   </div>
 
   <p class="muted">
-    Al 100% puoi vedere il Rolex intero.
-    Usa lo zoom per ingrandire i tasselli.
-    Tocca un tassello per selezionarlo
-    oppure per scoprire chi lo ha acquistato.
+    Al 100% il Rolex è visibile per intero.
+    Premi + Zoom per ingrandire e selezionare
+    con maggiore precisione i singoli tasselli.
   </p>
 
   <div class="info" id="pixelInfo">
-    Tocca un tassello per visualizzare
-    le informazioni.
+    Tocca un tassello per visualizzare le informazioni.
   </div>
-
 </section>
 
 <aside class="panel">
-
   <h2>Lascia il tuo segno</h2>
-
   <p class="muted">
-    Scegli un tassello del Rolex.
-    Prezzo: 1 €.
+    Scegli un tassello del Rolex. Prezzo: 1 €.
   </p>
 
   <div class="price">
     LA TUA SELEZIONE
-
     <strong id="price">0 €</strong>
-
-    <span id="count">
-      0 tasselli selezionati
-    </span>
+    <span id="count">0 tasselli selezionati</span>
   </div>
 
   <button id="clear" class="secondary full">
     Cancella selezione
   </button>
 
-  <label for="nickname">
-    Il tuo nickname pubblico
-  </label>
-
+  <label for="nickname">Il tuo nickname pubblico</label>
   <input
     id="nickname"
     maxlength="40"
@@ -406,9 +293,8 @@ footer {
   >
 
   <p class="muted">
-    Il nickname sarà visibile pubblicamente
-    sul tassello acquistato.
-    Non inserire dati personali.
+    Il nickname sarà visibile pubblicamente.
+    Non inserire informazioni private.
   </p>
 
   <button id="buy" class="full" disabled>
@@ -418,25 +304,17 @@ footer {
   <p id="message" aria-live="polite"></p>
 
   <div class="notice">
-    <strong>
-      PAGAMENTI NON ANCORA ATTIVI
-    </strong>
-
+    <strong>PAGAMENTI NON ANCORA ATTIVI</strong>
     <p>
-      Il collegamento con Stripe è in fase
-      di verifica. Al momento non è possibile
-      effettuare acquisti reali.
+      Il collegamento Stripe è in fase di verifica.
+      Al momento non è possibile effettuare acquisti reali.
     </p>
-
     <p>
-      I tasselli acquistati realmente
-      vengono letti da Supabase.
-      Non vengono effettuati acquisti simulati.
+      I tasselli realmente acquistati vengono letti
+      da Supabase e sono visibili a tutti.
     </p>
   </div>
-
 </aside>
-
 </main>
 
 <footer>
@@ -447,19 +325,10 @@ footer {
 'use strict';
 
 /*
-  BLOCCO DI SICUREZZA
-
-  Lasciare false fino al completamento
-  dei controlli del checkout e del webhook.
-
-  Anche il backend /api/dream-checkout
-  deve mantenere il proprio blocco
+  Pagamenti disattivati fino alla verifica finale.
+  Anche il server deve mantenere disattivato
   ENABLE_DREAM_PAYMENTS.
-
-  Modificare questo valore da solo
-  NON attiva i pagamenti sul server.
 */
-
 const PAYMENTS_ENABLED = false;
 
 const W = 250;
@@ -467,10 +336,8 @@ const H = 140;
 const TOTAL = W * H;
 
 const el = id => document.getElementById(id);
-
 const viewport = el('viewport');
 const board = el('board');
-
 const base = el('base');
 const overlay = el('overlay');
 const selection = el('selection');
@@ -482,19 +349,23 @@ const sctx = selection.getContext('2d');
 const source = document.createElement('canvas');
 source.width = W;
 source.height = H;
-
 const sourceCtx = source.getContext('2d');
 
 let zoom = 1;
 let ready = false;
 let databaseConnected = false;
 let purchasing = false;
-
 let chosen = null;
 let owners = Object.create(null);
 
-const fmt = n => n.toLocaleString('it-IT');
+/*
+  Dimensioni dell'immagine intera al 100%.
+  Non vengono mai aumentate automaticamente.
+*/
+let fittedWidth = 1;
+let fittedHeight = 1;
 
+const fmt = n => n.toLocaleString('it-IT');
 const idOf = (x, y) => y * W + x;
 
 function info(text) {
@@ -503,23 +374,19 @@ function info(text) {
 
 function update() {
   const sold = Object.keys(owners).length;
-  const p = sold / TOTAL * 100;
+  const percent = sold / TOTAL * 100;
 
   el('sold').textContent = fmt(sold);
   el('available').textContent = fmt(TOTAL - sold);
-  el('percent').textContent = p.toFixed(2) + '%';
-  el('progress').style.width = p + '%';
+  el('percent').textContent = percent.toFixed(2) + '%';
+  el('progress').style.width = percent + '%';
 
-  el('price').textContent =
-    chosen === null ? '0 €' : '1 €';
-
-  el('count').textContent =
-    chosen === null
-      ? '0 tasselli selezionati'
-      : '1 tassello selezionato';
+  el('price').textContent = chosen === null ? '0 €' : '1 €';
+  el('count').textContent = chosen === null
+    ? '0 tasselli selezionati'
+    : '1 tassello selezionato';
 
   const buy = el('buy');
-
   buy.disabled =
     !PAYMENTS_ENABLED ||
     !ready ||
@@ -598,23 +465,22 @@ function drawSelection() {
 function position(e) {
   const r = board.getBoundingClientRect();
 
-  const x = Math.max(
-    0,
-    Math.min(
-      W - 1,
-      Math.floor((e.clientX - r.left) / r.width * W)
+  return {
+    x: Math.max(
+      0,
+      Math.min(
+        W - 1,
+        Math.floor((e.clientX - r.left) / r.width * W)
+      )
+    ),
+    y: Math.max(
+      0,
+      Math.min(
+        H - 1,
+        Math.floor((e.clientY - r.top) / r.height * H)
+      )
     )
-  );
-
-  const y = Math.max(
-    0,
-    Math.min(
-      H - 1,
-      Math.floor((e.clientY - r.top) / r.height * H)
-    )
-  );
-
-  return { x, y };
+  };
 }
 
 function showPixel(p) {
@@ -634,9 +500,7 @@ board.addEventListener('pointerdown', e => {
   if (
     !ready ||
     (e.pointerType === 'mouse' && e.button !== 0)
-  ) {
-    return;
-  }
+  ) return;
 
   e.preventDefault();
 
@@ -662,32 +526,48 @@ board.addEventListener('pointerdown', e => {
 });
 
 /*
-  IMMAGINE FERMA AL 100%
+  CORREZIONE PRINCIPALE DEL ROLEX
 
-  La larghezza naturale è quella
-  disponibile nel riquadro.
+  Calcola una dimensione che rispetta:
+  1. La larghezza disponibile
+  2. L'altezza dello schermo
+  3. Il rapporto originale 250:140
 
-  L'altezza del viewport al 100%
-  coincide con l'altezza del Rolex.
-
-  Quando zoom > 1, il viewport resta
-  alto come al 100%, ma permette
-  lo scorrimento per esplorare.
+  Al 100% il Rolex entra interamente
+  nel riquadro senza scorrimento.
 */
-
 function fit() {
-  const naturalWidth =
-    Math.max(1, viewport.clientWidth - 2);
+  const availableWidth = Math.max(
+    1,
+    viewport.clientWidth - 2
+  );
 
-  const naturalHeight = naturalWidth * H / W;
+  const availableHeight = Math.max(
+    160,
+    window.innerHeight * 0.52
+  );
 
-  const width = naturalWidth * zoom;
+  fittedWidth = Math.min(
+    availableWidth,
+    availableHeight * W / H
+  );
 
-  board.style.width = width + 'px';
-  board.style.height = width * H / W + 'px';
+  fittedHeight = fittedWidth * H / W;
 
   viewport.style.height =
-    Math.ceil(naturalHeight + 2) + 'px';
+    Math.ceil(fittedHeight + 2) + 'px';
+
+  board.style.width =
+    fittedWidth * zoom + 'px';
+
+  board.style.height =
+    fittedHeight * zoom + 'px';
+
+  board.style.marginLeft =
+    zoom === 1 ? 'auto' : '0';
+
+  board.style.marginRight =
+    zoom === 1 ? 'auto' : '0';
 
   viewport.classList.toggle(
     'zoomed',
@@ -715,13 +595,11 @@ function setZoom(factor) {
 }
 
 el('plus').onclick = () => setZoom(2);
-
 el('minus').onclick = () => setZoom(0.5);
 
 el('reset').onclick = () => {
   zoom = 1;
   fit();
-
   viewport.scrollTop = 0;
   viewport.scrollLeft = 0;
 };
@@ -734,15 +612,10 @@ el('clear').onclick = () => {
 };
 
 /*
-  CHECKOUT STRIPE
-
-  Supporta un solo pixel per acquisto,
-  come previsto dall'API dream-checkout.
-
-  Il browser NON conferma i pagamenti:
-  lo fa il webhook Stripe sul server.
+  Checkout Stripe:
+  un solo pixel alla volta,
+  compatibile con dream-checkout.
 */
-
 el('buy').onclick = async () => {
   if (
     !PAYMENTS_ENABLED ||
@@ -750,9 +623,7 @@ el('buy').onclick = async () => {
     !databaseConnected ||
     chosen === null ||
     purchasing
-  ) {
-    return;
-  }
+  ) return;
 
   const nickname = el('nickname').value.trim();
 
@@ -776,8 +647,7 @@ el('buy').onclick = async () => {
 
   purchasing = true;
   update();
-
-  info('Preparazione del checkout sicuro Stripe...');
+  info('Preparazione del checkout Stripe...');
 
   try {
     const response = await fetch('/api/dream-checkout', {
@@ -785,11 +655,7 @@ el('buy').onclick = async () => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        x,
-        y,
-        nickname
-      })
+      body: JSON.stringify({ x, y, nickname })
     });
 
     const data = await response.json();
@@ -808,9 +674,7 @@ el('buy').onclick = async () => {
         'https://checkout.stripe.com/'
       )
     ) {
-      throw new Error(
-        'Indirizzo checkout non valido.'
-      );
+      throw new Error('Indirizzo checkout non valido.');
     }
 
     window.location.assign(data.checkout_url);
@@ -830,12 +694,9 @@ el('buy').onclick = async () => {
 };
 
 /*
-  SUPABASE
-
-  Mostra esclusivamente i pixel
-  realmente venduti e confermati.
+  Lettura dei pixel realmente venduti
+  tramite Supabase.
 */
-
 async function refreshSoldPixels() {
   try {
     const response = await fetch(
@@ -864,9 +725,7 @@ async function refreshSoldPixels() {
         pixel.y < 0 ||
         pixel.y >= H ||
         typeof pixel.nickname !== 'string'
-      ) {
-        continue;
-      }
+      ) continue;
 
       updated[idOf(pixel.x, pixel.y)] =
         pixel.nickname;
@@ -885,7 +744,6 @@ async function refreshSoldPixels() {
     if (ready) drawPurchased();
 
     update();
-
     return true;
 
   } catch (error) {
@@ -907,15 +765,10 @@ async function refreshSoldPixels() {
 }
 
 /*
-  RITORNO DA STRIPE
-
-  Il ritorno sul sito non equivale
-  alla conferma di pagamento.
-
-  Aspettiamo che Supabase riceva
-  la conferma tramite webhook.
+  Il ritorno da Stripe non conferma
+  automaticamente alcun acquisto.
+  La conferma deve arrivare dal webhook.
 */
-
 async function handleReturn() {
   const params = new URLSearchParams(
     window.location.search
@@ -933,18 +786,18 @@ async function handleReturn() {
     params.has('canceled') ||
     params.has('cancelled')
   ) {
-    info('Checkout annullato. Nessun acquisto confermato.');
+    info('Checkout annullato.');
   } else {
     info(
       'Ritorno da Stripe. ' +
-      'Verifica della conferma in corso...'
+      'Attesa conferma del pagamento...'
     );
 
     await refreshSoldPixels();
 
     info(
-      'Controlla i pixel colorati e il conteggio. ' +
-      'Solo il webhook può confermare il pagamento.'
+      'Il pagamento viene confermato dal webhook. ' +
+      'I pixel acquistati appariranno dopo la sincronizzazione.'
     );
   }
 
@@ -956,13 +809,10 @@ async function handleReturn() {
 }
 
 /*
-  CARICAMENTO IMMAGINE ROLEX
-
-  Conserva il rapporto 250:140,
-  mostra la versione grigia
-  e rivela i colori pixel per pixel.
+  Caricamento del Rolex:
+  l'immagine viene mantenuta intera
+  e adattata al rapporto del puzzle.
 */
-
 function load() {
   const image = new Image();
 
@@ -1049,7 +899,7 @@ function load() {
     drawPurchased();
     update();
 
-    info('Rolex caricato. Sincronizzazione dei pixel...');
+    info('Rolex caricato. Sincronizzazione pixel...');
 
     refreshSoldPixels();
     handleReturn();
@@ -1074,6 +924,5 @@ update();
 load();
 
 </script>
-
 </body>
 </html>
