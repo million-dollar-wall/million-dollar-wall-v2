@@ -6,258 +6,203 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>COLOR MY DREAM — Rolex</title>
-
 <style>
 :root {
-  font-family: system-ui, -apple-system, Arial, sans-serif;
-  color: #f7f5ed;
-  background: #111a15;
+  font-family: system-ui,-apple-system,Arial,sans-serif;
+  color:#f7f5ed;
+  background:#111a15;
 }
-
-* { box-sizing: border-box; }
-
-body { margin: 0; }
-
+* { box-sizing:border-box; }
+body { margin:0; }
 header {
-  text-align: center;
-  padding: 22px 12px;
-  background: #1b2b20;
-  border-bottom: 1px solid #425747;
+  text-align:center;
+  padding:22px 12px;
+  background:#1b2b20;
+  border-bottom:1px solid #425747;
 }
-
 header h1 {
-  color: #e8c978;
-  letter-spacing: 2px;
-  margin: 0;
-  font-size: clamp(24px, 4vw, 38px);
+  color:#e8c978;
+  letter-spacing:2px;
+  margin:0;
+  font-size:clamp(24px,4vw,38px);
 }
-
-header p {
-  color: #c3d0c3;
-  margin: 8px 0 0;
-}
-
+header p { color:#c3d0c3; margin:8px 0 0; }
 main {
-  max-width: 1440px;
-  margin: auto;
-  padding: 16px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 330px;
-  gap: 16px;
+  max-width:1440px;
+  margin:auto;
+  padding:16px;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 330px;
+  gap:16px;
 }
-
 .panel {
-  min-width: 0;
-  background: #1b2920;
-  border: 1px solid #435847;
-  border-radius: 16px;
-  padding: 18px;
+  min-width:0;
+  background:#1b2920;
+  border:1px solid #435847;
+  border-radius:16px;
+  padding:18px;
 }
-
-h2 { margin: 0 0 8px; }
-
-p { line-height: 1.5; }
-
-.muted {
-  color: #bacabb;
-  font-size: 14px;
-}
-
-.stats {
-  display: flex;
-  gap: 8px;
-  margin: 16px 0;
-}
-
+h2 { margin:0 0 8px; }
+p { line-height:1.5; }
+.muted { color:#bacabb; font-size:14px; }
+.stats { display:flex; gap:8px; margin:16px 0; }
 .stat {
-  flex: 1;
-  min-width: 0;
-  padding: 12px;
-  background: #2b3b2e;
-  border-radius: 9px;
-  font-size: 12px;
+  flex:1;
+  min-width:0;
+  padding:12px;
+  background:#2b3b2e;
+  border-radius:9px;
+  font-size:12px;
 }
-
 .stat strong {
-  display: block;
-  color: #e8c978;
-  font-size: clamp(16px, 2.3vw, 24px);
-  margin-top: 4px;
+  display:block;
+  color:#e8c978;
+  font-size:clamp(16px,2.3vw,24px);
+  margin-top:4px;
 }
-
 .bar {
-  height: 9px;
-  background: #425445;
-  border-radius: 20px;
-  overflow: hidden;
+  height:9px;
+  background:#425445;
+  border-radius:20px;
+  overflow:hidden;
 }
-
 .bar div {
-  height: 100%;
-  width: 0;
-  background: #e8c978;
+  height:100%;
+  width:0;
+  background:#e8c978;
 }
-
 .controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin: 16px 0;
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+  margin:16px 0;
 }
-
 button {
-  background: #e2bd66;
-  color: #142018;
-  border: 0;
-  border-radius: 9px;
-  padding: 11px 14px;
-  font-weight: 750;
-  cursor: pointer;
+  background:#e2bd66;
+  color:#142018;
+  border:0;
+  border-radius:9px;
+  padding:11px 14px;
+  font-weight:750;
+  cursor:pointer;
 }
-
-button:disabled {
-  opacity: .5;
-  cursor: not-allowed;
-}
-
-.secondary {
-  background: #3b5341;
-  color: white;
-}
-
-/* ROLEX: intero nel viewport al 100% */
-
+button:disabled { opacity:.5; cursor:not-allowed; }
+.secondary { background:#3b5341; color:white; }
 #viewport {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
-  background: #101610;
-  border: 1px solid #556c5a;
-  border-radius: 12px;
-  overscroll-behavior: contain;
+  position:relative;
+  width:100%;
+  overflow:hidden;
+  background:#101610;
+  border:1px solid #556c5a;
+  border-radius:12px;
+  overscroll-behavior:contain;
 }
-
-#viewport.zoomed {
-  overflow: auto;
-}
-
+#viewport.zoomed { overflow:auto; }
 #board {
-  position: relative;
-  aspect-ratio: 25 / 14;
-  touch-action: none;
-  user-select: none;
+  position:relative;
+  aspect-ratio:25 / 14;
+  touch-action:none;
+  user-select:none;
 }
-
 #board canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  display: block;
-  pointer-events: none;
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  pointer-events:none;
 }
-
-#overlay,
-#selection {
-  image-rendering: pixelated;
-}
-
+#overlay,#selection { image-rendering:pixelated; }
 .legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 12px 0;
-  font-size: 13px;
-  color: #cbd8cc;
+  display:flex;
+  flex-wrap:wrap;
+  gap:12px;
+  margin:12px 0;
+  font-size:13px;
+  color:#cbd8cc;
 }
-
 .swatch {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 2px;
-  margin-right: 5px;
-  vertical-align: middle;
+  display:inline-block;
+  width:12px;
+  height:12px;
+  border-radius:2px;
+  margin-right:5px;
+  vertical-align:middle;
 }
-
 .info {
-  background: #2a3c2e;
-  border-radius: 9px;
-  padding: 12px;
-  min-height: 48px;
-  overflow-wrap: anywhere;
-  font-size: 14px;
+  background:#2a3c2e;
+  border-radius:9px;
+  padding:12px;
+  min-height:48px;
+  overflow-wrap:anywhere;
+  font-size:14px;
 }
-
 .price {
-  background: #2e3b2d;
-  border: 1px solid #947b3f;
-  padding: 16px;
-  border-radius: 12px;
-  margin: 16px 0;
+  background:#2e3b2d;
+  border:1px solid #947b3f;
+  padding:16px;
+  border-radius:12px;
+  margin:16px 0;
 }
-
 .price strong {
-  display: block;
-  color: #e8c978;
-  font-size: 34px;
-  margin: 6px 0;
+  display:block;
+  color:#e8c978;
+  font-size:34px;
+  margin:6px 0;
 }
-
 label {
-  display: block;
-  margin: 18px 0 7px;
-  font-weight: 700;
+  display:block;
+  margin:18px 0 7px;
+  font-weight:700;
 }
-
 input {
-  width: 100%;
-  padding: 13px;
-  background: #101710;
-  color: white;
-  border: 1px solid #6a806d;
-  border-radius: 8px;
-  font-size: 16px;
+  width:100%;
+  padding:13px;
+  background:#101710;
+  color:white;
+  border:1px solid #6a806d;
+  border-radius:8px;
+  font-size:16px;
 }
-
-.full {
-  width: 100%;
-  margin-top: 12px;
-}
-
+.full { width:100%; margin-top:12px; }
 .notice {
-  border: 1px solid #8d7541;
-  background: #3c3422;
-  padding: 13px;
-  border-radius: 10px;
-  margin-top: 20px;
-  font-size: 13px;
-  line-height: 1.6;
+  border:1px solid #8d7541;
+  background:#3c3422;
+  padding:13px;
+  border-radius:10px;
+  margin-top:20px;
+  font-size:13px;
+  line-height:1.6;
 }
-
 #message {
-  min-height: 22px;
-  font-size: 14px;
-  overflow-wrap: anywhere;
-  color: #e8c978;
+  min-height:22px;
+  font-size:14px;
+  overflow-wrap:anywhere;
+  color:#e8c978;
 }
-
 footer {
-  text-align: center;
-  padding: 24px;
-  color: #9fb2a1;
-  font-size: 12px;
+  text-align:center;
+  padding:24px;
+  color:#9fb2a1;
+  font-size:12px;
 }
-
-@media (max-width: 850px) {
-  main {
-    grid-template-columns: 1fr;
-    padding: 9px;
-  }
-
-  .panel { padding: 12px; }
-  .stat { padding: 8px; }
+footer a {
+  color:#e8c978;
+  text-decoration:none;
+}
+footer a:hover { text-decoration:underline; }
+.footer-links {
+  display:flex;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:12px;
+  margin:12px 0;
+}
+@media(max-width:850px) {
+  main { grid-template-columns:1fr; padding:9px; }
+  .panel { padding:12px; }
+  .stat { padding:8px; }
 }
 </style>
 </head>
@@ -270,11 +215,8 @@ footer {
 </header>
 
 <main>
-
 <section class="panel">
-
   <h2>Un sogno, 35.000 tasselli</h2>
-
   <p class="muted">
     Ogni tassello vale 1 €.
     Scopri il colore originale del Rolex,
@@ -282,115 +224,70 @@ footer {
   </p>
 
   <div class="stats">
-
     <div class="stat">
       Venduti realmente
       <strong id="sold">0</strong>
     </div>
-
     <div class="stat">
       Non venduti
       <strong id="available">35.000</strong>
     </div>
-
     <div class="stat">
       Completamento
       <strong id="percent">0%</strong>
     </div>
-
   </div>
 
-  <div class="bar">
-    <div id="progress"></div>
-  </div>
+  <div class="bar"><div id="progress"></div></div>
 
   <div class="controls">
     <button id="plus">+ Zoom</button>
     <button id="minus">− Zoom</button>
-    <button id="reset" class="secondary">
-      Ripristina
-    </button>
+    <button id="reset" class="secondary">Ripristina</button>
     <span id="zoomText">100%</span>
   </div>
 
   <div id="viewport">
     <div id="board">
       <canvas id="base"></canvas>
-      <canvas
-        id="overlay"
-        width="250"
-        height="140"
-      ></canvas>
-      <canvas
-        id="selection"
-        width="250"
-        height="140"
-      ></canvas>
+      <canvas id="overlay" width="250" height="140"></canvas>
+      <canvas id="selection" width="250" height="140"></canvas>
     </div>
   </div>
 
   <div class="legend">
-    <span>
-      <i class="swatch"
-         style="background:#999"></i>
-      Da colorare
-    </span>
-
-    <span>
-      <i class="swatch"
-         style="background:#d8b45f"></i>
-      Acquistato
-    </span>
-
-    <span>
-      <i class="swatch"
-         style="background:#3c8cff"></i>
-      Selezionato
-    </span>
+    <span><i class="swatch" style="background:#999"></i>Da colorare</span>
+    <span><i class="swatch" style="background:#d8b45f"></i>Acquistato</span>
+    <span><i class="swatch" style="background:#3c8cff"></i>Selezionato</span>
   </div>
 
   <p class="muted">
-    Al 100% il Rolex è visibile nel riquadro
-    senza scorrimento.
-    Usa lo zoom per selezionare con precisione
-    i singoli tasselli.
+    Al 100% il Rolex è visibile nel riquadro senza scorrimento.
+    Usa lo zoom per selezionare con precisione i singoli tasselli.
   </p>
 
   <div class="info" id="pixelInfo">
-    Tocca un tassello per visualizzare
-    le informazioni.
+    Tocca un tassello per visualizzare le informazioni.
   </div>
-
 </section>
 
 <aside class="panel">
-
   <h2>Lascia il tuo segno</h2>
-
   <p class="muted">
-    Scegli un tassello del Rolex.
-    Prezzo: 1 €.
+    Scegli un tassello del Rolex. Prezzo: 1 €.
   </p>
 
   <div class="price">
     LA TUA SELEZIONE
     <strong id="price">0 €</strong>
-    <span id="count">
-      0 tasselli selezionati
-    </span>
+    <span id="count">0 tasselli selezionati</span>
   </div>
 
-  <button
-    id="clear"
-    class="secondary full"
-  >
+  <button id="clear" class="secondary full">
     Cancella selezione
   </button>
 
-  <label for="nickname">
-    Il tuo nickname pubblico
-  </label>
-
+  <label for="nickname">Il tuo nickname pubblico</label>
   <input
     id="nickname"
     maxlength="40"
@@ -409,10 +306,7 @@ footer {
   <p id="message" aria-live="polite"></p>
 
   <div class="notice">
-
-    <strong>
-      COME FUNZIONA COLOR MY DREAM
-    </strong>
+    <strong>COME FUNZIONA COLOR MY DREAM</strong>
 
     <p>
       Un sogno, 35.000 tasselli.
@@ -421,12 +315,10 @@ footer {
     </p>
 
     <p>
-      Ogni tassello costa
-      <strong>1 €</strong>.
+      Ogni tassello costa <strong>1 €</strong>.
       Dopo la conferma del pagamento,
-      il pixel acquistato rivela il suo
-      colore originale e il tuo nickname
-      viene associato al tassello.
+      il pixel acquistato rivela il suo colore originale
+      e il tuo nickname viene associato al tassello.
     </p>
 
     <p>
@@ -440,29 +332,32 @@ footer {
       di acquistare un Rolex Day-Date.
     </p>
 
-    <p>
-      <strong>
-        Pagamenti non ancora attivi.
-      </strong>
-    </p>
-
+    <p><strong>Pagamenti non ancora attivi.</strong></p>
   </div>
-
 </aside>
-
 </main>
 
 <footer>
-  COLOR MY DREAM · Challenge #1 · Rolex
+  <p>© 2026 COLOR MY DREAM</p>
+
+  <nav class="footer-links" aria-label="Informazioni legali">
+    <a href="/contatti.html">Contatti</a>
+    <span>·</span>
+    <a href="/privacy.html">Privacy Policy</a>
+    <span>·</span>
+    <a href="/termini.html">Termini e Condizioni</a>
+  </nav>
+
+  <p>Challenge #1 — Rolex Day-Date</p>
 </footer>
 
 <script>
 'use strict';
 
 /*
-  Interfaccia checkout predisposta.
-  Il server continua a bloccare i pagamenti
-  finché ENABLE_DREAM_PAYMENTS=false.
+  Il checkout è predisposto.
+  Il server blocca gli acquisti finché
+  ENABLE_DREAM_PAYMENTS=false.
 */
 const PAYMENTS_ENABLED = true;
 
@@ -470,8 +365,7 @@ const W = 250;
 const H = 140;
 const TOTAL = W * H;
 
-const el = id =>
-  document.getElementById(id);
+const el = id => document.getElementById(id);
 
 const viewport = el('viewport');
 const board = el('board');
@@ -485,50 +379,34 @@ const octx = overlay.getContext('2d');
 const sctx = selection.getContext('2d');
 
 const source = document.createElement('canvas');
-
 source.width = W;
 source.height = H;
-
 const sourceCtx = source.getContext('2d');
 
 let zoom = 1;
 let ready = false;
 let databaseConnected = false;
 let purchasing = false;
-
 let chosen = null;
 let owners = Object.create(null);
-
 let fittedWidth = 1;
 let fittedHeight = 1;
 
-const fmt = n =>
-  n.toLocaleString('it-IT');
-
-const idOf = (x, y) =>
-  y * W + x;
+const fmt = n => n.toLocaleString('it-IT');
+const idOf = (x,y) => y * W + x;
 
 function info(text) {
   el('message').textContent = text;
 }
 
-/* STATISTICHE E PULSANTE */
-
 function update() {
-
   const sold = Object.keys(owners).length;
   const percent = sold / TOTAL * 100;
 
   el('sold').textContent = fmt(sold);
-
-  el('available').textContent =
-    fmt(TOTAL - sold);
-
-  el('percent').textContent =
-    percent.toFixed(2) + '%';
-
-  el('progress').style.width =
-    percent + '%';
+  el('available').textContent = fmt(TOTAL-sold);
+  el('percent').textContent = percent.toFixed(2)+'%';
+  el('progress').style.width = percent+'%';
 
   el('price').textContent =
     chosen === null ? '0 €' : '1 €';
@@ -548,63 +426,50 @@ function update() {
     purchasing;
 
   if (purchasing) {
-    buy.textContent =
-      'Preparazione checkout...';
+    buy.textContent = 'Preparazione checkout...';
   } else if (chosen === null) {
-    buy.textContent =
-      'Seleziona un tassello';
+    buy.textContent = 'Seleziona un tassello';
   } else if (!PAYMENTS_ENABLED) {
-    buy.textContent =
-      'ACQUISTO NON ATTIVO — 1 €';
+    buy.textContent = 'ACQUISTO NON ATTIVO — 1 €';
   } else {
-    buy.textContent =
-      'ACQUISTA PIXEL — 1 €';
+    buy.textContent = 'ACQUISTA PIXEL — 1 €';
   }
 }
 
-/* PIXEL ACQUISTATI */
-
 function drawPurchased() {
-
-  octx.clearRect(0, 0, W, H);
+  octx.clearRect(0,0,W,H);
 
   for (const key of Object.keys(owners)) {
-
     const id = Number(key);
     const x = id % W;
-    const y = Math.floor(id / W);
+    const y = Math.floor(id/W);
 
     octx.drawImage(
       source,
-      x, y, 1, 1,
-      x, y, 1, 1
+      x,y,1,1,
+      x,y,1,1
     );
   }
 
   drawSelection();
 }
 
-/* SELEZIONE PIXEL */
-
 function drawSelection() {
-
-  sctx.clearRect(0, 0, W, H);
+  sctx.clearRect(0,0,W,H);
 
   if (zoom >= 3) {
-
     sctx.beginPath();
     sctx.lineWidth = 0.065;
-    sctx.strokeStyle =
-      'rgba(20,25,20,.48)';
+    sctx.strokeStyle = 'rgba(20,25,20,.48)';
 
-    for (let x = 0; x <= W; x++) {
-      sctx.moveTo(x, 0);
-      sctx.lineTo(x, H);
+    for (let x=0;x<=W;x++) {
+      sctx.moveTo(x,0);
+      sctx.lineTo(x,H);
     }
 
-    for (let y = 0; y <= H; y++) {
-      sctx.moveTo(0, y);
-      sctx.lineTo(W, y);
+    for (let y=0;y<=H;y++) {
+      sctx.moveTo(0,y);
+      sctx.lineTo(W,y);
     }
 
     sctx.stroke();
@@ -613,259 +478,182 @@ function drawSelection() {
   if (chosen === null) return;
 
   const x = chosen % W;
-  const y = Math.floor(chosen / W);
+  const y = Math.floor(chosen/W);
 
-  sctx.fillStyle =
-    'rgba(30,117,255,.48)';
-
+  sctx.fillStyle = 'rgba(30,117,255,.48)';
   sctx.strokeStyle = '#4d91ff';
   sctx.lineWidth = 0.12;
 
-  sctx.fillRect(x, y, 1, 1);
-
-  sctx.strokeRect(
-    x + 0.06,
-    y + 0.06,
-    0.88,
-    0.88
-  );
+  sctx.fillRect(x,y,1,1);
+  sctx.strokeRect(x+0.06,y+0.06,0.88,0.88);
 }
 
 function position(e) {
-
   const r = board.getBoundingClientRect();
 
   return {
     x: Math.max(
       0,
       Math.min(
-        W - 1,
-        Math.floor(
-          (e.clientX - r.left) /
-          r.width * W
-        )
+        W-1,
+        Math.floor((e.clientX-r.left)/r.width*W)
       )
     ),
-
     y: Math.max(
       0,
       Math.min(
-        H - 1,
-        Math.floor(
-          (e.clientY - r.top) /
-          r.height * H
-        )
+        H-1,
+        Math.floor((e.clientY-r.top)/r.height*H)
       )
     )
   };
 }
 
 function showPixel(p) {
-
-  const id = idOf(p.x, p.y);
+  const id = idOf(p.x,p.y);
   const name = owners[id];
 
   el('pixelInfo').textContent =
-    'Tassello (' +
-    p.x + ', ' + p.y + ') — ' +
+    'Tassello ('+p.x+', '+p.y+') — '+
     (
       typeof name === 'string'
-        ? 'Acquistato da ' + name
+        ? 'Acquistato da '+name
         : 'Disponibile · 1 €'
     );
 }
 
-board.addEventListener(
-  'pointerdown',
-  e => {
+board.addEventListener('pointerdown',e=>{
+  if (
+    !ready ||
+    (e.pointerType==='mouse' && e.button!==0)
+  ) return;
 
-    if (
-      !ready ||
-      (
-        e.pointerType === 'mouse' &&
-        e.button !== 0
-      )
-    ) return;
+  e.preventDefault();
 
-    e.preventDefault();
+  const p = position(e);
+  const id = idOf(p.x,p.y);
 
-    const p = position(e);
-    const id = idOf(p.x, p.y);
+  showPixel(p);
 
-    showPixel(p);
-
-    if (owners[id] !== undefined) {
-
-      chosen = null;
-
-      info(
-        'Questo tassello è già stato acquistato.'
-      );
-
-    } else {
-
-      chosen = id;
-
-      info(
-        'Tassello selezionato. ' +
-        'Inserisci il nickname.'
-      );
-    }
-
-    drawSelection();
-    update();
+  if (owners[id] !== undefined) {
+    chosen = null;
+    info('Questo tassello è già stato acquistato.');
+  } else {
+    chosen = id;
+    info('Tassello selezionato. Inserisci il nickname.');
   }
-);
 
-/* ZOOM: FOTO NEL RIQUADRO AL 100% */
+  drawSelection();
+  update();
+});
 
 function fit() {
-
   const availableWidth = Math.max(
     1,
-    viewport.clientWidth - 2
+    viewport.clientWidth-2
   );
 
   const availableHeight = Math.max(
     160,
-    window.innerHeight * 0.52
+    window.innerHeight*0.52
   );
 
   fittedWidth = Math.min(
     availableWidth,
-    availableHeight * W / H
+    availableHeight*W/H
   );
 
-  fittedHeight =
-    fittedWidth * H / W;
+  fittedHeight = fittedWidth*H/W;
 
   viewport.style.height =
-    Math.ceil(fittedHeight + 2) + 'px';
+    Math.ceil(fittedHeight+2)+'px';
 
-  board.style.width =
-    fittedWidth * zoom + 'px';
-
-  board.style.height =
-    fittedHeight * zoom + 'px';
+  board.style.width = fittedWidth*zoom+'px';
+  board.style.height = fittedHeight*zoom+'px';
 
   board.style.marginLeft =
-    zoom === 1 ? 'auto' : '0';
+    zoom===1 ? 'auto' : '0';
 
   board.style.marginRight =
-    zoom === 1 ? 'auto' : '0';
+    zoom===1 ? 'auto' : '0';
 
-  viewport.classList.toggle(
-    'zoomed',
-    zoom > 1
-  );
+  viewport.classList.toggle('zoomed',zoom>1);
 
   el('zoomText').textContent =
-    Math.round(zoom * 100) + '%';
+    Math.round(zoom*100)+'%';
 
   drawSelection();
 }
 
 function setZoom(factor) {
-
-  zoom = Math.max(
-    1,
-    Math.min(32, zoom * factor)
-  );
-
+  zoom = Math.max(1,Math.min(32,zoom*factor));
   fit();
 
-  if (zoom === 1) {
-    viewport.scrollTop = 0;
-    viewport.scrollLeft = 0;
+  if (zoom===1) {
+    viewport.scrollTop=0;
+    viewport.scrollLeft=0;
   }
 }
 
-el('plus').onclick = () =>
-  setZoom(2);
+el('plus').onclick = ()=>setZoom(2);
+el('minus').onclick = ()=>setZoom(0.5);
 
-el('minus').onclick = () =>
-  setZoom(0.5);
-
-el('reset').onclick = () => {
-  zoom = 1;
+el('reset').onclick = ()=>{
+  zoom=1;
   fit();
-  viewport.scrollTop = 0;
-  viewport.scrollLeft = 0;
+  viewport.scrollTop=0;
+  viewport.scrollLeft=0;
 };
 
-el('clear').onclick = () => {
-  chosen = null;
+el('clear').onclick = ()=>{
+  chosen=null;
   drawSelection();
   update();
   info('');
 };
 
-/* CHECKOUT STRIPE */
-
-el('buy').onclick = async () => {
-
+el('buy').onclick = async ()=>{
   if (
     !PAYMENTS_ENABLED ||
     !ready ||
     !databaseConnected ||
-    chosen === null ||
+    chosen===null ||
     purchasing
   ) return;
 
-  const nickname =
-    el('nickname').value.trim();
+  const nickname = el('nickname').value.trim();
 
-  if (
-    !nickname ||
-    nickname.length > 40
-  ) {
-    info(
-      'Inserisci un nickname da 1 a 40 caratteri.'
-    );
+  if (!nickname || nickname.length>40) {
+    info('Inserisci un nickname da 1 a 40 caratteri.');
     return;
   }
 
   const id = chosen;
 
   if (owners[id] !== undefined) {
-
-    chosen = null;
-
+    chosen=null;
     drawSelection();
     update();
-
-    info(
-      'Questo tassello è già stato acquistato.'
-    );
-
+    info('Questo tassello è già stato acquistato.');
     return;
   }
 
   const x = id % W;
-  const y = Math.floor(id / W);
+  const y = Math.floor(id/W);
 
-  purchasing = true;
+  purchasing=true;
   update();
-
-  info(
-    'Preparazione del checkout Stripe...'
-  );
+  info('Preparazione del checkout Stripe...');
 
   try {
-
     const response = await fetch(
       '/api/dream-checkout',
       {
-        method: 'POST',
-        headers: {
-          'Content-Type':
-            'application/json'
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json'
         },
-        body: JSON.stringify({
-          x,
-          y,
-          nickname
-        })
+        body:JSON.stringify({x,y,nickname})
       }
     );
 
@@ -879,130 +667,93 @@ el('buy').onclick = async () => {
       );
     }
 
-    if (
-      typeof data.checkout_url !==
-      'string'
-    ) {
-      throw new Error(
-        'Indirizzo checkout non valido.'
-      );
+    if (typeof data.checkout_url!=='string') {
+      throw new Error('Indirizzo checkout non valido.');
     }
 
-    const checkoutUrl =
-      new URL(data.checkout_url);
+    const checkoutUrl = new URL(data.checkout_url);
 
     if (
-      checkoutUrl.protocol !== 'https:' ||
+      checkoutUrl.protocol!=='https:' ||
       ![
         'checkout.stripe.com',
         'pay.stripe.com'
       ].includes(checkoutUrl.hostname)
     ) {
-      throw new Error(
-        'Indirizzo checkout non valido.'
-      );
+      throw new Error('Indirizzo checkout non valido.');
     }
 
-    window.location.assign(
-      checkoutUrl.href
-    );
+    window.location.assign(checkoutUrl.href);
 
-  } catch (error) {
-
+  } catch(error) {
     await refreshSoldPixels();
 
     info(
       error.message ||
       'Impossibile avviare il pagamento.'
     );
-
   } finally {
-
-    purchasing = false;
+    purchasing=false;
     update();
   }
 };
 
-/* SINCRONIZZAZIONE SUPABASE */
-
 async function refreshSoldPixels() {
-
   try {
-
     const response = await fetch(
       '/api/dream-pixels',
-      {
-        cache: 'no-store'
-      }
+      {cache:'no-store'}
     );
 
     if (!response.ok) {
-      throw new Error(
-        'HTTP ' + response.status
-      );
+      throw new Error('HTTP '+response.status);
     }
 
     const data = await response.json();
 
-    if (
-      !data ||
-      !Array.isArray(data.pixels)
-    ) {
-      throw new Error(
-        'Risposta non valida.'
-      );
+    if (!data || !Array.isArray(data.pixels)) {
+      throw new Error('Risposta non valida.');
     }
 
-    const updated =
-      Object.create(null);
+    const updated = Object.create(null);
 
     for (const pixel of data.pixels) {
-
       if (
         !Number.isInteger(pixel.x) ||
         !Number.isInteger(pixel.y) ||
-        pixel.x < 0 ||
-        pixel.x >= W ||
-        pixel.y < 0 ||
-        pixel.y >= H ||
-        typeof pixel.nickname !==
-          'string'
+        pixel.x<0 ||
+        pixel.x>=W ||
+        pixel.y<0 ||
+        pixel.y>=H ||
+        typeof pixel.nickname!=='string'
       ) continue;
 
-      updated[
-        idOf(pixel.x, pixel.y)
-      ] = pixel.nickname;
+      updated[idOf(pixel.x,pixel.y)] =
+        pixel.nickname;
     }
 
-    owners = updated;
-    databaseConnected = true;
+    owners=updated;
+    databaseConnected=true;
 
     if (
-      chosen !== null &&
-      owners[chosen] !== undefined
+      chosen!==null &&
+      owners[chosen]!==undefined
     ) {
-      chosen = null;
+      chosen=null;
     }
 
-    if (ready) {
-      drawPurchased();
-    }
+    if (ready) drawPurchased();
 
     update();
     return true;
 
-  } catch (error) {
+  } catch(error) {
+    databaseConnected=false;
 
-    databaseConnected = false;
-
-    console.error(
-      'Errore Supabase:',
-      error
-    );
+    console.error('Errore Supabase:',error);
 
     info(
-      'Connessione ai pixel reali ' +
-      'non disponibile. ' +
+      'Connessione ai pixel reali non disponibile. '+
       'Acquisti bloccati.'
     );
 
@@ -1011,10 +762,7 @@ async function refreshSoldPixels() {
   }
 }
 
-/* RITORNO DA STRIPE */
-
 async function handleReturn() {
-
   const params = new URLSearchParams(
     window.location.search
   );
@@ -1027,32 +775,29 @@ async function handleReturn() {
     params.has('success') ||
     params.has('canceled') ||
     params.has('cancelled') ||
-    checkoutState === 'success' ||
-    checkoutState === 'cancel';
+    checkoutState==='success' ||
+    checkoutState==='cancel';
 
   if (!returned) return;
 
   if (
     params.has('canceled') ||
     params.has('cancelled') ||
-    checkoutState === 'cancel'
+    checkoutState==='cancel'
   ) {
-
     info('Checkout annullato.');
-
   } else {
-
     info(
-      'Ritorno da Stripe. ' +
+      'Ritorno da Stripe. '+
       'Attesa conferma del pagamento...'
     );
 
     await refreshSoldPixels();
 
     info(
-      'Il pagamento viene confermato ' +
-      'dal webhook. I pixel acquistati ' +
-      'appariranno dopo la sincronizzazione.'
+      'Il pagamento viene confermato dal webhook. '+
+      'I pixel acquistati appariranno '+
+      'dopo la sincronizzazione.'
     );
   }
 
@@ -1063,186 +808,109 @@ async function handleReturn() {
   );
 }
 
-/*
-  FOTO ROLEX SENZA BORDI AGGIUNTI
-
-  La foto originale viene ritagliata
-  al centro quando le proporzioni
-  non coincidono con 250:140.
-
-  NON vengono aggiunte bande bianche.
-  La stessa identica porzione di foto
-  viene usata per il Rolex grigio
-  e per i pixel colorati.
-*/
-
 function load() {
-
   const image = new Image();
 
-  image.onload = () => {
-
+  image.onload = ()=>{
     const iw = image.naturalWidth;
     const ih = image.naturalHeight;
 
     if (!iw || !ih) {
-      info(
-        'Immagine Rolex non valida.'
-      );
+      info('Immagine Rolex non valida.');
       return;
     }
 
-    const targetAspect = W / H;
-    const imageAspect = iw / ih;
+    const targetAspect = W/H;
+    const imageAspect = iw/ih;
 
-    let sx = 0;
-    let sy = 0;
-    let sw = iw;
-    let sh = ih;
+    let sx=0;
+    let sy=0;
+    let sw=iw;
+    let sh=ih;
 
-    if (imageAspect > targetAspect) {
-
-      /* Immagine troppo larga:
-         taglia i lati in modo uguale. */
-
-      sw = ih * targetAspect;
-      sx = (iw - sw) / 2;
-
-    } else if (
-      imageAspect < targetAspect
-    ) {
-
-      /* Immagine troppo alta:
-         taglia sopra e sotto. */
-
-      sh = iw / targetAspect;
-      sy = (ih - sh) / 2;
+    if (imageAspect>targetAspect) {
+      sw=ih*targetAspect;
+      sx=(iw-sw)/2;
+    } else if (imageAspect<targetAspect) {
+      sh=iw/targetAspect;
+      sy=(ih-sh)/2;
     }
-
-    /*
-      Canvas ad alta risoluzione
-      per mantenere nitida la foto.
-    */
 
     const highW = Math.max(
       1000,
       Math.round(sw)
     );
 
-    const highH = Math.round(
-      highW * H / W
-    );
+    const highH = Math.round(highW*H/W);
 
-    base.width = highW;
-    base.height = highH;
+    base.width=highW;
+    base.height=highH;
 
-    /*
-      Foto completa del riquadro,
-      senza padding o bordi bianchi.
-    */
-
-    bctx.clearRect(
-      0, 0,
-      highW, highH
-    );
+    bctx.clearRect(0,0,highW,highH);
 
     bctx.drawImage(
       image,
-      sx, sy, sw, sh,
-      0, 0, highW, highH
+      sx,sy,sw,sh,
+      0,0,highW,highH
     );
 
-    /*
-      Identica immagine in 250x140,
-      usata per rivelare i colori
-      dei pixel acquistati.
-    */
-
-    sourceCtx.clearRect(
-      0, 0, W, H
-    );
+    sourceCtx.clearRect(0,0,W,H);
 
     sourceCtx.drawImage(
       image,
-      sx, sy, sw, sh,
-      0, 0, W, H
+      sx,sy,sw,sh,
+      0,0,W,H
     );
 
-    /*
-      Trasforma SOLO la foto base
-      in scala di grigi.
-    */
-
     const pixels = bctx.getImageData(
-      0, 0,
-      highW, highH
+      0,0,highW,highH
     );
 
     const data = pixels.data;
 
-    for (
-      let i = 0;
-      i < data.length;
-      i += 4
-    ) {
-
+    for (let i=0;i<data.length;i+=4) {
       const gray = Math.round(
-        0.2126 * data[i] +
-        0.7152 * data[i + 1] +
-        0.0722 * data[i + 2]
+        0.2126*data[i]+
+        0.7152*data[i+1]+
+        0.0722*data[i+2]
       );
 
-      data[i] = gray;
-      data[i + 1] = gray;
-      data[i + 2] = gray;
+      data[i]=gray;
+      data[i+1]=gray;
+      data[i+2]=gray;
     }
 
-    bctx.putImageData(
-      pixels, 0, 0
-    );
+    bctx.putImageData(pixels,0,0);
 
-    ready = true;
+    ready=true;
 
     fit();
     drawPurchased();
     update();
 
-    info(
-      'Rolex caricato. ' +
-      'Sincronizzazione pixel...'
-    );
+    info('Rolex caricato. Sincronizzazione pixel...');
 
     refreshSoldPixels();
     handleReturn();
   };
 
-  image.onerror = () => {
+  image.onerror = ()=>{
     info(
-      'Impossibile caricare rolex.png. ' +
-      'Controlla che sia accanto ' +
-      'a index.html.'
+      'Impossibile caricare rolex.png. '+
+      'Controlla che sia accanto a index.html.'
     );
   };
 
-  image.src = './rolex.png';
+  image.src='./rolex.png';
 }
 
-/* AVVIO */
+window.addEventListener('resize',fit);
 
-window.addEventListener(
-  'resize',
-  fit
-);
-
-setInterval(
-  refreshSoldPixels,
-  30000
-);
+setInterval(refreshSoldPixels,30000);
 
 fit();
 update();
 load();
-
 </script>
 
 </body>
