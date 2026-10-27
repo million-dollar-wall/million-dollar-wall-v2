@@ -1,10 +1,11 @@
 
+
 const CHALLENGE_ID = "rolex-001";
 const SITE_URL = "https://million-dollar-wall-v2.vercel.app";
 const PRICE_CENTS = 100;
 
 const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const SESSION_RE = /^cs_live_[A-Za-z0-9]+$/;
 
@@ -12,9 +13,21 @@ function sendError(res, status, message) {
   return res.status(status).json({ error: message });
 }
 
+function getPaymentDiagnostics() {
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const stripeKey = process.env.STRIPE_SECRET_KEY;
+
+  return {
+    supabase_url: Boolean(supabaseUrl?.trim()),
+    supabase_key: Boolean(supabaseKey?.trim()),
+    stripe_live: Boolean(stripeKey?.trim().startsWith("sk_live_"))
+  };
+}
+
 async function supabaseRpc(name, data) {
-  const url = process.env.SUPABASE_URL?.replace(/\/$/, "");
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = process.env.SUPABASE_URL?.trim().replace(/\/$/, "");
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
 
   if (!url || !key) {
     throw new Error("Configurazione Supabase mancante");
@@ -46,7 +59,7 @@ async function supabaseRpc(name, data) {
 }
 
 async function stripeRequest(path, params) {
-  const key = process.env.STRIPE_SECRET_KEY;
+  const key = process.env.STRIPE_SECRET_KEY?.trim();
 
   if (!key || !key.startsWith("sk_live_")) {
     throw new Error("Stripe LIVE non configurato");
@@ -76,7 +89,7 @@ async function stripeRequest(path, params) {
 }
 
 async function expireSession(sessionId) {
-  const key = process.env.STRIPE_SECRET_KEY;
+  const key = process.env.STRIPE_SECRET_KEY?.trim();
 
   await fetch(
     `https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}/expire`,
@@ -97,9 +110,7 @@ export default async function handler(req, res) {
     return sendError(res, 405, "Metodo non consentito");
   }
 
-  // Non abilitiamo gli acquisti finché
-  // webhook e verifiche non sono completati.
-  if (process.env.ENABLE_DREAM_PAYMENTS !== "true") {
+  if (process.env.ENABLE_DREAM_PAYMENTS?.trim() !== "true") {
     return sendError(
       res,
       503,
@@ -128,16 +139,22 @@ export default async function handler(req, res) {
     return sendError(res, 400, "Nickname non valido");
   }
 
+  const diagnostics = getPaymentDiagnostics();
+
   if (
-    !process.env.SUPABASE_URL ||
-    !process.env.SUPABASE_SERVICE_ROLE_KEY ||
-    !process.env.STRIPE_SECRET_KEY?.startsWith("sk_live_")
+    !diagnostics.supabase_url ||
+    !diagnostics.supabase_key ||
+    !diagnostics.stripe_live
   ) {
-    return sendError(
-      res,
-      503,
-      "Configurazione pagamenti incompleta"
+    console.error(
+      "Dream checkout configuration:",
+      diagnostics
     );
+
+    return res.status(503).json({
+      error: "Configurazione pagamenti incompleta",
+      diagnostics
+    });
   }
 
   let reservationId = null;
@@ -242,10 +259,6 @@ export default async function handler(req, res) {
         console.error("Scadenza Stripe:", e.message);
       }
     }
-
-    // Non eliminiamo automaticamente prenotazioni
-    // collegate a Stripe: potrebbero richiedere
-    // una riconciliazione sicura.
 
     return sendError(
       res,
